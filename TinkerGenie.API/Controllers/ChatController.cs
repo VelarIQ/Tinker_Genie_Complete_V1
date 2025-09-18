@@ -38,7 +38,6 @@ namespace TinkerGenie.API.Controllers
             _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
         }
 
-        // USER REQUESTED: New Chat endpoint for session clearing
         [HttpPost("new")]
         public async Task<IActionResult> NewChat()
         {
@@ -54,13 +53,10 @@ namespace TinkerGenie.API.Controllers
                 
                 _logger.LogInformation("New chat requested by user: {UserId}", userId);
                 
-                // Clear Redis sessions
                 await ClearAllActiveSessions(userId);
                 
-                // Generate new conversation ID
                 var newConversationId = Guid.NewGuid().ToString();
                 
-                // Time-based welcome message
                 var timeOfDay = GetTimeOfDay();
                 var welcomeMessage = GetWelcomeMessage(timeOfDay, name);
                 
@@ -101,34 +97,28 @@ namespace TinkerGenie.API.Controllers
                 
                 _logger.LogInformation("Chat request from user: {UserId}, message: {Message}", userId, request.Message);
 
-                // Check if this is a daily prompt request
                 if (IsDailyPromptRequest(request.Message))
                 {
                     return await HandleDailyPromptRequest(userId, firstName, businessName, request.ConversationId, request.Message);
                 }
 
-                // Check if user is in a daily prompt session
                 var dailyPromptSession = await GetDailyPromptSession(userId);
                 if (dailyPromptSession != null)
                 {
                     return await HandleDailyPromptResponse(userId, request.Message, dailyPromptSession, request.ConversationId);
                 }
 
-                // Check for burning fires scenario
                 if (IsBurningFiresScenario(request.Message))
                 {
                     return await HandleBurningFiresRequest(userId, request.Message, request.ConversationId);
                 }
 
-                // Regular chat - use AI for everything
                 return await HandleRegularChat(userId, request.Message, request.ConversationId);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in chat endpoint for user: {UserId}", request.UserId);
-                
                 var errorResponse = await GetAIResponse($"User encountered an error: {ex.Message}. Provide a supportive response as Chris Cooper would, acknowledging the technical difficulty but maintaining focus on their leadership development.");
-                
                 return Ok(new ChatResponse
                 {
                     Response = errorResponse,
@@ -141,18 +131,15 @@ namespace TinkerGenie.API.Controllers
         private bool IsDailyPromptRequest(string message)
         {
             if (message == "START_DAILY_PROMPT") return true;
-            
             var lowerMessage = message?.ToLower() ?? "";
             if (lowerMessage == "start fresh" || lowerMessage == "reset session" || lowerMessage == "clear session")
             {
                 return true;
             }
-            
             var dailyPromptKeywords = new[] { "daily prompt", "give me my daily prompt", "today's prompt", "leadership prompt" };
             return dailyPromptKeywords.Any(keyword => lowerMessage.Contains(keyword));
         }
 
-        // ISSUE #1 FIX: Ensure daily prompt request saves conversation for sidebar
         private async Task<IActionResult> HandleDailyPromptRequest(string userId, string firstName, string businessName, string? conversationId, string? originalMessage = null)
         {
             try
@@ -193,15 +180,13 @@ namespace TinkerGenie.API.Controllers
 
                 await StoreDailyPromptSession(userId, currentDay, dailyPrompt);
 
-                _logger.LogInformation("Delivering EXACT prompt from DB - Title: {Title}, Text: {Text}", 
-                    dailyPrompt.PromptTitle, dailyPrompt.PromptText);
+                _logger.LogInformation("Delivering EXACT prompt from DB - Title: {Title}, Text: {Text}", dailyPrompt.PromptTitle, dailyPrompt.PromptText);
                 
                 var response = dailyPrompt.PromptText;
                 
-                // CRITICAL FOR ISSUE #1: Save the initial prompt delivery as a conversation so it appears in sidebar
                 var finalConversationId = conversationId ?? Guid.NewGuid().ToString();
                 await _conversationService.SaveConversation(userId, "START_DAILY_PROMPT", response, finalConversationId);
-                _logger.LogInformation("ISSUE #1 FIX: Saved initial daily prompt delivery to conversation history for user {UserId}", userId);
+                _logger.LogInformation("Saved initial daily prompt delivery to conversation history for user {UserId}", userId);
 
                 return Ok(new ChatResponse
                 {
@@ -237,11 +222,8 @@ namespace TinkerGenie.API.Controllers
                 if (lowerMessage.Contains("done for the day"))
                 {
                     await CompleteDailyPrompt(userId, session.DayNumber);
-                    
                     var userStyle = await GetUserCommunicationStyle(userId);
                     var completionMessage = GetCompletionMessage(session.DayNumber, userStyle);
-                    
-                    // ISSUE #1: Save completion conversation for sidebar
                     await _conversationService.SaveConversation(userId, userMessage, completionMessage, conversationId);
                     
                     return Ok(new ChatResponse
@@ -258,8 +240,6 @@ namespace TinkerGenie.API.Controllers
                 {
                     var specialPrompt = await BuildBurningFiresAIPrompt(userMessage, userId);
                     var specialResponse = await GetAIResponse(specialPrompt);
-                    
-                    // ISSUE #1: Save burning fires conversation for sidebar
                     await _conversationService.SaveConversation(userId, userMessage, specialResponse, conversationId);
                     
                     return Ok(new ChatResponse
@@ -273,14 +253,11 @@ namespace TinkerGenie.API.Controllers
                 var aiPrompt = await BuildDailyPromptAIPrompt(userMessage, session, userId);
                 var aiResponse = await GetAIResponse(aiPrompt);
                 
-                var communicationStyle = await GetUserCommunicationStyle(userId);
                 var acknowledgment = GetAcknowledgmentResponse(aiResponse);
                 var followUp = await GetFollowUpWithKeyPhrases(session);
                 var fullResponse = acknowledgment + "|SPLIT|" + followUp;
                 
-                // ISSUE #1: Save conversation for sidebar
                 await _conversationService.SaveConversation(userId, userMessage, fullResponse, conversationId);
-
                 await UpdateDailyPromptSession(userId, session);
 
                 return Ok(new ChatResponse
@@ -312,8 +289,6 @@ namespace TinkerGenie.API.Controllers
                 var userStyle = await GetUserCommunicationStyle(userId);
                 var aiPrompt = BuildRegularChatAIPrompt(userMessage, userId, history, userStyle);
                 var aiResponse = await GetAIResponse(aiPrompt);
-                
-                // ISSUE #1: Save regular chat conversation for sidebar
                 await _conversationService.SaveConversation(userId, userMessage, aiResponse, conversationId);
 
                 return Ok(new ChatResponse
@@ -340,8 +315,6 @@ namespace TinkerGenie.API.Controllers
             {
                 var aiPrompt = await BuildBurningFiresAIPrompt(userMessage, userId);
                 var aiResponse = await GetAIResponse(aiPrompt);
-                
-                // ISSUE #1: Save burning fires conversation for sidebar
                 await _conversationService.SaveConversation(userId, userMessage, aiResponse, conversationId);
                 
                 return Ok(new ChatResponse
@@ -369,7 +342,6 @@ namespace TinkerGenie.API.Controllers
                 "burning fire", "burning fires", "urgent", "emergency", "crisis",
                 "immediate help", "need help now", "urgent situation"
             };
-            
             var lowerMessage = message?.ToLower() ?? "";
             return urgentPatterns.Any(pattern => lowerMessage.Contains(pattern));
         }
@@ -377,7 +349,6 @@ namespace TinkerGenie.API.Controllers
         private async Task<string> BuildDailyPromptAIPrompt(string userMessage, DailyPromptSession session, string userId)
         {
             var userStyle = await GetUserCommunicationStyle(userId);
-            
             var prompt = new StringBuilder();
             prompt.AppendLine("You are Chris Cooper, founder of Two-Brain Business. You're having a genuine conversation");
             prompt.AppendLine("with a business owner about their daily leadership reflection. Be real, be human, be helpful.");
@@ -387,7 +358,6 @@ namespace TinkerGenie.API.Controllers
             prompt.AppendLine("CONTEXT:");
             prompt.AppendLine($"• Day {session.DayNumber} reflection topic: {session.DailyPrompt}");
             prompt.AppendLine($"• Their response: \"{userMessage}\"");
-            
             if (session.ConversationHistory != null && session.ConversationHistory.Any())
             {
                 prompt.AppendLine("• Previous conversation in this session:");
@@ -396,7 +366,6 @@ namespace TinkerGenie.API.Controllers
                     prompt.AppendLine($"  - {msg}");
                 }
             }
-            
             prompt.AppendLine();
             prompt.AppendLine("HOW TO RESPOND:");
             prompt.AppendLine("• ACKNOWLEDGE what they've shared - show you truly heard them");
@@ -416,7 +385,6 @@ namespace TinkerGenie.API.Controllers
             prompt.AppendLine();
             prompt.AppendLine("LENGTH:");
             
-            // Apply communication style
             if (userStyle == "short")
             {
                 prompt.AppendLine("• ULTRA CONCISE: 3-8 words MAXIMUM total response");
@@ -431,28 +399,24 @@ namespace TinkerGenie.API.Controllers
                 prompt.AppendLine("• Include specific insights and examples");
                 prompt.AppendLine("• Be comprehensive but still conversational");
             }
-            else // medium or default
+            else
             {
                 prompt.AppendLine("• BALANCED: EXACTLY 2-3 sentences MAXIMUM total response");
                 prompt.AppendLine("• Be concise but meaningful");
             }
-            
             prompt.AppendLine();
             prompt.AppendLine("Respond as Chris Cooper - authentic, direct, supportive:");
-
             return prompt.ToString();
         }
 
         private string BuildRegularChatAIPrompt(string userMessage, string userId, List<Services.ConversationMessage> history, string userStyle)
         {
             var prompt = new StringBuilder();
-            
             prompt.AppendLine("You are Chris Cooper, chatting with a business owner who trusts you.");
             prompt.AppendLine("They're on their leadership journey and need your guidance.");
             prompt.AppendLine("IMPORTANT: They may run any type of business - don't assume it's a gym or fitness business.");
             prompt.AppendLine("NEVER give out personal contact information, email addresses, or phone numbers.");
             prompt.AppendLine();
-            
             if (history != null && history.Any())
             {
                 prompt.AppendLine("CONVERSATION CONTEXT (recent messages):");
@@ -462,7 +426,6 @@ namespace TinkerGenie.API.Controllers
                 }
                 prompt.AppendLine();
             }
-            
             prompt.AppendLine($"THEY JUST SAID: \"{userMessage}\"");
             prompt.AppendLine();
             prompt.AppendLine("YOUR STYLE:");
@@ -490,7 +453,6 @@ namespace TinkerGenie.API.Controllers
                 prompt.AppendLine("• BALANCED: EXACTLY 2-3 sentences MAXIMUM total response");
                 prompt.AppendLine("• Be concise but meaningful");
             }
-            
             prompt.AppendLine();
             prompt.AppendLine("REMEMBER:");
             prompt.AppendLine("• Use their exact words when you reference their situation");
@@ -505,14 +467,12 @@ namespace TinkerGenie.API.Controllers
             prompt.AppendLine("• Numbers (1. 2. 3.) only for steps");
             prompt.AppendLine();
             prompt.AppendLine("Respond naturally as Chris would:");
-
             return prompt.ToString();
         }
 
         private async Task<string> BuildBurningFiresAIPrompt(string userMessage, string userId)
         {
             var userStyle = await GetUserCommunicationStyle(userId);
-            
             var prompt = new StringBuilder();
             prompt.AppendLine("URGENT SITUATION - Chris Cooper Mode");
             prompt.AppendLine("You are Chris Cooper. A business owner has come to you with an urgent issue they described as a 'burning fire'.");
@@ -544,10 +504,8 @@ namespace TinkerGenie.API.Controllers
             {
                 prompt.AppendLine("• 3-4 sentences with clear action steps");
             }
-            
             prompt.AppendLine();
             prompt.AppendLine("Respond as Chris Cooper helping with this urgent business issue:");
-
             return prompt.ToString();
         }
 
@@ -556,9 +514,7 @@ namespace TinkerGenie.API.Controllers
             try
             {
                 var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = 
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _openAiApiKey);
-
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _openAiApiKey);
                 var requestBody = new
                 {
                     model = "gpt-4o-mini",
@@ -570,23 +526,17 @@ namespace TinkerGenie.API.Controllers
                     max_tokens = 500,
                     temperature = 0.7
                 };
-
                 var json = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-
                 var response = await client.PostAsync("https://api.openai.com/v1/chat/completions", content);
-                
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogError("OpenAI API error: {StatusCode}", response.StatusCode);
                     return "I'm having trouble connecting right now. Can you try again?";
                 }
-
                 var responseContent = await response.Content.ReadAsStringAsync();
                 var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
-                
-                return result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? 
-                       "I'm having trouble responding right now. Can you try again?";
+                return result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "I'm having trouble responding right now. Can you try again?";
             }
             catch (Exception ex)
             {
@@ -595,22 +545,14 @@ namespace TinkerGenie.API.Controllers
             }
         }
 
-        // All the supporting methods for daily prompt functionality
         private async Task<int> GetUserCurrentDay(string userId)
         {
             try
             {
                 await using var conn = new NpgsqlConnection(_connectionString);
                 await conn.OpenAsync();
-                
-                var cmd = new NpgsqlCommand(@"
-                    SELECT current_day FROM user_data WHERE user_id = @userId
-                    UNION
-                    SELECT current_day FROM user_preferences WHERE user_id = @userId::uuid
-                    LIMIT 1", conn);
-                    
+                var cmd = new NpgsqlCommand("SELECT current_day FROM user_data WHERE user_id = @userId LIMIT 1", conn);
                 cmd.Parameters.AddWithValue("userId", userId.ToLower());
-                
                 var result = await cmd.ExecuteScalarAsync();
                 return result != null ? Convert.ToInt32(result) : 1;
             }
@@ -627,15 +569,8 @@ namespace TinkerGenie.API.Controllers
             {
                 await using var conn = new NpgsqlConnection(_connectionString);
                 await conn.OpenAsync();
-                
-                var cmd = new NpgsqlCommand(@"
-                    SELECT prompt_title, prompt_text, day_number
-                    FROM leadership_daily_prompts
-                    WHERE day_number = @dayNumber
-                    LIMIT 1", conn);
-                    
+                var cmd = new NpgsqlCommand("SELECT prompt_title, prompt_text, day_number FROM leadership_daily_prompts WHERE day_number = @dayNumber LIMIT 1", conn);
                 cmd.Parameters.AddWithValue("dayNumber", dayNumber);
-                
                 await using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
@@ -655,7 +590,6 @@ namespace TinkerGenie.API.Controllers
             }
         }
 
-        // USER REQUESTED: Session clearing functionality
         private async Task ClearAllActiveSessions(string userId)
         {
             try
@@ -686,7 +620,6 @@ namespace TinkerGenie.API.Controllers
                     await db.KeyDeleteAsync($"daily_prompt_session:{userId}");
                     _logger.LogInformation("Cleared Redis daily prompt session for user {UserId}", userId);
                 }
-                _logger.LogInformation("Daily prompt session cleared for user {UserId} - fresh start enabled", userId);
             }
             catch (Exception ex)
             {
@@ -706,49 +639,22 @@ namespace TinkerGenie.API.Controllers
         {
             var greetings = new Dictionary<string, string[]>
             {
-                ["morning"] = new[]
-                {
-                    $"Good morning, {firstName}! Ready to tackle today's leadership challenges?",
-                    $"Morning, {firstName}! What's on your mind as we start the day?",
-                    $"Hey {firstName}, good morning! Let's make today count. What can I help you with?"
-                },
-                ["afternoon"] = new[]
-                {
-                    $"Good afternoon, {firstName}! How's your day going so far?",
-                    $"Hey {firstName}, afternoon check-in. What's on your mind?",
-                    $"Afternoon, {firstName}! Let's tackle whatever's on your plate."
-                },
-                ["evening"] = new[]
-                {
-                    $"Good evening, {firstName}! Time to reflect on the day. What's on your mind?",
-                    $"Evening, {firstName}! Let's wrap up any loose ends from today.",
-                    $"Hey {firstName}, evening! How can I help you wind down the day?"
-                }
+                ["morning"] = new[] { $"Good morning, {firstName}! Ready to tackle today's leadership challenges?", $"Morning, {firstName}! What's on your mind as we start the day?" },
+                ["afternoon"] = new[] { $"Good afternoon, {firstName}! How's your day going so far?", $"Hey {firstName}, afternoon check-in. What's on your mind?" },
+                ["evening"] = new[] { $"Good evening, {firstName}! Time to reflect on the day. What's on your mind?", $"Evening, {firstName}! Let's wrap up any loose ends from today." }
             };
-            
             var messages = greetings.ContainsKey(timeOfDay) ? greetings[timeOfDay] : greetings["afternoon"];
             var random = new Random();
-            var selectedMessage = messages[random.Next(messages.Length)];
-            
-            return selectedMessage + "\n\nYou can ask for your daily prompt, discuss burning fires, or just chat about leadership.";
+            return messages[random.Next(messages.Length)] + "\n\nYou can ask for your daily prompt, discuss burning fires, or just chat about leadership.";
         }
 
-        // Daily prompt session management
         private async Task StoreDailyPromptSession(string userId, int dayNumber, DailyPrompt dailyPrompt)
         {
             try
             {
                 if (_redis?.IsConnected == true)
                 {
-                    var session = new DailyPromptSession
-                    {
-                        UserId = userId,
-                        DayNumber = dayNumber,
-                        DailyPrompt = dailyPrompt.PromptText,
-                        CreatedAt = DateTime.UtcNow,
-                        ConversationHistory = new List<string>()
-                    };
-                    
+                    var session = new DailyPromptSession { UserId = userId, DayNumber = dayNumber, DailyPrompt = dailyPrompt.PromptText, CreatedAt = DateTime.UtcNow, ConversationHistory = new List<string>() };
                     var sessionJson = JsonSerializer.Serialize(session);
                     var db = _redis.GetDatabase();
                     await db.StringSetAsync($"daily_prompt_session:{userId}", sessionJson, TimeSpan.FromHours(24));
@@ -768,10 +674,9 @@ namespace TinkerGenie.API.Controllers
                 {
                     var db = _redis.GetDatabase();
                     var sessionJson = await db.StringGetAsync($"daily_prompt_session:{userId}");
-                    
                     if (sessionJson.HasValue)
                     {
-                        return JsonSerializer.Deserialize<DailyPromptSession>(sessionJson);
+                        return JsonSerializer.Deserialize<DailyPromptSession>(sessionJson!);
                     }
                 }
             }
@@ -808,20 +713,12 @@ namespace TinkerGenie.API.Controllers
                     var db = _redis.GetDatabase();
                     await db.KeyDeleteAsync($"daily_prompt_session:{userId}");
                 }
-                
                 await using var conn = new NpgsqlConnection(_connectionString);
                 await conn.OpenAsync();
-                
-                await using var cmd = new NpgsqlCommand(@"
-                    INSERT INTO user_prompt_deliveries (user_id, day_number, completed_at)
-                    VALUES (@userId, @dayNumber, CURRENT_TIMESTAMP)
-                    ON CONFLICT (user_id, day_number) DO UPDATE SET completed_at = CURRENT_TIMESTAMP", conn);
-                
+                await using var cmd = new NpgsqlCommand("INSERT INTO user_prompt_deliveries (user_id, day_number, completed_at) VALUES (@userId, @dayNumber, CURRENT_TIMESTAMP) ON CONFLICT (user_id, day_number) DO UPDATE SET completed_at = CURRENT_TIMESTAMP", conn);
                 cmd.Parameters.AddWithValue("userId", Guid.Parse(userId));
                 cmd.Parameters.AddWithValue("dayNumber", dayNumber);
-                
                 await cmd.ExecuteNonQueryAsync();
-                
                 _logger.LogInformation("Completed daily prompt for user {UserId}, day {DayNumber}", userId, dayNumber);
             }
             catch (Exception ex)
@@ -836,13 +733,8 @@ namespace TinkerGenie.API.Controllers
             {
                 await using var conn = new NpgsqlConnection(_connectionString);
                 await conn.OpenAsync();
-                
-                var cmd = new NpgsqlCommand(@"
-                    SELECT communication_style FROM user_preferences 
-                    WHERE user_id = @userId::uuid", conn);
-                    
+                var cmd = new NpgsqlCommand("SELECT communication_style FROM user_preferences WHERE user_id = @userId::uuid", conn);
                 cmd.Parameters.AddWithValue("userId", Guid.Parse(userId));
-                
                 var result = await cmd.ExecuteScalarAsync();
                 return result?.ToString() ?? "medium";
             }
@@ -864,19 +756,12 @@ namespace TinkerGenie.API.Controllers
             try
             {
                 var prompt = "You are Chris Cooper. The user just shared their daily reflection and you acknowledged it. Now naturally mention that they have options to continue their leadership journey today. Mention in a conversational way that they can say 'done for the day' to finish, 'burning fires' for urgent issues, or 'Other Tinker Level Fires' for other challenges. Make it sound natural and supportive, not like a menu. Keep it to 2-3 sentences maximum.";
-                
                 var aiResponse = await GetAIResponse(prompt);
-                
                 if (!string.IsNullOrEmpty(aiResponse) && aiResponse.Length > 10)
                 {
-                    _logger.LogInformation("Generated natural key phrases: {Response}", aiResponse);
                     return aiResponse;
                 }
-                else
-                {
-                    _logger.LogWarning("AI key phrase generation failed, using natural fallback");
-                    return "You can wrap up when you're ready, or let me know if something urgent needs attention - those burning fires we can tackle together.";
-                }
+                return "You can wrap up when you're ready, or let me know if something urgent needs attention - those burning fires we can tackle together.";
             }
             catch (Exception ex)
             {
@@ -888,7 +773,6 @@ namespace TinkerGenie.API.Controllers
         private string GetCompletionMessage(int dayNumber, string userStyle)
         {
             var baseMessage = $"Excellent work completing Day {dayNumber} of your leadership journey! You're building real self-awareness.";
-            
             if (userStyle == "short")
             {
                 return "Great job! Day complete.";
@@ -904,7 +788,6 @@ namespace TinkerGenie.API.Controllers
         }
     }
 
-    // Supporting models
     public class ChatRequest
     {
         public string Message { get; set; } = "";

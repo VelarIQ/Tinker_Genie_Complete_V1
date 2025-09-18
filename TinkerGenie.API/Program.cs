@@ -13,13 +13,13 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add SignalR
-builder.Services.AddSignalR();
-
 // Redis connection (single instance)
 var redisConnectionString = builder.Configuration.GetConnectionString("ConnectionString") ?? "localhost:6379";
 var redis = ConnectionMultiplexer.Connect(redisConnectionString);
 builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+
+// Add SignalR and configure Redis Backplane
+builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString);
 
 // Register all services that exist
 builder.Services.AddScoped<IOpenAIService, OpenAIService>();
@@ -84,73 +84,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowTinker");
-app.UseRouting();           // MUST come first
-app.UseAuthentication();    // Then authentication
-app.UseAuthorization();     // Then authorization
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Map SignalR Hubs
 app.MapHub<ChatHub>("/chatHub").RequireAuthorization();
 app.MapHub<SyncHub>("/syncHub").RequireAuthorization();
 
-// Allow SignalR negotiation without authentication
-app.MapPost("/chatHub/negotiate", (HttpContext context) =>
-{
-    // SignalR negotiation endpoint - no auth required
-    return Results.Ok();
-});
-
-app.MapPost("/syncHub/negotiate", (HttpContext context) =>
-{
-    // SignalR negotiation endpoint - no auth required
-    return Results.Ok();
-});
-
-app.MapControllers();       // Finally controllers
-
-// Health endpoint
-app.MapGet("/health", () => Results.Ok(new {
-    status = "healthy",
-    timestamp = DateTime.UtcNow,
-    version = "1.0.0"
-}));
-
-// OpenAI health check endpoint
-app.MapGet("/api/health", () =>
-{
-    return Results.Ok(new { 
-        ok = true, 
-        status = "healthy",
-        timestamp = DateTime.UtcNow,
-        services = new {
-            api = "running",
-            weaviate = "configured",
-            redis = "configured"
-        }
-    });
-});
-
-// Status endpoint for monitoring
-app.MapGet("/api/status", () =>
-{
-    return Results.Ok(new
-    {
-        service = "TinkerGenie API",
-        status = "running",
-        timestamp = DateTime.UtcNow,
-        version = "1.0.0",
-        endpoints = new
-        {
-            health = "/api/health",
-            chat = "/api/chat",
-            signalr = "/chatHub"
-        }
-    });
-});
+app.MapControllers();
 
 app.Run();
-
-public class ChatRequest
-{
-    public string Message { get; set; } = "";
-    public string? UserEmail { get; set; }
-}

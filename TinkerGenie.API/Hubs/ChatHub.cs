@@ -63,23 +63,42 @@ namespace TinkerGenie.API.Hubs
                 bool isDailyPrompt = false;
                 int? dayNumber = null;
                 
-                // Check if this is a daily prompt request
-                if (IsDailyPromptRequest(message))
+                // FIXED FLOW: Check for session switches first, then existing sessions
+                
+                // 1. Check for session SWITCHES (burning fires, tinker level) - these clear other sessions
+                if (IsBurningFiresRequest(message))
                 {
-                    var promptResult = await HandleDailyPromptRequest(userId, firstName, businessName, conversationId);
-                    aiResponse = promptResult.Response;
-                    isDailyPrompt = promptResult.IsDailyPrompt;
-                    dayNumber = promptResult.DayNumber;
-                }
-                else if (IsBurningFiresRequest(message))
-                {
+                    // Clear any existing daily prompt session - user switching to burning fires
+                    if (_redis != null)
+                    {
+                        var db = _redis.GetDatabase();
+                        await db.KeyDeleteAsync($"daily_prompt_session:{userId}");
+                        _logger.LogInformation("Cleared daily prompt session - switching to burning fires");
+                    }
+                    
                     var burningResult = await HandleBurningFiresRequest(userId, message, conversationId);
                     aiResponse = burningResult.Response;
                 }
                 else if (IsTinkerLevelRequest(message))
                 {
+                    // Clear any existing sessions - user switching to tinker level
+                    if (_redis != null)
+                    {
+                        var db = _redis.GetDatabase();
+                        await db.KeyDeleteAsync($"daily_prompt_session:{userId}");
+                        _logger.LogInformation("Cleared daily prompt session - switching to tinker level");
+                    }
+                    
                     var tinkerResult = await HandleTinkerLevelRequest(userId, message, conversationId);
                     aiResponse = tinkerResult.Response;
+                }
+                // 2. Check if user is in daily prompt session (only if not switching sessions)
+                else if (IsDailyPromptRequest(message))
+                {
+                    var promptResult = await HandleDailyPromptRequest(userId, firstName, businessName, conversationId);
+                    aiResponse = promptResult.Response;
+                    isDailyPrompt = promptResult.IsDailyPrompt;
+                    dayNumber = promptResult.DayNumber;
                 }
                 else
                 {
