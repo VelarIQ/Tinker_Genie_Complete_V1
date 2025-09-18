@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
@@ -13,6 +14,7 @@ namespace TinkerGenie.API.Hubs
     {
         private readonly ILogger<ChatHub> _logger;
         private readonly IWeaviateService? _weaviateService;
+        private readonly ICurriculumSearchService? _curriculumSearchService;
         private readonly IConnectionMultiplexer? _redis;
         private readonly IConversationService _conversationService;
         private readonly HttpClient _httpClient;
@@ -26,12 +28,14 @@ namespace TinkerGenie.API.Hubs
             IConversationService conversationService,
             IConnectionMultiplexer? redis = null,
             IWeaviateService? weaviateService = null,
+            ICurriculumSearchService? curriculumSearchService = null,
             IHttpClientFactory? httpClientFactory = null)
         {
             _logger = logger;
             _configuration = configuration;
             _conversationService = conversationService;
             _weaviateService = weaviateService;
+            _curriculumSearchService = curriculumSearchService;
             _redis = redis;
             _httpClient = httpClientFactory?.CreateClient() ?? new HttpClient();
             _openAiApiKey = configuration["OpenAI:ApiKey"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "";
@@ -306,8 +310,38 @@ namespace TinkerGenie.API.Hubs
                 var newConversationId = Guid.NewGuid().ToString();
                 _logger.LogInformation("Creating new Tinker Level conversation {ConversationId} for strategic leadership coaching", newConversationId);
                 
-                // Strategic leadership coaching response (vs crisis management)
-                var response = "I'm here to help you with strategic leadership challenges. Let's dive into what's on your mind.\n\nWhat specific leadership area would you like to work on? Team development, business growth, operational efficiency, or something else?";
+                // Get strategic leadership resources from knowledge base
+                string response;
+                if (_curriculumSearchService != null)
+                {
+                    var searchResult = await _curriculumSearchService.SearchGeneralCurriculum(message);
+                    if (searchResult.Resources != null && searchResult.Resources.Any())
+                    {
+                        var solutionBuilder = new StringBuilder();
+                        solutionBuilder.AppendLine($"I found strategic leadership resources for your '{message}' challenge:");
+                        solutionBuilder.AppendLine();
+                        
+                        foreach (var resource in searchResult.Resources.Take(3))
+                        {
+                            solutionBuilder.AppendLine($"📋 **{resource.Title}**");
+                            solutionBuilder.AppendLine($"💡 {resource.Preview}");
+                            solutionBuilder.AppendLine($"🔗 https://twobrain.com{resource.Url}");
+                            solutionBuilder.AppendLine($"✨ *Selected for strategic leadership development*");
+                            solutionBuilder.AppendLine();
+                        }
+                        
+                        solutionBuilder.AppendLine("Click any link to open in a new window. Which approach fits your leadership style?");
+                        response = solutionBuilder.ToString();
+                    }
+                    else
+                    {
+                        response = "I'm here to help you with strategic leadership challenges. Let me find the right resources for your situation.";
+                    }
+                }
+                else
+                {
+                    response = "I'm here to help you with strategic leadership challenges. Let's dive into what's on your mind.\n\nWhat specific leadership area would you like to work on?";
+                }
                 
                 // Save conversation for sidebar (new entry)
                 await _conversationService.SaveConversation(userId, message, response);
