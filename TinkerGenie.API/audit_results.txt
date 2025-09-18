@@ -1,0 +1,2045 @@
+🔍 COMPLETE TINKERGENIE FORENSIC AUDIT
+======================================
+Leaving no rock unturned...
+
+🖥️ SYSTEM INFORMATION
+====================
+Hostname: tinker-genie-app
+OS: Ubuntu 24.04.3 LTS
+Kernel: 6.8.0-78-generic
+Uptime: up 2 days, 13 hours, 9 minutes
+Load:  0.00, 0.00, 0.01
+Memory: 731Mi/7.8Gi
+Disk: 9.1G/78G (12% used)
+
+👥 USERS & PERMISSIONS
+======================
+Current user: root
+Groups: root
+
+All users with shell access:
+root:x:0:0:root:/root:/bin/bash
+
+Recent logins:
+root     pts/0        162.243.190.66   Sun Aug 24 21:53   still logged in
+root     pts/3        162.243.188.66   Sun Aug 24 17:52   still logged in
+root     pts/1        162.243.190.66   Sun Aug 24 17:07 - 17:53  (00:46)
+root     pts/0        162.243.188.66   Sun Aug 24 16:55 - 17:54  (00:59)
+root     pts/0        162.243.188.66   Fri Aug 22 18:33 - 19:56  (01:23)
+root     pts/0        198.211.111.194  Fri Aug 22 12:46 - 17:28  (04:42)
+root     pts/0        162.243.188.66   Fri Aug 22 11:43 - 11:57  (00:14)
+root     pts/0        162.243.190.66   Fri Aug 22 10:42 - 11:42  (01:00)
+reboot   system boot  6.8.0-78-generic Fri Aug 22 10:41   still running
+root     pts/0        162.243.190.66   Fri Aug 22 10:40 - down   (00:00)
+
+wtmp begins Thu Aug  7 21:34:26 2025
+
+🌐 NETWORK & PORTS
+==================
+Public IP: 24.144.119.69
+Local IP: 24.144.119.69
+
+All listening ports:
+tcp        0      0 0.0.0.0:111             0.0.0.0:*               LISTEN      1/init              
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1/init              
+tcp        0      0 0.0.0.0:443             0.0.0.0:*               LISTEN      1078860/nginx: mast 
+tcp        0      0 0.0.0.0:6379            0.0.0.0:*               LISTEN      1173363/docker-prox 
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      1078860/nginx: mast 
+tcp        0      0 0.0.0.0:8765            0.0.0.0:*               LISTEN      1204418/dotnet      
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      748/systemd-resolve 
+tcp        0      0 127.0.0.54:53           0.0.0.0:*               LISTEN      748/systemd-resolve 
+tcp6       0      0 :::111                  :::*                    LISTEN      1/init              
+tcp6       0      0 :::22                   :::*                    LISTEN      1/init              
+tcp6       0      0 :::443                  :::*                    LISTEN      1078860/nginx: mast 
+tcp6       0      0 :::6379                 :::*                    LISTEN      1173368/docker-prox 
+tcp6       0      0 :::80                   :::*                    LISTEN      1078860/nginx: mast 
+
+Active connections:
+tcp        0      0 24.144.119.69:22        162.243.188.66:47661    ESTABLISHED 965629/sshd: root@p 
+tcp        0      0 24.144.119.69:22        162.243.190.66:10147    ESTABLISHED 1159406/sshd: root@ 
+tcp        0      0 24.144.119.69:39944     67.207.67.2:53          ESTABLISHED 748/systemd-resolve 
+
+🔧 RUNNING SERVICES
+===================
+All active systemd services:
+  docker.service                                 loaded active running Docker Application Container Engine
+  nginx.service                                  loaded active running A high performance web server and a reverse proxy server
+  tinker-api.service                             loaded active running TinkerGenie API on port 8765
+
+All systemd services (including failed):
+  docker.service                                 loaded active running Docker Application Container Engine
+  nginx.service                                  loaded active running A high performance web server and a reverse proxy server
+● redis-server.service                           loaded failed failed  Advanced key-value store
+  tinker-api.service                             loaded active running TinkerGenie API on port 8765
+
+Service status details:
+--- tinker-api ---
+active
+✅ ACTIVE
+enabled
+✅ ENABLED
+--- nginx ---
+active
+✅ ACTIVE
+enabled
+✅ ENABLED
+--- postgresql ---
+inactive
+❌ INACTIVE
+not-found
+❌ DISABLED
+--- redis-server ---
+failed
+❌ INACTIVE
+disabled
+❌ DISABLED
+--- docker ---
+active
+✅ ACTIVE
+enabled
+✅ ENABLED
+
+🐳 DOCKER CONTAINERS
+====================
+Docker version: Docker version 28.3.3, build 980b856
+Running containers:
+CONTAINER ID   IMAGE                              COMMAND                  CREATED       STATUS                  PORTS                                         NAMES
+4f928231a933   redis:7-alpine                     "docker-entrypoint.s…"   2 hours ago   Up 2 hours              0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp   tinker_redis
+91d2804e32de   semitechnologies/weaviate:latest   "/bin/weaviate --hos…"   3 days ago    Exited (0) 2 days ago                                                 weaviate
+
+Docker images:
+REPOSITORY                  TAG         IMAGE ID       CREATED       SIZE
+semitechnologies/weaviate   latest      978a024a592e   5 days ago    196MB
+postgres                    15-alpine   06686173a6eb   10 days ago   274MB
+redis                       7-alpine    f218e591b571   7 weeks ago   41.4MB
+
+📁 COMPLETE FILE SYSTEM AUDIT
+=============================
+
+=== /var/www STRUCTURE ===
+/var/www/html/index.nginx-debian.html
+/var/www/n8n_workflow_smart_nudge.json
+/var/www/tinker-genie/TinkerGenie.API/Controllers/AuthController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/ChatController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/CurriculumController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/PreferencesController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/TestController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/UserController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/WodController.cs
+/var/www/tinker-genie/TinkerGenie.API/Data/TinkerGenieContext.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/ConversationMessage.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/GenieConversation.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/GenieInstance.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/Tenant.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/User.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/UserPreferences.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/UserProfile.cs
+/var/www/tinker-genie/TinkerGenie.API/Program.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/ConversationService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/IConversationService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/ILeadershipService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/IOpenAIService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/IWeaviateService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/NotificationService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/OpenAIService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/RedisService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/WeaviateService.cs
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/clean-setup.sh
+/var/www/tinker-genie/TinkerGenie.API/cleanup.sh
+/var/www/tinker-genie/TinkerGenie.API/complete_forensic_audit.sh
+/var/www/tinker-genie/TinkerGenie.API/corrected_fix.sh
+/var/www/tinker-genie/TinkerGenie.API/deploy-tb-genie.sh
+/var/www/tinker-genie/TinkerGenie.API/fresh-setup.sh
+/var/www/tinker-genie/TinkerGenie.API/google-service-account.json
+/var/www/tinker-genie/TinkerGenie.API/nuclear-cleanup.sh
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.AssemblyInfo.cs
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.GlobalUsings.g.cs
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.MvcApplicationPartsAssemblyInfo.cs
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/staticwebassets.build.json
+/var/www/tinker-genie/TinkerGenie.API/obj/TinkerGenie.API.csproj.nuget.dgspec.json
+/var/www/tinker-genie/TinkerGenie.API/obj/project.assets.json
+/var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/run.sh
+/var/www/tinker-genie/TinkerGenie.API/start.sh
+/var/www/tinker-genie/TinkerGenie.API/start_api.sh
+/var/www/tinker-genie/TinkerGenie.API/start_production.sh
+/var/www/tinker-genie/TinkerGenie.API/system-check.sh
+/var/www/tinker-genie/complete_fix_5005.sh
+/var/www/tinker-genie/complete_health_check.sh
+/var/www/tinker-genie/complete_health_check_5005.sh
+/var/www/tinker-genie/deploy-complete.sh
+/var/www/tinker-genie/deploy-pwa.sh
+/var/www/tinker-genie/deployment/deploy-complete.sh
+/var/www/tinker-genie/deployment/final-deploy.sh
+/var/www/tinker-genie/final_fix.sh
+/var/www/tinker-genie/fix_chatclient_di.sh
+/var/www/tinker-genie/fix_everything.sh
+/var/www/tinker-genie/fix_openai_errors.sh
+/var/www/tinker-genie/health_scanner.sh
+/var/www/tinker-genie/published/TinkerGenie.API.deps.json
+/var/www/tinker-genie/published/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/published/appsettings.Development.json
+/var/www/tinker-genie/published/appsettings.json
+/var/www/tinker-genie/pwa/app.js
+/var/www/tinker-genie/pwa/create-icons.sh
+/var/www/tinker-genie/pwa/icons/create-icon.html
+/var/www/tinker-genie/pwa/icons/generate-icons.html
+/var/www/tinker-genie/pwa/index.html
+/var/www/tinker-genie/pwa/login.html
+/var/www/tinker-genie/pwa/manifest.json
+/var/www/tinker-genie/pwa/notifications.js
+/var/www/tinker-genie/pwa/sw.js
+/var/www/tinker-genie/pwa/voice-test.html
+/var/www/tinker-genie/setup-notifications.sh
+/var/www/tinker-genie/ultimate_health_check.sh
+/var/www/tinker-genie/update-branding.sh
+/var/www/tinker-genie/widget/config.json
+/var/www/tinker-genie/widget/index.html
+/var/www/tinker-genie/widget/widget.js
+
+=== /etc CONFIGURATIONS ===
+/etc/letsencrypt/archive/tinker.twobrain.ai
+/etc/letsencrypt/live/tinker.twobrain.ai
+/etc/letsencrypt/renewal/tinker.twobrain.ai.conf
+/etc/logrotate.d/tinker-genie
+/etc/nginx/sites-available/tinker
+/etc/nginx/sites-available/tinker.twobrain.ai
+/etc/nginx/sites-available/tinker.twobrain.ai.bak
+/etc/nginx/sites-enabled/tinker
+/etc/nginx/sites-enabled/tinker.twobrain.ai
+/etc/systemd/system/multi-user.target.wants/tinker-api.service
+/etc/systemd/system/tinker-api.service
+/etc/systemd/system/tinker-api.service.backup
+
+=== /home DIRECTORIES ===
+
+=== ROOT DIRECTORY ===
+/root/.pm2/module_conf.json
+/root/auth_controller_debug.sh
+/root/build-deploy.sh
+/root/check-tinker-status.sh
+/root/complete-schema-fix.sh
+/root/complete_fix.sh
+/root/complete_leadership_deploy.sh
+/root/deploy-tinker-2.sh
+/root/deploy-tinker-genie.sh
+/root/deploy-tinker.sh
+/root/fix-all-issues.sh
+/root/fix-jwt-continue.sh
+/root/get-docker.sh
+/root/production-update.sh
+/root/redis-fix.sh
+/root/setup-app-complete.sh
+/root/setup-app-server.sh
+/root/tinker-audit.sh
+/root/uuid_debug.sh
+
+🗃️ DATABASE COMPLETE AUDIT
+==========================
+Testing database connection...
+                                                        postgresql_version                                                         
+-----------------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.9 (Ubuntu 16.9-1.pgdg24.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+(1 row)
+
+ current_database | current_user | inet_server_addr | inet_server_port 
+------------------+--------------+------------------+------------------
+ tinker_genie     | genie_admin  | 161.35.5.159     |             5432
+(1 row)
+
+                                                       List of databases
+     Name     |  Owner   | Encoding | Locale Provider | Collate |  Ctype  | ICU Locale | ICU Rules |     Access privileges     
+--------------+----------+----------+-----------------+---------+---------+------------+-----------+---------------------------
+ postgres     | postgres | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | 
+ template0    | postgres | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =c/postgres              +
+              |          |          |                 |         |         |            |           | postgres=CTc/postgres
+ template1    | postgres | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =c/postgres              +
+              |          |          |                 |         |         |            |           | postgres=CTc/postgres
+ tinker_genie | postgres | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =Tc/postgres             +
+              |          |          |                 |         |         |            |           | postgres=CTc/postgres    +
+              |          |          |                 |         |         |            |           | genie_admin=CTc/postgres +
+              |          |          |                 |         |         |            |           | genie_readonly=c/postgres+
+              |          |          |                 |         |         |            |           | genie_backup=c/postgres
+(4 rows)
+
+ schemaname |        tablename         | tableowner  | tablespace | hasindexes | hasrules | hastriggers 
+------------+--------------------------+-------------+------------+------------+----------+-------------
+ public     | admin_notifications      | genie_admin |            | t          | f        | f
+ public     | admin_users              | genie_admin |            | t          | f        | f
+ public     | baseline_content         | genie_admin |            | t          | f        | f
+ public     | content_ingestion_log    | genie_admin |            | t          | f        | f
+ public     | conversation_messages    | genie_admin |            | t          | f        | t
+ public     | conversations            | genie_admin |            | t          | f        | f
+ public     | curriculum_modules       | genie_admin |            | t          | f        | t
+ public     | curriculum_prompts       | genie_admin |            | t          | f        | t
+ public     | genie_conversations      | genie_admin |            | t          | f        | t
+ public     | genie_instances          | genie_admin |            | t          | f        | t
+ public     | knowledge_base           | genie_admin |            | t          | f        | f
+ public     | knowledge_base_content   | genie_admin |            | t          | f        | f
+ public     | leadership_content       | genie_admin |            | t          | f        | f
+ public     | leadership_daily_prompts | genie_admin |            | t          | f        | f
+ public     | notification_log         | genie_admin |            | t          | f        | f
+ public     | nudge_tracking           | genie_admin |            | t          | f        | t
+ public     | preference_change_log    | postgres    |            | t          | f        | f
+ public     | prompt_tracking          | genie_admin |            | t          | f        | t
+ public     | push_subscriptions       | genie_admin |            | t          | f        | f
+ public     | tenants                  | genie_admin |            | t          | f        | t
+ public     | usage_metrics            | genie_admin |            | t          | f        | t
+ public     | user_analytics           | genie_admin |            | t          | f        | f
+ public     | user_data                | genie_admin |            | t          | f        | f
+ public     | user_notifications       | genie_admin |            | t          | f        | f
+ public     | user_nudges              | genie_admin |            | t          | f        | t
+ public     | user_preferences         | genie_admin |            | t          | f        | t
+ public     | user_profiles            | genie_admin |            | t          | f        | f
+ public     | user_prompt_progress     | genie_admin |            | t          | f        | t
+ public     | user_responses           | genie_admin |            | t          | f        | t
+ public     | user_sessions            | genie_admin |            | t          | f        | f
+ public     | users                    | genie_admin |            | t          | f        | t
+(31 rows)
+
+ schemaname |        tablename         |    size    
+------------+--------------------------+------------
+ public     | conversation_messages    | 144 kB
+ public     | users                    | 112 kB
+ public     | leadership_content       | 112 kB
+ public     | genie_conversations      | 96 kB
+ public     | user_data                | 96 kB
+ public     | user_profiles            | 64 kB
+ public     | user_preferences         | 64 kB
+ public     | conversations            | 64 kB
+ public     | baseline_content         | 56 kB
+ public     | knowledge_base_content   | 40 kB
+ public     | leadership_daily_prompts | 40 kB
+ public     | tenants                  | 40 kB
+ public     | admin_users              | 40 kB
+ public     | user_analytics           | 40 kB
+ public     | push_subscriptions       | 32 kB
+ public     | curriculum_prompts       | 32 kB
+ public     | genie_instances          | 32 kB
+ public     | curriculum_modules       | 32 kB
+ public     | user_notifications       | 32 kB
+ public     | preference_change_log    | 32 kB
+ public     | knowledge_base           | 32 kB
+ public     | user_prompt_progress     | 32 kB
+ public     | nudge_tracking           | 24 kB
+ public     | user_nudges              | 24 kB
+ public     | content_ingestion_log    | 24 kB
+ public     | notification_log         | 24 kB
+ public     | admin_notifications      | 16 kB
+ public     | usage_metrics            | 16 kB
+ public     | user_sessions            | 16 kB
+ public     | user_responses           | 16 kB
+ public     | prompt_tracking          | 8192 bytes
+(31 rows)
+
+NOTICE:  Table curriculum_modules: 1 rows
+NOTICE:  Table curriculum_prompts: 7 rows
+NOTICE:  Table prompt_tracking: 0 rows
+NOTICE:  Table user_profiles: 1 rows
+NOTICE:  Table user_responses: 0 rows
+NOTICE:  Table baseline_content: 0 rows
+NOTICE:  Table users: 2 rows
+NOTICE:  Table tenants: 1 rows
+NOTICE:  Table genie_conversations: 5 rows
+NOTICE:  Table conversation_messages: 40 rows
+NOTICE:  Table admin_users: 1 rows
+NOTICE:  Table user_data: 3 rows
+NOTICE:  Table genie_instances: 3 rows
+NOTICE:  Table usage_metrics: 0 rows
+NOTICE:  Table user_analytics: 0 rows
+NOTICE:  Table push_subscriptions: 0 rows
+NOTICE:  Table notification_log: 0 rows
+NOTICE:  Table user_notifications: 0 rows
+NOTICE:  Table preference_change_log: 0 rows
+NOTICE:  Table user_sessions: 0 rows
+NOTICE:  Table knowledge_base: 3 rows
+NOTICE:  Table admin_notifications: 0 rows
+NOTICE:  Table leadership_daily_prompts: 0 rows
+NOTICE:  Table user_preferences: 1 rows
+NOTICE:  Table user_prompt_progress: 0 rows
+NOTICE:  Table knowledge_base_content: 0 rows
+NOTICE:  Table nudge_tracking: 0 rows
+NOTICE:  Table user_nudges: 0 rows
+NOTICE:  Table content_ingestion_log: 0 rows
+NOTICE:  Table leadership_content: 1 rows
+NOTICE:  Table conversations: 5 rows
+DO
+       info        
+-------------------
+ USER DATA SAMPLE:
+(1 row)
+
+               user_id                |    name    | first_name |   business_name   | current_day | is_active 
+--------------------------------------+------------+------------+-------------------+-------------+-----------
+ 550e8400-e29b-41d4-a716-446655440000 | Admin User | Admin      | TinkerGenie Admin |           1 | t
+ user_1755207086183                   | leighton   | leighton   | 13 stripes        |           1 | t
+ anonymous                            | Leader     | Leader     | your gym          |           1 | t
+(3 rows)
+
+            info            
+----------------------------
+ LEADERSHIP PROMPTS SAMPLE:
+(1 row)
+
+ day_number | prompt_title | prompt_preview 
+------------+--------------+----------------
+(0 rows)
+
+             info             
+------------------------------
+ RECENT CONVERSATIONS SAMPLE:
+(1 row)
+
+                  message_preview                   | sender |         created_at         
+----------------------------------------------------+--------+----------------------------
+ Leadership is a multifaceted concept that goes bey | genie  | 2025-08-24 13:20:20.230728
+ tell me about leadership                           | user   | 2025-08-24 13:20:15.443231
+ Hi there! How's your day going? Anything specific  | genie  | 2025-08-24 13:19:58.769232
+ hello                                              | user   | 2025-08-24 13:19:57.566247
+ Great! It sounds like you're prepared to dive into | genie  | 2025-08-23 06:34:41.95193
+(5 rows)
+
+ application_name |  client_addr  | state  |          query_start          |     current_query     
+------------------+---------------+--------+-------------------------------+-----------------------
+ psql             | 24.144.119.69 | active | 2025-08-24 19:50:56.515077-04 | SELECT               +
+                  |               |        |                               |     application_name,+
+                  |               |        |                               |     client_addr,     +
+                  |               |        |                               |    
+(1 row)
+
+
+☁️ REDIS COMPLETE AUDIT
+=======================
+Redis server info:
+# Server
+redis_version:7.4.5
+redis_git_sha1:00000000
+redis_git_dirty:0
+redis_build_id:14ef7c78d3983ab
+redis_mode:standalone
+os:Linux 6.8.0-78-generic x86_64
+arch_bits:64
+monotonic_clock:POSIX clock_gettime
+multiplexing_api:epoll
+
+Redis memory info:
+used_memory:1381656
+used_memory_human:1.32M
+used_memory_rss:9437184
+used_memory_rss_human:9.00M
+used_memory_peak:1394728
+used_memory_peak_human:1.33M
+used_memory_peak_perc:99.06%
+used_memory_overhead:947072
+used_memory_startup:946192
+used_memory_dataset:434584
+used_memory_dataset_perc:99.80%
+used_memory_lua:31744
+used_memory_vm_eval:31744
+used_memory_lua_human:31.00K
+used_memory_scripts_eval:0
+used_memory_vm_functions:32768
+used_memory_vm_total:64512
+used_memory_vm_total_human:63.00K
+used_memory_functions:192
+used_memory_scripts:192
+used_memory_scripts_human:192B
+maxmemory:0
+maxmemory_human:0B
+maxmemory_policy:noeviction
+
+Redis keys:
+backup2
+backup1
+backup4
+backup3
+
+Redis config:
+
+
+📄 CONFIGURATION FILES AUDIT
+============================
+
+=== NGINX CONFIGURATION ===
+Nginx sites enabled:
+total 8
+drwxr-xr-x 2 root root 4096 Aug 24 22:40 .
+drwxr-xr-x 8 root root 4096 Aug 22 16:07 ..
+lrwxrwxrwx 1 root root   33 Aug 24 22:40 tinker -> /etc/nginx/sites-available/tinker
+lrwxrwxrwx 1 root root   45 Aug 24 19:07 tinker.twobrain.ai -> /etc/nginx/sites-available/tinker.twobrain.ai
+
+Nginx configuration files:
+/etc/nginx/nginx.conf
+/etc/nginx/fastcgi.conf
+/etc/nginx/modules-enabled/70-mod-stream-geoip2.conf
+/etc/nginx/modules-enabled/50-mod-http-xslt-filter.conf
+/etc/nginx/modules-enabled/50-mod-mail.conf
+/etc/nginx/modules-enabled/50-mod-http-geoip2.conf
+/etc/nginx/modules-enabled/50-mod-http-image-filter.conf
+/etc/nginx/modules-enabled/50-mod-stream.conf
+/etc/nginx/snippets/fastcgi-php.conf
+/etc/nginx/snippets/snakeoil.conf
+
+
+=== SYSTEMD SERVICE FILES ===
+TinkerGenie service file:
+[Unit]
+Description=TinkerGenie API on port 8765
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/tinker-genie/TinkerGenie.API
+ExecStart=/usr/bin/dotnet /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.dll
+Restart=always
+RestartSec=10
+SyslogIdentifier=tinker-api
+User=root
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:8765
+Environment=OPENAI_API_KEY=**API_KEY**
+
+[Install]
+WantedBy=multi-user.target
+
+=== CRON JOBS ===
+System crontabs:
+0 0 * * * /usr/bin/certbot renew --quiet
+
+System-wide cron:
+/etc/cron.d:
+drwxr-xr-x   2 root root  4096 Aug 24 20:55 .
+drwxr-xr-x 123 root root 12288 Aug 24 21:40 ..
+-rw-r--r--   1 root root   102 Mar 23  2022 .placeholder
+-rw-r--r--   1 root root   802 Apr 16  2023 certbot
+-rw-r--r--   1 root root   201 Jan  8  2022 e2scrub_all
+-rw-r--r--   1 root root   396 Jan  9  2024 sysstat
+
+/etc/cron.daily:
+drwxr-xr-x   2 root root  4096 Aug 22 10:21 .
+drwxr-xr-x 123 root root 12288 Aug 24 21:40 ..
+-rw-r--r--   1 root root   102 Mar 23  2022 .placeholder
+-rwxr-xr-x   1 root root   376 Nov 11  2019 apport
+-rwxr-xr-x   1 root root  1478 Apr  8  2022 apt-compat
+-rwxr-xr-x   1 root root   123 Dec  5  2021 dpkg
+-rwxr-xr-x   1 root root   377 Jan 24  2022 logrotate
+-rwxr-xr-x   1 root root  1395 Mar 29  2024 man-db
+-rwxr-xr-x   1 root root   518 Jan  9  2024 sysstat
+
+/etc/cron.hourly:
+drwxr-xr-x   2 root root  4096 Aug 22 10:15 .
+drwxr-xr-x 123 root root 12288 Aug 24 21:40 ..
+-rw-r--r--   1 root root   102 Mar 23  2022 .placeholder
+-rwxr-xr-x   1 root root   110 Aug  7 21:36 droplet-agent
+
+/etc/cron.monthly:
+drwxr-xr-x   2 root root  4096 Aug 22 10:15 .
+drwxr-xr-x 123 root root 12288 Aug 24 21:40 ..
+-rw-r--r--   1 root root   102 Mar 23  2022 .placeholder
+
+/etc/cron.weekly:
+drwxr-xr-x   2 root root  4096 Aug 22 10:17 .
+drwxr-xr-x 123 root root 12288 Aug 24 21:40 ..
+-rw-r--r--   1 root root   102 Mar 23  2022 .placeholder
+-rwxr-xr-x   1 root root  1055 Mar 29  2024 man-db
+
+/etc/cron.yearly:
+drwxr-xr-x   2 root root  4096 Aug 22 10:15 .
+drwxr-xr-x 123 root root 12288 Aug 24 21:40 ..
+-rw-r--r--   1 root root   102 Mar 31  2024 .placeholder
+
+📊 API APPLICATION COMPLETE AUDIT
+=================================
+
+=== PROJECT STRUCTURE ===
+TinkerGenie API directory structure:
+/var/www/tinker-genie/TinkerGenie.API/Controllers/AuthController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/ChatController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/CurriculumController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/PreferencesController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/PreferencesController.cs.backup
+/var/www/tinker-genie/TinkerGenie.API/Controllers/TestController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/UserController.cs
+/var/www/tinker-genie/TinkerGenie.API/Controllers/WodController.cs
+/var/www/tinker-genie/TinkerGenie.API/Data/TinkerGenieContext.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/ConversationMessage.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/GenieConversation.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/GenieInstance.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/Tenant.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/User.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/UserPreferences.cs
+/var/www/tinker-genie/TinkerGenie.API/Models/UserProfile.cs
+/var/www/tinker-genie/TinkerGenie.API/Program.cs
+/var/www/tinker-genie/TinkerGenie.API/Program.cs.backup
+/var/www/tinker-genie/TinkerGenie.API/Services/ConversationService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/IConversationService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/ILeadershipService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/IOpenAIService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/IWeaviateService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/NotificationService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/OpenAIService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/RedisService.cs
+/var/www/tinker-genie/TinkerGenie.API/Services/WeaviateService.cs
+/var/www/tinker-genie/TinkerGenie.API/TinkerGenie.API.csproj
+/var/www/tinker-genie/TinkerGenie.API/TinkerGenie.API.csproj.backup
+/var/www/tinker-genie/TinkerGenie.API/TinkerGenie.API.http
+/var/www/tinker-genie/TinkerGenie.API/appsettings.json.backup
+/var/www/tinker-genie/TinkerGenie.API/audit_results.txt
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/BCrypt.Net-Next.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Dapper.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Google.Apis.Auth.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Google.Apis.Core.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Google.Apis.Drive.v3.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Google.Apis.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/HealthChecks.NpgSql.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/HealthChecks.Redis.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Humanizer.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.OpenIdConnect.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.AspNetCore.OpenApi.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Bcl.AsyncInterfaces.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Build.Locator.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.CSharp.Workspaces.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.CSharp.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.Workspaces.MSBuild.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.Workspaces.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.Design.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.Relational.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Caching.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Caching.Memory.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Configuration.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.DependencyInjection.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.DependencyModel.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Diagnostics.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Diagnostics.HealthChecks.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Hosting.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Logging.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Logging.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Options.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Primitives.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.JsonWebTokens.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Logging.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Protocols.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Tokens.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.OpenApi.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Mono.TextTemplating.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Newtonsoft.Json.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Npgsql.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/OpenAI.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Pipelines.Sockets.Unofficial.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/RestSharp.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.AspNetCore.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Extensions.Hosting.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Extensions.Logging.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Formatting.Compact.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Settings.Configuration.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Sinks.Console.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Sinks.Debug.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Sinks.File.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/StackExchange.Redis.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Swashbuckle.AspNetCore.Swagger.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.ClientModel.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.CodeDom.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.AttributedModel.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.Convention.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.Hosting.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.Runtime.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.TypedParts.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Diagnostics.DiagnosticSource.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.IO.Pipelines.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.IdentityModel.Tokens.Jwt.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Management.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Memory.Data.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Net.WebSockets.WebSocketProtocol.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Text.Encodings.Web.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Text.Json.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.pdb
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/WeaviateNET.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/web.config
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/web.config
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/web.config
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/web.config
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/runtimes/win/lib/net7.0/System.Management.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.CSharp.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.resources.dll
+/var/www/tinker-genie/TinkerGenie.API/clean-setup.sh
+/var/www/tinker-genie/TinkerGenie.API/cleanup.sh
+/var/www/tinker-genie/TinkerGenie.API/complete_forensic_audit.sh
+/var/www/tinker-genie/TinkerGenie.API/corrected_fix.sh
+/var/www/tinker-genie/TinkerGenie.API/deploy-tb-genie.sh
+/var/www/tinker-genie/TinkerGenie.API/fresh-setup.sh
+/var/www/tinker-genie/TinkerGenie.API/google-service-account.json
+/var/www/tinker-genie/TinkerGenie.API/nuclear-cleanup.sh
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.AssemblyInfo.cs
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.AssemblyInfoInputs.cache
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.GeneratedMSBuildEditorConfig.editorconfig
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.GlobalUsings.g.cs
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.MvcApplicationPartsAssemblyInfo.cache
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.MvcApplicationPartsAssemblyInfo.cs
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.assets.cache
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.csproj.AssemblyReference.cache
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.csproj.CopyComplete
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.csproj.CoreCompileInputs.cache
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.csproj.FileListAbsolute.txt
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.dll
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.genruntimeconfig.cache
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.pdb
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/apphost
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/ref/TinkerGenie.API.dll
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/refint/TinkerGenie.API.dll
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/staticwebassets.build.json
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/staticwebassets/msbuild.build.TinkerGenie.API.props
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.TinkerGenie.API.props
+/var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.TinkerGenie.API.props
+/var/www/tinker-genie/TinkerGenie.API/obj/TinkerGenie.API.csproj.nuget.dgspec.json
+/var/www/tinker-genie/TinkerGenie.API/obj/TinkerGenie.API.csproj.nuget.g.props
+/var/www/tinker-genie/TinkerGenie.API/obj/TinkerGenie.API.csproj.nuget.g.targets
+/var/www/tinker-genie/TinkerGenie.API/obj/project.assets.json
+/var/www/tinker-genie/TinkerGenie.API/obj/project.nuget.cache
+/var/www/tinker-genie/TinkerGenie.API/publish/BCrypt.Net-Next.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Dapper.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Google.Apis.Auth.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Google.Apis.Core.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Google.Apis.Drive.v3.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Google.Apis.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/HealthChecks.NpgSql.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/HealthChecks.Redis.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.AspNetCore.Authentication.OpenIdConnect.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.AspNetCore.OpenApi.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.EntityFrameworkCore.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.EntityFrameworkCore.Relational.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.EntityFrameworkCore.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Caching.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Caching.Memory.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Configuration.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.DependencyInjection.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.DependencyModel.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Logging.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Logging.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Options.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Primitives.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Abstractions.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.JsonWebTokens.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Logging.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Protocols.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Tokens.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.OpenApi.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Newtonsoft.Json.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Npgsql.EntityFrameworkCore.PostgreSQL.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Npgsql.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/OpenAI.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Pipelines.Sockets.Unofficial.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/RestSharp.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Serilog.AspNetCore.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Extensions.Hosting.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Extensions.Logging.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Formatting.Compact.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Settings.Configuration.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Sinks.Console.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Sinks.Debug.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Sinks.File.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Serilog.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/StackExchange.Redis.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Swashbuckle.AspNetCore.Swagger.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Swashbuckle.AspNetCore.SwaggerGen.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/Swashbuckle.AspNetCore.SwaggerUI.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.ClientModel.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.CodeDom.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.Diagnostics.DiagnosticSource.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.IO.Pipelines.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.IdentityModel.Tokens.Jwt.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.Management.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.Memory.Data.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.Net.WebSockets.WebSocketProtocol.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.Text.Encodings.Web.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/System.Text.Json.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API
+/var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.pdb
+/var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/WeaviateNET.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/TinkerGenie.API.deps.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/appsettings.Development.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/appsettings.json
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/web.config
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/web.config
+/var/www/tinker-genie/TinkerGenie.API/publish/publish/web.config
+/var/www/tinker-genie/TinkerGenie.API/publish/runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/runtimes/win/lib/net7.0/System.Management.dll
+/var/www/tinker-genie/TinkerGenie.API/publish/web.config
+/var/www/tinker-genie/TinkerGenie.API/run.sh
+/var/www/tinker-genie/TinkerGenie.API/start.sh
+/var/www/tinker-genie/TinkerGenie.API/start_api.sh
+/var/www/tinker-genie/TinkerGenie.API/start_production.sh
+/var/www/tinker-genie/TinkerGenie.API/system-check.sh
+
+=== PROJECT FILES SIZES ===
+0 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.MvcApplicationPartsAssemblyInfo.cache
+0 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.csproj.CopyComplete
+1.1K /var/www/tinker-genie/TinkerGenie.API/Controllers/PreferencesController.cs
+1.1K /var/www/tinker-genie/TinkerGenie.API/Controllers/PreferencesController.cs.backup
+1.1K /var/www/tinker-genie/TinkerGenie.API/Models/GenieInstance.cs
+1.1K /var/www/tinker-genie/TinkerGenie.API/Models/User.cs
+1.1K /var/www/tinker-genie/TinkerGenie.API/Services/ConversationService.cs
+1.1K /var/www/tinker-genie/TinkerGenie.API/TinkerGenie.API.csproj.backup
+1.1K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/appsettings.json
+1.1K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/appsettings.json
+1.1K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/appsettings.json
+1.1K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/appsettings.json
+1.1K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/appsettings.json
+1.1K /var/www/tinker-genie/TinkerGenie.API/publish/appsettings.json
+1.1K /var/www/tinker-genie/TinkerGenie.API/publish/publish/appsettings.json
+1.1K /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/appsettings.json
+1.1K /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/appsettings.json
+1.1K /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/appsettings.json
+1.3K /var/www/tinker-genie/TinkerGenie.API/Models/GenieConversation.cs
+1.3K /var/www/tinker-genie/TinkerGenie.API/Models/UserProfile.cs
+1.3K /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.GeneratedMSBuildEditorConfig.editorconfig
+1.4M /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Npgsql.dll
+1.4M /var/www/tinker-genie/TinkerGenie.API/publish/Npgsql.dll
+1.7K /var/www/tinker-genie/TinkerGenie.API/Services/ILeadershipService.cs
+1.9K /var/www/tinker-genie/TinkerGenie.API/Services/OpenAIService.cs
+1006K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/StackExchange.Redis.dll
+1006K /var/www/tinker-genie/TinkerGenie.API/publish/StackExchange.Redis.dll
+109 /var/www/tinker-genie/TinkerGenie.API/start.sh
+109K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.ClientModel.dll
+10K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Formatting.Compact.dll
+10K /var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Formatting.Compact.dll
+117K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.OpenIdConnect.dll
+117K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.AspNetCore.Authentication.OpenIdConnect.dll
+118K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+118K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+11K /var/www/tinker-genie/TinkerGenie.API/clean-setup.sh
+127 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/appsettings.Development.json
+127 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/appsettings.Development.json
+127 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/appsettings.Development.json
+127 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/appsettings.Development.json
+127 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/appsettings.Development.json
+127 /var/www/tinker-genie/TinkerGenie.API/publish/appsettings.Development.json
+127 /var/www/tinker-genie/TinkerGenie.API/publish/publish/appsettings.Development.json
+127 /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/appsettings.Development.json
+127 /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/appsettings.Development.json
+127 /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/appsettings.Development.json
+127K /var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.dll
+134K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.dll
+134K /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.dll
+143 /var/www/tinker-genie/TinkerGenie.API/TinkerGenie.API.http
+14K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.AspNetCore.dll
+14K /var/www/tinker-genie/TinkerGenie.API/publish/Serilog.AspNetCore.dll
+150K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.dll
+150K /var/www/tinker-genie/TinkerGenie.API/publish/Serilog.dll
+151K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+15K /var/www/tinker-genie/TinkerGenie.API/obj/project.nuget.cache
+15K /var/www/tinker-genie/TinkerGenie.API/publish/Swashbuckle.AspNetCore.Swagger.dll
+164 /var/www/tinker-genie/TinkerGenie.API/start_api.sh
+164K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Pipelines.Sockets.Unofficial.dll
+164K /var/www/tinker-genie/TinkerGenie.API/publish/Pipelines.Sockets.Unofficial.dll
+168K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.JsonWebTokens.dll
+168K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.JsonWebTokens.dll
+16K /var/www/tinker-genie/TinkerGenie.API/complete_forensic_audit.sh
+170K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Diagnostics.DiagnosticSource.dll
+170K /var/www/tinker-genie/TinkerGenie.API/publish/System.Diagnostics.DiagnosticSource.dll
+172K /var/www/tinker-genie/TinkerGenie.API/publish/System.ClientModel.dll
+174K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Mono.TextTemplating.dll
+179K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Google.Apis.Drive.v3.dll
+179K /var/www/tinker-genie/TinkerGenie.API/publish/Google.Apis.Drive.v3.dll
+183K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.CodeDom.dll
+183K /var/www/tinker-genie/TinkerGenie.API/publish/System.CodeDom.dll
+186 /var/www/tinker-genie/TinkerGenie.API/start_production.sh
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Swashbuckle.AspNetCore.Swagger.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+18K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+194 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+19K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Bcl.AsyncInterfaces.dll
+19K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+19K /var/www/tinker-genie/TinkerGenie.API/corrected_fix.sh
+19K /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.csproj.FileListAbsolute.txt
+2.0K /var/www/tinker-genie/TinkerGenie.API/google-service-account.json
+2.1K /var/www/tinker-genie/TinkerGenie.API/TinkerGenie.API.csproj
+2.1M /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.Relational.dll
+2.1M /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.EntityFrameworkCore.Relational.dll
+2.2K /var/www/tinker-genie/TinkerGenie.API/obj/TinkerGenie.API.csproj.nuget.g.targets
+2.2M /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/OpenAI.dll
+2.3K /var/www/tinker-genie/TinkerGenie.API/cleanup.sh
+2.4K /var/www/tinker-genie/TinkerGenie.API/Data/TinkerGenieContext.cs
+2.5K /var/www/tinker-genie/TinkerGenie.API/Program.cs.backup
+2.6M /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.dll
+2.6M /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.EntityFrameworkCore.dll
+2.7K /var/www/tinker-genie/TinkerGenie.API/Controllers/ChatController.cs
+2.8M /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.dll
+207K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.OpenApi.dll
+20K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Abstractions.dll
+20K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.AttributedModel.dll
+20K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Abstractions.dll
+213 /var/www/tinker-genie/TinkerGenie.API/Services/IOpenAIService.cs
+214K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/RestSharp.dll
+214K /var/www/tinker-genie/TinkerGenie.API/publish/RestSharp.dll
+21K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/HealthChecks.NpgSql.dll
+21K /var/www/tinker-genie/TinkerGenie.API/publish/HealthChecks.NpgSql.dll
+22K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/HealthChecks.Redis.dll
+235K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Google.Apis.Auth.dll
+235K /var/www/tinker-genie/TinkerGenie.API/publish/Google.Apis.Auth.dll
+239K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.OpenApi.dll
+23K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/BCrypt.Net-Next.dll
+23K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll
+23K /var/www/tinker-genie/TinkerGenie.API/fresh-setup.sh
+23K /var/www/tinker-genie/TinkerGenie.API/publish/BCrypt.Net-Next.dll
+23K /var/www/tinker-genie/TinkerGenie.API/publish/HealthChecks.Redis.dll
+240K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Dapper.dll
+240K /var/www/tinker-genie/TinkerGenie.API/publish/Dapper.dll
+26K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.Runtime.dll
+281 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/staticwebassets.build.json
+289K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/runtimes/win/lib/net7.0/System.Management.dll
+289K /var/www/tinker-genie/TinkerGenie.API/publish/runtimes/win/lib/net7.0/System.Management.dll
+28K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Configuration.Abstractions.dll
+28K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Memory.Data.dll
+28K /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.csproj.AssemblyReference.cache
+28K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Configuration.Abstractions.dll
+293K /var/www/tinker-genie/TinkerGenie.API/obj/project.assets.json
+29K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Extensions.Hosting.dll
+29K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Extensions.Logging.dll
+29K /var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Extensions.Hosting.dll
+29K /var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Extensions.Logging.dll
+3.0K /var/www/tinker-genie/TinkerGenie.API/Services/RedisService.cs
+3.0K /var/www/tinker-genie/TinkerGenie.API/obj/TinkerGenie.API.csproj.nuget.g.props
+3.1K /var/www/tinker-genie/TinkerGenie.API/Services/WeaviateService.cs
+3.3M /var/www/tinker-genie/TinkerGenie.API/publish/Swashbuckle.AspNetCore.SwaggerUI.dll
+3.5K /var/www/tinker-genie/TinkerGenie.API/Controllers/WodController.cs
+3.7M /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.Workspaces.dll
+3.8M /var/www/tinker-genie/TinkerGenie.API/publish/OpenAI.dll
+30K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Diagnostics.Abstractions.dll
+30K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Sinks.File.dll
+30K /var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Sinks.File.dll
+30K /var/www/tinker-genie/TinkerGenie.API/publish/System.Memory.Data.dll
+348K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Humanizer.dll
+34K /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/ref/TinkerGenie.API.dll
+34K /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/refint/TinkerGenie.API.dll
+35K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.Abstractions.dll
+35K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.EntityFrameworkCore.Abstractions.dll
+36K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Caching.Abstractions.dll
+36K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Caching.Abstractions.dll
+373K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.CSharp.resources.dll
+374K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.CSharp.resources.dll
+377K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Tokens.dll
+377K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Tokens.dll
+37K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Logging.dll
+37K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Logging.dll
+38K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Sinks.Console.dll
+38K /var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Sinks.Console.dll
+39K /var/www/tinker-genie/TinkerGenie.API/deploy-tb-genie.sh
+4.7K /var/www/tinker-genie/TinkerGenie.API/obj/TinkerGenie.API.csproj.nuget.dgspec.json
+408K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/WeaviateNET.dll
+408K /var/www/tinker-genie/TinkerGenie.API/publish/WeaviateNET.dll
+40K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.IdentityModel.Protocols.dll
+40K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.IdentityModel.Protocols.dll
+412K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.CSharp.resources.dll
+420K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.CSharp.resources.dll
+423K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.CSharp.resources.dll
+431K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.CSharp.resources.dll
+437K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.CSharp.resources.dll
+43K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.resources.dll
+440K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.CSharp.resources.dll
+441K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.CSharp.resources.dll
+442K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.CSharp.resources.dll
+443K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.CSharp.resources.dll
+44K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Build.Locator.dll
+44K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Primitives.dll
+44K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.resources.dll
+44K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Primitives.dll
+44K /var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.pdb
+466 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.runtimeconfig.json
+46K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.resources.dll
+46K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.resources.dll
+46K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.Workspaces.resources.dll
+46K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.resources.dll
+47K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Caching.Memory.dll
+47K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.pdb
+47K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.resources.dll
+47K /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.pdb
+47K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Caching.Memory.dll
+482K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.CSharp.resources.dll
+48K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/cs/Microsoft.CodeAnalysis.Workspaces.resources.dll
+48K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.resources.dll
+48K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.resources.dll
+48K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.resources.dll
+48K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.resources.dll
+48K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.resources.dll
+48K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.resources.dll
+48K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.Workspaces.resources.dll
+491 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/web.config
+491 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/web.config
+491 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/web.config
+491 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/web.config
+491 /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/web.config
+491 /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/web.config
+491 /var/www/tinker-genie/TinkerGenie.API/publish/publish/web.config
+491 /var/www/tinker-genie/TinkerGenie.API/publish/web.config
+499 /var/www/tinker-genie/TinkerGenie.API/Models/UserPreferences.cs
+49K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/de/Microsoft.CodeAnalysis.Workspaces.resources.dll
+49K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/es/Microsoft.CodeAnalysis.Workspaces.resources.dll
+49K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pl/Microsoft.CodeAnalysis.Workspaces.resources.dll
+49K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/pt-BR/Microsoft.CodeAnalysis.Workspaces.resources.dll
+5.2K /var/www/tinker-genie/TinkerGenie.API/Program.cs
+5.4K /var/www/tinker-genie/TinkerGenie.API/Controllers/UserController.cs
+5.4K /var/www/tinker-genie/TinkerGenie.API/Services/NotificationService.cs
+502 /var/www/tinker-genie/TinkerGenie.API/Services/IWeaviateService.cs
+50K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/fr/Microsoft.CodeAnalysis.Workspaces.resources.dll
+50K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/it/Microsoft.CodeAnalysis.Workspaces.resources.dll
+50K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ko/Microsoft.CodeAnalysis.Workspaces.resources.dll
+51K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+51K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Hosting.Abstractions.dll
+51K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Logging.dll
+51K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.resources.dll
+51K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+51K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Logging.dll
+537 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/TinkerGenie.API.runtimeconfig.json
+537 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/TinkerGenie.API.runtimeconfig.json
+537 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+537 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+537 /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+537 /var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.runtimeconfig.json
+537 /var/www/tinker-genie/TinkerGenie.API/publish/publish/TinkerGenie.API.runtimeconfig.json
+537 /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+537 /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+537 /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/TinkerGenie.API.runtimeconfig.json
+53K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.Convention.dll
+53K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ja/Microsoft.CodeAnalysis.Workspaces.resources.dll
+543 /var/www/tinker-genie/TinkerGenie.API/Services/IConversationService.cs
+55K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Diagnostics.HealthChecks.dll
+55K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.Hosting.dll
+55K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Net.WebSockets.WebSocketProtocol.dll
+55K /var/www/tinker-genie/TinkerGenie.API/publish/System.Net.WebSockets.WebSocketProtocol.dll
+57K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.Workspaces.resources.dll
+582K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.CSharp.resources.dll
+58K /var/www/tinker-genie/TinkerGenie.API/audit_results.txt
+58K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/ru/Microsoft.CodeAnalysis.resources.dll
+6.0K /var/www/tinker-genie/TinkerGenie.API/system-check.sh
+6.3M /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.CSharp.dll
+6.7K /var/www/tinker-genie/TinkerGenie.API/Controllers/CurriculumController.cs
+609K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.Design.dll
+629K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Text.Json.dll
+629K /var/www/tinker-genie/TinkerGenie.API/publish/System.Text.Json.dll
+646K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
+646K /var/www/tinker-genie/TinkerGenie.API/publish/Npgsql.EntityFrameworkCore.PostgreSQL.dll
+64K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+64K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Options.dll
+64K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Composition.TypedParts.dll
+64K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+64K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Options.dll
+65 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.AssemblyInfoInputs.cache
+65 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.csproj.CoreCompileInputs.cache
+65 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.genruntimeconfig.cache
+65K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.AspNetCore.OpenApi.dll
+65K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.Logging.Abstractions.dll
+65K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.AspNetCore.OpenApi.dll
+65K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.Logging.Abstractions.dll
+680 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.MvcApplicationPartsAssemblyInfo.cs
+688K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+695 /var/www/tinker-genie/TinkerGenie.API/Models/Tenant.cs
+696K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Newtonsoft.Json.dll
+696K /var/www/tinker-genie/TinkerGenie.API/publish/Newtonsoft.Json.dll
+7.0K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Sinks.Debug.dll
+7.0K /var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Sinks.Debug.dll
+7.4K /var/www/tinker-genie/TinkerGenie.API/nuclear-cleanup.sh
+70K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Text.Encodings.Web.dll
+70K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll
+70K /var/www/tinker-genie/TinkerGenie.API/publish/System.Text.Encodings.Web.dll
+70K /var/www/tinker-genie/TinkerGenie.API/publish/runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll
+72K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.Workspaces.MSBuild.dll
+73K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.Management.dll
+73K /var/www/tinker-genie/TinkerGenie.API/publish/System.Management.dll
+74K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Serilog.Settings.Configuration.dll
+74K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API
+74K /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/apphost
+74K /var/www/tinker-genie/TinkerGenie.API/publish/Serilog.Settings.Configuration.dll
+74K /var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API
+753 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.GlobalUsings.g.cs
+76K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.IO.Pipelines.dll
+76K /var/www/tinker-genie/TinkerGenie.API/publish/System.IO.Pipelines.dll
+77 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.TinkerGenie.API.props
+773 /var/www/tinker-genie/TinkerGenie.API/Controllers/TestController.cs
+78K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/TinkerGenie.API.deps.json
+78K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/TinkerGenie.API.deps.json
+78K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/TinkerGenie.API.deps.json
+78K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/TinkerGenie.API.deps.json
+78K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/publish/publish/publish/publish/publish/TinkerGenie.API.deps.json
+78K /var/www/tinker-genie/TinkerGenie.API/publish/TinkerGenie.API.deps.json
+78K /var/www/tinker-genie/TinkerGenie.API/publish/publish/TinkerGenie.API.deps.json
+78K /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/TinkerGenie.API.deps.json
+78K /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/TinkerGenie.API.deps.json
+78K /var/www/tinker-genie/TinkerGenie.API/publish/publish/publish/publish/publish/TinkerGenie.API.deps.json
+80 /var/www/tinker-genie/TinkerGenie.API/run.sh
+826 /var/www/tinker-genie/TinkerGenie.API/appsettings.json.backup
+83K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Google.Apis.dll
+83K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.DependencyModel.dll
+83K /var/www/tinker-genie/TinkerGenie.API/publish/Google.Apis.dll
+83K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.DependencyModel.dll
+85K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Google.Apis.Core.dll
+85K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll
+85K /var/www/tinker-genie/TinkerGenie.API/publish/Google.Apis.Core.dll
+860 /var/www/tinker-genie/TinkerGenie.API/Models/ConversationMessage.cs
+863K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.CodeAnalysis.CSharp.Workspaces.dll
+89 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/staticwebassets/msbuild.build.TinkerGenie.API.props
+89K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/System.IdentityModel.Tokens.Jwt.dll
+89K /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.assets.cache
+89K /var/www/tinker-genie/TinkerGenie.API/publish/System.IdentityModel.Tokens.Jwt.dll
+9.8K /var/www/tinker-genie/TinkerGenie.API/Controllers/AuthController.cs
+90K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.deps.json
+91 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.TinkerGenie.API.props
+91K /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/Microsoft.Extensions.DependencyInjection.dll
+91K /var/www/tinker-genie/TinkerGenie.API/publish/Microsoft.Extensions.DependencyInjection.dll
+956 /var/www/tinker-genie/TinkerGenie.API/obj/Debug/net8.0/TinkerGenie.API.AssemblyInfo.cs
+95K /var/www/tinker-genie/TinkerGenie.API/publish/Swashbuckle.AspNetCore.SwaggerGen.dll
+
+=== CSPROJ FILE ===
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.70.0" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.70.0.3856" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+    <PackageReference Include="OpenAI" Version="2.1.0" />
+    <PackageReference Include="RestSharp" Version="112.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.9.11" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Npgsql" Version="9.0.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    <PackageReference Include="WeaviateNET" Version="1.23.9.1" />
+  </ItemGroup>
+
+</Project>
+
+=== APPSETTINGS.JSON ===
+No appsettings.json found
+
+=== PROGRAM.CS ===
+File size: 5247 bytes
+First 50 lines:
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Npgsql;
+using StackExchange.Redis;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "TinkerGenie API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new()
+    {
+        Description = "JWT Authorization header using the Bearer scheme",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+    c.AddSecurityRequirement(new()
+    {
+        {
+            new()
+            {
+                Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            new string[] {}
+        }
+    });
+});
+
+// Add JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes("TinkerGenieJWTSecretKey2025VeryLongAndSecure")),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+=== ALL CONTROLLERS DETAILED ANALYSIS ===
+
+--- AuthController.cs ---
+Size: 9989 bytes
+Lines: 250 lines
+HTTP endpoints:
+        [HttpPost("login")]
+        [HttpGet("google")]
+        [HttpGet("google/callback")]
+        [HttpPost("logout")]
+Dependencies:
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+Class definition:
+    public class AuthController : ControllerBase
+Constructor:
+        public AuthController(ILogger<AuthController> logger)
+        {
+            _logger = logger;
+        }
+
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginRequest request)
+        {
+            try
+            {
+                // Chris Cooper - Owner access
+First method:
+        public async Task<IActionResult> GoogleCallback([FromQuery] string code, [FromQuery] string state)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(code))
+                {
+
+--- ChatController.cs ---
+Size: 2723 bytes
+Lines: 76 lines
+HTTP endpoints:
+        [HttpPost]
+Dependencies:
+using Microsoft.AspNetCore.Mvc;
+using OpenAI.Chat;
+Class definition:
+    public class ChatController : ControllerBase
+Constructor:
+        public ChatController(ILogger<ChatController> logger)
+        {
+            _logger = logger;
+            // Initialize OpenAI client with API key from environment
+            var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "your-api-key-here";
+            _chatClient = new ChatClient("gpt-4o-mini", apiKey);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Chat([FromBody] ChatRequest request)
+        {
+First method:
+        public async Task<IActionResult> Chat([FromBody] ChatRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request.Message))
+                {
+
+--- CurriculumController.cs ---
+Size: 6767 bytes
+Lines: 155 lines
+HTTP endpoints:
+        [HttpGet("today/{userId}")]
+        [HttpPost("complete")]
+Dependencies:
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Text.Json;
+using Npgsql;
+Class definition:
+    public class CurriculumController : ControllerBase
+Constructor:
+        public CurriculumController(IConfiguration configuration, ILogger<CurriculumController> logger)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+            _logger = logger;
+        }
+
+        [HttpGet("today/{userId}")]
+        public async Task<IActionResult> GetTodaysPrompt(string userId)
+        {
+            try
+            {
+First method:
+        public async Task<IActionResult> GetTodaysPrompt(string userId)
+        {
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+--
+        public async Task<IActionResult> CompletePrompt([FromBody] PromptCompletionRequest request)
+        {
+            try
+
+--- PreferencesController.cs ---
+Size: 1074 bytes
+Lines: 38 lines
+HTTP endpoints:
+        [HttpGet("{userId}")]
+        [HttpPost("{userId}")]
+Dependencies:
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System;
+Class definition:
+    public class PreferencesController : ControllerBase
+Constructor:
+First method:
+
+--- TestController.cs ---
+Size: 773 bytes
+Lines: 29 lines
+HTTP endpoints:
+        [HttpGet]
+        [HttpPost("auth")]
+Dependencies:
+using Microsoft.AspNetCore.Mvc;
+Class definition:
+    public class TestController : ControllerBase
+Constructor:
+First method:
+
+--- UserController.cs ---
+Size: 5469 bytes
+Lines: 139 lines
+HTTP endpoints:
+        [HttpGet("{userId}")]
+        [HttpPost]
+        [HttpPost("{userId}/progress")]
+Dependencies:
+using Microsoft.AspNetCore.Mvc;
+using Npgsql;
+using System.Text.Json;
+Class definition:
+    public class UserController : ControllerBase
+Constructor:
+        public UserController(IConfiguration configuration, ILogger<UserController> logger)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+            _logger = logger;
+        }
+        
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> GetUser(string userId)
+        {
+            try
+            {
+First method:
+        public async Task<IActionResult> GetUser(string userId)
+        {
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+--
+        public async Task<IActionResult> CreateUser([FromBody] UserData userData)
+        {
+            try
+
+--- WodController.cs ---
+Size: 3502 bytes
+Lines: 97 lines
+HTTP endpoints:
+        [HttpGet("daily/{day}")]
+        [HttpPost("import")]
+Dependencies:
+using Microsoft.AspNetCore.Mvc;
+using Npgsql;
+Class definition:
+    public class WodController : ControllerBase
+Constructor:
+        public WodController(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+        }
+        
+        [HttpGet("daily/{day}")]
+        public async Task<IActionResult> GetDailyWod(int day)
+        {
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+First method:
+        public async Task<IActionResult> GetDailyWod(int day)
+        {
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+--
+        public async Task<IActionResult> ImportContent([FromBody] BaselineContent content)
+        {
+            await using var conn = new NpgsqlConnection(_connectionString);
+
+=== ALL MODELS ANALYSIS ===
+
+--- ConversationMessage.cs ---
+Size: 860 bytes
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace TinkerGenie.API.Models
+{
+    [Table("conversation_messages")]
+    public class ConversationMessage
+    {
+        [Key]
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        public Guid ConversationId { get; set; }
+        
+        public string Role { get; set; } = "user"; // user, assistant, system
+        
+        [Required]
+        public string Content { get; set; } = "";
+        
+        [Column(TypeName = "jsonb")]
+        public string? Metadata { get; set; }
+        
+        [Column(TypeName = "jsonb")]
+        public string? GenerationContext { get; set; }
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        public virtual GenieConversation? Conversation { get; set; }
+    }
+}
+
+--- GenieConversation.cs ---
+Size: 1270 bytes
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace TinkerGenie.API.Models
+{
+    [Table("genie_conversations")]
+    public class GenieConversation
+    {
+        [Key]
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        public Guid GenieInstanceId { get; set; }
+        
+        public string UserId { get; set; } = "";
+        
+        public string? Title { get; set; }
+        
+        [Column(TypeName = "jsonb")]
+        public string? Context { get; set; }
+        
+        [Column(TypeName = "jsonb")]
+        public string? ContextTags { get; set; }
+        
+        [Column(TypeName = "jsonb")]
+        public string? KeyInsights { get; set; }
+        
+        [Column(TypeName = "jsonb")]
+        public string? ActionItems { get; set; }
+        
+        [Column(TypeName = "jsonb")]
+        public string? EmotionalContext { get; set; }
+        
+        public string Status { get; set; } = "active";
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        
+        public virtual ICollection<ConversationMessage> Messages { get; set; } = new List<ConversationMessage>();
+    }
+}
+
+--- GenieInstance.cs ---
+Size: 1091 bytes
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace TinkerGenie.API.Models
+{
+    public class GenieInstance
+    {
+        public Guid Id { get; set; }
+        public Guid TenantId { get; set; }
+        
+        [Required]
+        [MaxLength(200)]
+        public string Name { get; set; } = string.Empty;
+        
+        [Required]
+        [MaxLength(50)]
+        public string Type { get; set; } = string.Empty;
+        
+        public int HierarchyLevel { get; set; }
+        public Guid? ParentGenieId { get; set; }
+        public Guid? OwnerUserId { get; set; }
+        
+        [Column(TypeName = "jsonb")]
+        public string PersonaConfig { get; set; } = "{}";
+        
+        public Guid[]? CurriculumAssignments { get; set; }
+        
+        [Column(TypeName = "jsonb")]
+        public string? Permissions { get; set; }
+        
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
+}
+
+--- Tenant.cs ---
+Size: 695 bytes
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace TinkerGenie.API.Models
+{
+    [Table("tenants")]
+    public class Tenant
+    {
+        [Key]
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        public string Name { get; set; } = "";
+        
+        public string? Domain { get; set; }
+        
+        [Column(TypeName = "jsonb")]
+        public string? Settings { get; set; }
+        
+        public bool IsActive { get; set; } = true;
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
+}
+
+--- User.cs ---
+Size: 1046 bytes
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace TinkerGenie.API.Models
+{
+    public class User
+    {
+        public Guid Id { get; set; }
+        public Guid TenantId { get; set; }
+        public int TbbUserId { get; set; }
+        
+        [Required]
+        [MaxLength(255)]
+        public string Email { get; set; } = string.Empty;
+        
+        [MaxLength(100)]
+        public string? FirstName { get; set; }
+        
+        [MaxLength(100)]
+        public string? LastName { get; set; }
+        
+        [MaxLength(50)]
+        public string Role { get; set; } = "tinker_member";
+        
+        public bool IsTinkerMember { get; set; } = true;
+        
+        [MaxLength(255)]
+        public string? GoogleId { get; set; }
+        
+        public DateTime? LastLogin { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
+}
+
+--- UserPreferences.cs ---
+Size: 499 bytes
+namespace TinkerGenie.API.Models
+{
+    public class UserPreferences
+    {
+        public string UserId { get; set; } = "";
+        public string PromptTime { get; set; } = "09:00";
+        public string Timezone { get; set; } = "America/New_York";
+        public string CommunicationStyle { get; set; } = "balanced";
+        public string ResponseLength { get; set; } = "medium";
+        public bool NudgeEnabled { get; set; } = true;
+        public bool EmailSummary { get; set; } = false;
+    }
+}
+
+--- UserProfile.cs ---
+Size: 1326 bytes
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace TinkerGenie.API.Models
+{
+    public class UserProfile
+    {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        
+        [MaxLength(50)]
+        public string CommunicationStyle { get; set; } = "balanced";
+        
+        [MaxLength(20)]
+        public string PreferredResponseLength { get; set; } = "medium";
+        
+        [MaxLength(50)]
+        public string Timezone { get; set; } = "America/New_York";
+        
+        public TimeOnly? PreferredPromptTime { get; set; }
+        
+        [MaxLength(100)]
+        public string? BusinessType { get; set; }
+        
+        [MaxLength(50)]
+        public string? BusinessStage { get; set; }
+        
+        public string[]? CurrentChallenges { get; set; }
+        public string[]? Goals { get; set; }
+        public bool OnboardingCompleted { get; set; }
+        public bool NudgeEnabled { get; set; } = true;
+        public bool EmailSummaryEnabled { get; set; } = false;
+        
+        [Column(TypeName = "jsonb")]
+        public string? PersonalityInsights { get; set; }
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
+}
+
+🌐 WEB FRONTEND COMPLETE AUDIT
+==============================
+
+=== /var/www/html ===
+HTML directory contents:
+total 12
+drwxr-xr-x 2 root root 4096 Aug  7 22:28 .
+drwxr-xr-x 4 root root 4096 Aug 22 16:29 ..
+-rw-r--r-- 1 root root  612 Aug  7 22:28 index.nginx-debian.html
+
+--- index.nginx-debian.html ---
+Size: 612 bytes
+First 30 lines:
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+
+=== OTHER WEB DIRECTORIES ===
+Found: /var/www/tinker-genie/pwa/notifications.js (4425 bytes)
+Found: /var/www/tinker-genie/pwa/manifest.json (572 bytes)
+Found: /var/www/tinker-genie/pwa/sw.js (782 bytes)
+Found: /var/www/tinker-genie/pwa/index.html (36080 bytes)
+Found: /var/www/tinker-genie/pwa/app.js (11013 bytes)
+Found: /var/www/tinker-genie/widget/widget.js (212 bytes)
+Found: /var/www/tinker-genie/widget/index.html (228 bytes)
+
+🔐 SECURITY & CREDENTIALS AUDIT
+===============================
+
+=== FIREWALL STATUS ===
+Status: active
+
+To                         Action      From
+--                         ------      ----
+5000                       ALLOW       Anywhere                  
+22/tcp                     ALLOW       Anywhere                  
+80/tcp                     ALLOW       Anywhere                  
+443/tcp                    ALLOW       Anywhere                  
+5000                       ALLOW       127.0.0.1                 
+8080/tcp                   ALLOW       Anywhere                  
+8080                       ALLOW       127.0.0.1                 
+5000/tcp                   ALLOW       Anywhere                  
+5000 (v6)                  ALLOW       Anywhere (v6)             
+22/tcp (v6)                ALLOW       Anywhere (v6)             
+80/tcp (v6)                ALLOW       Anywhere (v6)             
+443/tcp (v6)               ALLOW       Anywhere (v6)             
+5000                       ALLOW       ::1                       
+8080/tcp (v6)              ALLOW       Anywhere (v6)             
+8080                       ALLOW       ::1                       
+5000/tcp (v6)              ALLOW       Anywhere (v6)             
+
+
+=== SSH CONFIGURATION ===
+PermitRootLogin prohibit-password
+
+=== SSL CERTIFICATES ===
+/etc/ssl/certs/Atos_TrustedRoot_2011.pem
+/etc/ssl/certs/Security_Communication_RootCA3.pem
+/etc/ssl/certs/Entrust_Root_Certification_Authority.pem
+/etc/ssl/certs/CommScope_Public_Trust_RSA_Root-01.pem
+/etc/ssl/certs/SecureSign_RootCA11.pem
+/etc/ssl/certs/GDCA_TrustAUTH_R5_ROOT.pem
+/etc/ssl/certs/emSign_Root_CA_-_G1.pem
+/etc/ssl/certs/Amazon_Root_CA_4.pem
+/etc/ssl/certs/Hellenic_Academic_and_Research_Institutions_RootCA_2015.pem
+/etc/ssl/certs/vTrus_ECC_Root_CA.pem
+
+🔄 PROCESSES & RESOURCES
+=======================
+Top processes by CPU:
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root     1211721  3.5  0.0   7868  3456 pts/0    S+   23:50   0:00 /bin/bash ./complete_forensic_audit.sh
+lxd      1173344  0.7  0.1  41804  9216 ?        Ssl  22:14   0:44 redis-server *:6379
+root          17  0.6  0.0      0     0 ?        I    Aug22  23:18 [rcu_preempt]
+root     1204418  0.2  1.5 273948500 122976 ?    Ssl  23:19   0:03 /usr/bin/dotnet /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.dll
+root           1  0.1  0.1  23044 14184 ?        Ss   Aug22   5:59 /sbin/init
+root          24  0.1  0.0      0     0 ?        S    Aug22   3:56 [ksoftirqd/1]
+root          16  0.1  0.0      0     0 ?        S    Aug22   3:55 [ksoftirqd/0]
+root         923  0.0  0.6 1950132 50268 ?       Ssl  Aug22   3:28 /usr/bin/containerd
+root        2176  0.0  0.0   8260  3712 ?        Ss   Aug22   2:38 /bin/bash /usr/sbin/aznfswatchdog
+
+Top processes by memory:
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root     1204418  0.2  1.5 273948500 122976 ?    Ssl  23:19   0:03 /usr/bin/dotnet /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.dll
+root        1012  0.0  1.0 2343124 83612 ?       Ssl  Aug22   1:41 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+root     1084385  0.0  0.7 2061660 60040 ?       Sl   19:25   0:05 lxd --logfile /var/snap/lxd/common/lxd/logs/lxd.log --group lxd
+root     1190897  0.0  0.6 1026372 54336 ?       Ssl  22:29   0:00 PM2 v6.0.8: God Daemon (/root/.pm2)
+root         923  0.0  0.6 1950132 50268 ?       Ssl  Aug22   3:28 /usr/bin/containerd
+root         306  0.0  0.6  80116 49800 ?        S<s  Aug22   0:11 /usr/lib/systemd/systemd-journald
+root         911  0.0  0.4 1923496 39400 ?       Ssl  Aug22   0:12 /usr/lib/snapd/snapd
+root         362  0.0  0.3 288952 27136 ?        SLsl Aug22   0:24 /sbin/multipathd -d -s
+root         975  0.0  0.2 110020 22912 ?        Ssl  Aug22   0:00 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+
+.NET processes:
+root     1204418  0.2  1.5 273948500 122976 ?    Ssl  23:19   0:03 /usr/bin/dotnet /var/www/tinker-genie/TinkerGenie.API/bin/Debug/net8.0/TinkerGenie.API.dll
+
+📝 LOG FILES AUDIT
+==================
+
+=== SYSTEMD LOGS (TINKER API) ===
+Last 20 lines of tinker-api service logs:
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]: info: Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler[7]
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Bearer was not authenticated. Failure message: IDX10517: Signature validation failed. The token's kid is missing. Keys tried: 'Microsoft.IdentityModel.Tokens.SymmetricSecurityKey, KeyId: '', InternalId: '0JiAAkmbUARU-7_mPzK7Bxbu72AIt5GziNzcsd7DXiE'. , KeyId:
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       '.
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Number of keys in TokenValidationParameters: '1'.
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Number of keys in Configuration: '0'.
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Exceptions caught:
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:        '[PII of type 'System.String' is hidden. For more details, see https://aka.ms/IdentityModel/PII.]'.
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       token: '[PII of type 'Microsoft.IdentityModel.JsonWebTokens.JsonWebToken' is hidden. For more details, see https://aka.ms/IdentityModel/PII.]'. See https://aka.ms/IDX10503 for details.
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]: info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Executing endpoint 'TinkerGenie.API.Controllers.PreferencesController.GetPreferences (TinkerGenie.API)'
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]: info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[102]
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Route matched with {action = "GetPreferences", controller = "Preferences"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetPreferences(System.String) on controller TinkerGenie.API.Controllers.PreferencesController (TinkerGenie.API).
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]: info: Microsoft.AspNetCore.Mvc.Infrastructure.ObjectResultExecutor[1]
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Executing OkObjectResult, writing value of type '<>f__AnonymousType9`5[[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Boolean, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]: info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[105]
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Executed action TinkerGenie.API.Controllers.PreferencesController.GetPreferences (TinkerGenie.API) in 0.8197ms
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]: info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Executed endpoint 'TinkerGenie.API.Controllers.PreferencesController.GetPreferences (TinkerGenie.API)'
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]: info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+Aug 24 23:32:54 tinker-genie-app tinker-api[1204418]:       Request finished HTTP/1.1 GET http://tinker.twobrain.ai/api/preferences/550e8400-e29b-41d4-a716-446655440000 - 200 - application/json;+charset=utf-8 2.2535ms
+
+=== NGINX LOGS ===
+Last 10 nginx access log entries:
+70.44.105.101 - - [24/Aug/2025:23:29:01 +0000] "GET /api/preferences/550e8400-e29b-41d4-a716-446655440000 HTTP/2.0" 200 126 "https://tinker.twobrain.ai/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
+70.44.105.101 - - [24/Aug/2025:23:29:16 +0000] "POST /api/chat HTTP/2.0" 200 2071 "https://tinker.twobrain.ai/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
+70.44.105.101 - - [24/Aug/2025:23:29:39 +0000] "POST /api/chat HTTP/2.0" 200 1989 "https://tinker.twobrain.ai/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
+94.72.105.101 - - [24/Aug/2025:23:32:49 +0000] "GET / HTTP/1.1" 200 36080 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.7; rv:133.0) Gecko/20100101 Firefox/133.0"
+70.44.105.101 - - [24/Aug/2025:23:32:54 +0000] "GET / HTTP/2.0" 200 9041 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
+70.44.105.101 - - [24/Aug/2025:23:32:54 +0000] "GET /api/preferences/550e8400-e29b-41d4-a716-446655440000 HTTP/2.0" 200 126 "https://tinker.twobrain.ai/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
+70.44.105.101 - - [24/Aug/2025:23:32:54 +0000] "GET /favicon.ico HTTP/2.0" 200 187 "https://tinker.twobrain.ai/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
+70.44.105.101 - - [24/Aug/2025:23:32:54 +0000] "GET /manifest.json HTTP/2.0" 200 572 "https://tinker.twobrain.ai/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
+70.44.105.101 - - [24/Aug/2025:23:32:54 +0000] "GET /icon-192.png HTTP/2.0" 200 10428 "https://tinker.twobrain.ai/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
+204.76.203.219 - - [24/Aug/2025:23:35:02 +0000] "GET / HTTP/1.1" 301 178 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36 Edg/90.0.818.46"
+Last 10 nginx error log entries:
+2025/08/24 21:24:59 [error] 1116250#1116250: *959 open() "/var/www/tinker-genie/pwa/widget.css" failed (2: No such file or directory), client: 24.144.119.69, server: tinker.twobrain.ai, request: "GET /widget.css HTTP/1.1", host: "tinker.twobrain.ai"
+2025/08/24 22:40:10 [error] 1190629#1190629: *1022 connect() failed (111: Connection refused) while connecting to upstream, client: 24.144.119.69, server: tinker.twobrain.ai, request: "HEAD /api/health HTTP/1.1", upstream: "http://[::1]:8765/api/health", host: "tinker.twobrain.ai"
+2025/08/24 22:41:49 [error] 1193863#1193863: *1025 connect() failed (111: Connection refused) while connecting to upstream, client: 24.144.119.69, server: tinker.twobrain.ai, request: "HEAD /api/health HTTP/2.0", upstream: "http://[::1]:8765/health", host: "tinker.twobrain.ai"
+2025/08/24 22:54:27 [error] 1197156#1197156: *1039 connect() failed (111: Connection refused) while connecting to upstream, client: 70.44.105.101, server: tinker.twobrain.ai, request: "GET /api/preferences/550e8400-e29b-41d4-a716-446655440000 HTTP/2.0", upstream: "http://[::1]:8765/api/preferences/550e8400-e29b-41d4-a716-446655440000", host: "tinker.twobrain.ai", referrer: "https://tinker.twobrain.ai/"
+2025/08/24 22:57:52 [error] 1197156#1197156: *1053 connect() failed (111: Connection refused) while connecting to upstream, client: 70.44.105.101, server: tinker.twobrain.ai, request: "POST /api/chat HTTP/2.0", upstream: "http://[::1]:8765/api/chat", host: "tinker.twobrain.ai", referrer: "https://tinker.twobrain.ai/"
+2025/08/24 23:06:03 [error] 1197156#1197156: *1125 connect() failed (111: Connection refused) while connecting to upstream, client: 70.44.105.101, server: tinker.twobrain.ai, request: "GET /api/preferences/550e8400-e29b-41d4-a716-446655440000 HTTP/2.0", upstream: "http://[::1]:8765/api/preferences/550e8400-e29b-41d4-a716-446655440000", host: "tinker.twobrain.ai", referrer: "https://tinker.twobrain.ai/"
+2025/08/24 23:10:47 [error] 1200754#1200754: *1135 connect() failed (111: Connection refused) while connecting to upstream, client: 70.44.105.101, server: tinker.twobrain.ai, request: "GET /api/preferences/550e8400-e29b-41d4-a716-446655440000 HTTP/2.0", upstream: "http://[::1]:8765/api/preferences/550e8400-e29b-41d4-a716-446655440000", host: "tinker.twobrain.ai", referrer: "https://tinker.twobrain.ai/"
+2025/08/24 23:10:47 [error] 1200754#1200754: *1135 connect() failed (111: Connection refused) while connecting to upstream, client: 70.44.105.101, server: tinker.twobrain.ai, request: "GET /api/preferences/550e8400-e29b-41d4-a716-446655440000 HTTP/2.0", upstream: "http://127.0.0.1:8765/api/preferences/550e8400-e29b-41d4-a716-446655440000", host: "tinker.twobrain.ai", referrer: "https://tinker.twobrain.ai/"
+2025/08/24 23:29:34 [error] 1200754#1200754: *1147 connect() failed (111: Connection refused) while connecting to upstream, client: 70.44.105.101, server: tinker.twobrain.ai, request: "POST /api/chat HTTP/2.0", upstream: "http://[::1]:8765/api/chat", host: "tinker.twobrain.ai", referrer: "https://tinker.twobrain.ai/"
+2025/08/24 23:32:54 [error] 1200755#1200755: *1156 connect() failed (111: Connection refused) while connecting to upstream, client: 70.44.105.101, server: tinker.twobrain.ai, request: "GET /api/preferences/550e8400-e29b-41d4-a716-446655440000 HTTP/2.0", upstream: "http://[::1]:8765/api/preferences/550e8400-e29b-41d4-a716-446655440000", host: "tinker.twobrain.ai", referrer: "https://tinker.twobrain.ai/"
+
+🧪 API ENDPOINTS COMPREHENSIVE TESTING
+======================================
+
+=== HEALTH CHECKS ===
+Testing /health:
+Status: 000, Time: 0.000423s
+Failed to connect
+Testing /api/health:
+Status: 000, Time: 0.000318s
+Failed to connect
+Testing /status:
+Status: 000, Time: 0.000352s
+Failed to connect
+Testing /ping:
+Status: 000, Time: 0.000381s
+Failed to connect
+
+=== AUTHENTICATION TESTING ===
+Testing login endpoint:
+Login response status: 
+Login response size: 0 characters
+❌ Login failed or no response
+
+🏁 AUDIT SUMMARY & DISCREPANCIES
+=================================
+
+FILES THAT SHOULD BE LARGER THAN THEY ARE:
+❌ ChatController.cs: 2723 bytes (should be 15000+ bytes)
+❌ PreferencesController.cs: 1074 bytes (should be 5000+ bytes)
+
+MISSING CRITICAL FILES:
+❌ Missing: /var/www/tinker-genie/TinkerGenie.API/appsettings.json
+✅ Present: /var/www/tinker-genie/TinkerGenie.API/google-service-account.json
+❌ Missing: /var/www/html/index.html
+❌ Missing: /var/www/html/manifest.json
+
+🎯 WHAT NEEDS INVESTIGATION:
+============================
+Based on this audit, we need to search chat history for:
+1. Why ChatController is smaller than expected
+2. Complete PreferencesController implementation
+3. PWA frontend files location and structure
+4. Google Drive service account setup
+5. Weaviate integration status
+6. Redis caching implementation
+7. Daily prompt delivery system
+8. User authentication flow
+9. Conversation persistence implementation
+10. Chris Cooper coaching style prompts
+
+✅ COMPLETE FORENSIC AUDIT FINISHED
+===================================
+All systems, files, configurations, and services audited.
+Ready for chat history analysis to determine what should be restored.

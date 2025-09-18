@@ -1,0 +1,22 @@
+# Build outputs
+bin/
+obj/
+*.dll
+*.pdb
+
+# Environment files
+appsettings.json
+*.env
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE files
+.vs/
+.vscode/
+*.swp
+*.swo

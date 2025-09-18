@@ -1,0 +1,34 @@
+services:
+  weaviate:
+    image: semitechnologies/weaviate:1.25.10
+    restart: unless-stopped
+    ports: ["8082:8080"]
+    environment:
+      QUERY_DEFAULTS_LIMIT: "25"
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+      CLUSTER_HOSTNAME: "node1"
+      ENABLE_MODULES: "text2vec-transformers"
+      TRANSFORMERS_INFERENCE_API: "http://t2v:8080"
+    volumes:
+      - weav-data:/var/lib/weaviate
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/meta"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  t2v:
+    image: semitechnologies/transformers-inference:sentence-transformers-all-MiniLM-L6-v2
+    restart: unless-stopped
+    environment:
+      ENABLE_CUDA: "0"
+    ports: ["8081:8080"]  # for health/debug
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  weav-data:

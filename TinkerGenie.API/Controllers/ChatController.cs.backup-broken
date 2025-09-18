@@ -1,0 +1,1225 @@
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Net.Http.Headers;
+using System.Text;
+using Npgsql;
+using TinkerGenie.API.Services;
+using StackExchange.Redis;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
+namespace TinkerGenie.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize] // Require authentication for all endpoints
+    public class ChatController : ControllerBase
+    {
+        private readonly HttpClient _httpClient;
+        private readonly ILogger<ChatController> _logger;
+        private readonly IWeaviateService? _weaviateService;
+        private readonly IConnectionMultiplexer? _redis;
+        private readonly IConversationService _conversationService;
+        private readonly string _openAiApiKey;
+        private readonly string _connectionString;
+
+        public ChatController(
+            IConfiguration configuration, 
+            ILogger<ChatController> logger, 
+            IConversationService conversationService,
+            IConnectionMultiplexer? redis = null,
+            IWeaviateService? weaviateService = null)
+        {
+            _logger = logger;
+            _conversationService = conversationService;
+            _weaviateService = weaviateService;
+            _redis = redis;
+            _httpClient = new HttpClient();
+            _openAiApiKey = configuration["OpenAI:ApiKey"] ?? "";
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+            _httpClient.DefaultRequestHeaders.Authorization = 
+                new AuthenticationHeaderValue("Bearer", _openAiApiKey);
+        }
+
+        [HttpPost("new")]
+        public async Task<IActionResult> NewChat()
+        {
+            try
+            {
+                var userId = User.FindFirst("userId")?.Value ?? "anonymous";
+                var firstName = User.FindFirst("firstName")?.Value ?? "Leader";
+                
+                _logger.LogInformation("New chat requested by user: {UserId}", userId);
+                
+                // Clear any active sessions
+                await ClearAllActiveSessions(userId);
+                
+                // Generate new conversation ID
+                var newConversationId = Guid.NewGuid().ToString();
+                
+                // Prepare welcome message based on time of day
+                var timeOfDay = GetTimeOfDay();
+                var welcomeMessage = GetWelcomeMessage(timeOfDay, firstName);
+                
+                return Ok(new
+                {
+                    success = true,
+                    conversationId = newConversationId,
+                    message = welcomeMessage,
+                    sessionCleared = true,
+                    timestamp = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating new chat");
+                return Ok(new
+                {
+                    success = false,
+                    error = "Failed to create new chat session",
+                    message = "Let's start fresh. What would you like to discuss today?"
+                });
+            }
+        }
+        
+        [HttpGet("test-prompt/{day}")]
+        public async Task<IActionResult> TestPrompt(int day)
+        {
+            try
+            {
+                var prompt = await GetDailyPromptFromDatabase(day);
+                if (prompt != null)
+                {
+                    return Ok(new 
+                    {
+                        success = true,
+                        day = day,
+                        title = prompt.PromptTitle,
+                        text = prompt.PromptText,
+                        rawPrompt = prompt
+                    });
+                }
+                return Ok(new { success = false, message = "No prompt found for day " + day });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, error = ex.Message });
+            }
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> Chat([FromBody] ChatRequest request)
+        {
+            try
+            {
+                var userId = User.FindFirst("userId")?.Value ?? request.UserId ?? "anonymous";
+                var firstName = User.FindFirst("firstName")?.Value ?? request.UserName ?? "Leader";
+                var businessName = User.FindFirst("businessName")?.Value ?? request.BusinessName ?? "your business";
+                
+                _logger.LogInformation("Chat request from user: {UserId}, message: {Message}", userId, request.Message);
+
+                // Check if this is a daily prompt request
+                if (IsDailyPromptRequest(request.Message))
+                {
+                    return await HandleDailyPromptRequest(userId, firstName, businessName, request.ConversationId, request.Message);
+                }
+
+                // Check if user is in a daily prompt session
+                var dailyPromptSession = await GetDailyPromptSession(userId);
+                if (dailyPromptSession != null)
+                {
+                    return await HandleDailyPromptResponse(userId, request.Message, dailyPromptSession, request.ConversationId);
+                }
+
+                // Check if this is a burning fires scenario (separate from daily prompts)
+                if (IsBurningFiresScenario(request.Message))
+                {
+                    return await HandleBurningFiresRequest(userId, request.Message, request.ConversationId);
+                }
+
+                // Regular chat - use AI for everything
+                return await HandleRegularChat(userId, request.Message, request.ConversationId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in chat endpoint for user: {UserId}", request.UserId);
+                
+                // Use AI to generate error response instead of hardcoded message
+                var errorResponse = await GetAIResponse($"User encountered an error: {ex.Message}. Provide a supportive response as Chris Cooper would, acknowledging the technical difficulty but maintaining focus on their leadership development.");
+                
+                return Ok(new ChatResponse
+                {
+                    Response = errorResponse,
+                    ConversationId = request.ConversationId ?? Guid.NewGuid().ToString(),
+                    IsError = true
+                });
+            }
+        }
+
+        private bool IsDailyPromptRequest(string message)
+        {
+            // Check for explicit button click or keyword-based requests
+            if (message == "START_DAILY_PROMPT") return true;
+            
+            // Check for reset/start fresh commands
+            var lowerMessage = message?.ToLower() ?? "";
+            if (lowerMessage == "start fresh" || lowerMessage == "reset session" || lowerMessage == "clear session")
+            {
+                return true;  // Will trigger session cleanup in HandleDailyPromptRequest
+            }
+            
+            var dailyPromptKeywords = new[] { "daily prompt", "give me my daily prompt", "today's prompt", "leadership prompt" };
+            return dailyPromptKeywords.Any(keyword => lowerMessage.Contains(keyword));
+        }
+
+        private async Task<IActionResult> HandleDailyPromptRequest(string userId, string firstName, string businessName, string? conversationId, string? originalMessage = null)
+        {
+            try
+            {
+                // Check if this is a "start fresh" request
+                var isStartFresh = originalMessage?.ToLower().Contains("start fresh") == true;
+                
+                // Check if user already has an active daily prompt session
+                var existingSession = await GetDailyPromptSession(userId);
+                if (existingSession != null && !isStartFresh)
+                {
+                    // Session is still active and not requesting fresh start
+                    _logger.LogInformation("User {UserId} already has active daily prompt session for day {Day}", userId, existingSession.DayNumber);
+                    return Ok(new ChatResponse
+                    {
+                        Response = $"You have an active Daily Prompt session for Day {existingSession.DayNumber}. Type 'start fresh' to reset and begin a new prompt, or continue with your current reflection.",
+                        IsDailyPrompt = true,
+                        DayNumber = existingSession.DayNumber,
+                        IsDailyPromptComplete = false,
+                        ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    });
+                }
+                
+                // If start fresh requested, clear the existing session
+                if (existingSession != null && isStartFresh)
+                {
+                    _logger.LogInformation("User {UserId} requested fresh start, clearing session for day {Day}", userId, existingSession.DayNumber);
+                    await ClearDailyPromptSession(userId);
+                }
+
+                // Get user's current day
+                var currentDay = await GetUserCurrentDay(userId);
+                
+                // Get daily prompt from database
+                var dailyPrompt = await GetDailyPromptFromDatabase(currentDay);
+                if (dailyPrompt == null)
+                {
+                    return Ok(new ChatResponse
+                    {
+                        Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: No daily prompt available in database. Please check the API connection and try again.",
+                        IsError = true,
+                        ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    });
+                }
+
+                // Store daily prompt session in Redis with the actual prompt
+                await StoreDailyPromptSession(userId, currentDay, dailyPrompt);
+
+                // Log the exact prompt being delivered for debugging
+                _logger.LogInformation("Delivering EXACT prompt from DB - Title: {Title}, Text: {Text}", 
+                    dailyPrompt.PromptTitle, dailyPrompt.PromptText);
+                
+                // Return ONLY the exact prompt text from database - NO title, NO day number, JUST the text
+                var response = dailyPrompt.PromptText;
+                
+                _logger.LogInformation("Final response being sent: {Response}", response);
+                
+                // CRITICAL: Save the initial prompt delivery as a conversation so it appears in sidebar
+                var finalConversationId = conversationId ?? Guid.NewGuid().ToString();
+                await _conversationService.SaveConversation(userId, "START_DAILY_PROMPT", response, finalConversationId);
+                _logger.LogInformation("Saved initial daily prompt delivery to conversation history for user {UserId}", userId);
+
+                return Ok(new ChatResponse
+                {
+                    Response = response,
+                    IsDailyPrompt = true,
+                    DayNumber = currentDay,
+                    IsDailyPromptComplete = false,
+                    ConversationId = finalConversationId
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling daily prompt request for user {UserId}", userId);
+                return Ok(new ChatResponse
+                {
+                    Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: Database connection failed. Please check the API connection and try again.",
+                    IsError = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+        }
+
+        private async Task<IActionResult> HandleDailyPromptResponse(string userId, string userMessage, DailyPromptSession session, string? conversationId)
+        {
+            try
+            {
+                // Add message to session history for context
+                if (session.ConversationHistory == null)
+                    session.ConversationHistory = new List<string>();
+                session.ConversationHistory.Add(userMessage);
+                
+                // Check for key phrases first
+                var lowerMessage = userMessage.ToLower();
+                
+                // Handle "done for the day" - complete the daily prompt
+                if (lowerMessage.Contains("done for the day"))
+                {
+                    await CompleteDailyPrompt(userId, session.DayNumber);
+                    
+                    var userStyle = await GetUserCommunicationStyle(userId);
+                    var completionMessage = GetCompletionMessage(session.DayNumber, userStyle);
+                    
+                    await _conversationService.SaveConversation(userId, userMessage, completionMessage, conversationId);
+                    
+                    return Ok(new ChatResponse
+                    {
+                        Response = completionMessage,
+                        IsDailyPrompt = true,
+                        DayNumber = session.DayNumber,
+                        IsDailyPromptComplete = true,
+                        PromptCompleted = true,
+                        ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    });
+                }
+                
+                // Check for "burning fires" - transition to burning fires mode
+                if (lowerMessage.Contains("burning fires") || lowerMessage.Contains("burning fire"))
+                {
+                    // Complete daily prompt session first
+                    await CompleteDailyPrompt(userId, session.DayNumber);
+                    
+                    // Handle as burning fires
+                    return await HandleBurningFiresRequest(userId, userMessage, conversationId);
+                }
+                
+                // Check for "Other Tinker Level Fires" 
+                if (lowerMessage.Contains("other tinker level fires"))
+                {
+                    await CompleteDailyPrompt(userId, session.DayNumber);
+                    
+                    // Handle as a special burning fires request
+                    var specialPrompt = await BuildBurningFiresAIPrompt("I have some other Tinker-level issues that need attention", userId);
+                    var specialResponse = await GetAIResponse(specialPrompt);
+                    
+                    await _conversationService.SaveConversation(userId, userMessage, specialResponse, conversationId);
+                    
+                    return Ok(new ChatResponse
+                    {
+                        Response = specialResponse,
+                        IsBurningFires = true,
+                        ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    });
+                }
+                
+                // Regular daily prompt response - split into acknowledgment and follow-up
+                var aiPrompt = await BuildDailyPromptAIPrompt(userMessage, session, userId);
+                var aiResponse = await GetAIResponse(aiPrompt);
+                
+                // Get user's communication style to determine if we should show key phrases
+                var communicationStyle = await GetUserCommunicationStyle(userId);
+                
+                // Split the response for two-bubble format
+                var acknowledgment = GetAcknowledgmentResponse(aiResponse);
+                
+                // Always include key phrases for navigation (they're functional UI elements)
+                var followUp = await GetFollowUpWithKeyPhrases(session);
+                var fullResponse = acknowledgment + "|SPLIT|" + followUp;
+                
+                // Store conversation in database
+                await _conversationService.SaveConversation(userId, userMessage, fullResponse, conversationId);
+
+                // Update session
+                await UpdateDailyPromptSession(userId, session);
+
+                return Ok(new ChatResponse
+                {
+                    Response = fullResponse,
+                    IsDailyPrompt = true,
+                    DayNumber = session.DayNumber,
+                    IsDailyPromptComplete = false,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling daily prompt response for user {UserId}", userId);
+                return Ok(new ChatResponse
+                {
+                    Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: Database connection failed. Please check the API connection and try again.",
+                    IsError = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+        }
+
+        private async Task<IActionResult> HandleBurningFiresRequest(string userId, string userMessage, string? conversationId)
+        {
+            try
+            {
+                // Use AI to handle burning fires with Chris Cooper style
+                var aiPrompt = await BuildBurningFiresAIPrompt(userMessage, userId);
+                var aiResponse = await GetAIResponse(aiPrompt);
+
+                return Ok(new ChatResponse
+                {
+                    Response = aiResponse,
+                    IsBurningFires = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling burning fires request for user {UserId}", userId);
+                return Ok(new ChatResponse
+                {
+                    Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: Database connection failed. Please check the API connection and try again.",
+                    IsError = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+        }
+
+        private async Task<IActionResult> HandleRegularChat(string userId, string userMessage, string? conversationId)
+        {
+            try
+            {
+                // Get conversation history for context awareness
+                var history = await _conversationService.GetConversationHistory(userId, 5);
+                
+                // Get user's communication style
+                var userStyle = await GetUserCommunicationStyle(userId);
+                
+                // Build contextual prompt with style and history
+                var aiPrompt = BuildRegularChatAIPrompt(userMessage, userId, history, userStyle);
+                
+                var aiResponse = await GetAIResponse(aiPrompt);
+                
+                // Store conversation
+                await _conversationService.SaveConversation(userId, userMessage, aiResponse, conversationId);
+
+                return Ok(new ChatResponse
+                {
+                    Response = aiResponse,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling regular chat for user {UserId}", userId);
+                return Ok(new ChatResponse
+                {
+                    Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: Database connection failed. Please check the API connection and try again.",
+                    IsError = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+        }
+
+        private bool IsBurningFiresScenario(string message)
+        {
+            var lowerMessage = message?.ToLower() ?? "";
+            
+            // First check for explicit "burning fires" mention
+            if (lowerMessage.Contains("burning fire") || lowerMessage.Contains("burning fires"))
+            {
+                return true;
+            }
+            
+            // Only trigger on truly urgent patterns with multiple indicators
+            var urgentPatterns = new[]
+            {
+                "emergency", "crisis", "urgent help", "immediate", "asap",
+                "critical situation", "disaster", "falling apart"
+            };
+            
+            var stressIndicators = new[]
+            {
+                "overwhelmed", "drowning", "can't handle", "losing control",
+                "about to quit", "walking out", "threatening to leave"
+            };
+            
+            // Count how many urgent indicators are present
+            var urgentCount = urgentPatterns.Count(pattern => lowerMessage.Contains(pattern));
+            var stressCount = stressIndicators.Count(pattern => lowerMessage.Contains(pattern));
+            
+            // Only trigger if we have strong signals (at least 2 indicators)
+            return (urgentCount + stressCount) >= 2;
+        }
+
+        private async Task<string> BuildDailyPromptAIPrompt(string userMessage, DailyPromptSession session, string userId)
+        {
+            // Get user's communication style preference
+            var userStyle = await GetUserCommunicationStyle(userId);
+            
+            var prompt = new StringBuilder();
+            
+            prompt.AppendLine("You are Chris Cooper, founder of Two-Brain Business. You're having a mentoring conversation");
+            prompt.AppendLine("with a business owner about their daily leadership reflection. Be their mentor, not their friend.");
+            prompt.AppendLine("Guide them to insights, don't just validate their feelings.");
+            prompt.AppendLine("IMPORTANT: They may run any type of business - don't assume it's a gym or fitness business.");
+            prompt.AppendLine("NEVER give out personal contact information, email addresses, or phone numbers.");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("CONTEXT:");
+            prompt.AppendLine($"• Day {session.DayNumber} reflection topic: {session.DailyPrompt}");
+            prompt.AppendLine($"• Their response: \"{userMessage}\"");
+            
+            // Add conversation history for context
+            if (session.ConversationHistory != null && session.ConversationHistory.Any())
+            {
+                prompt.AppendLine("• Previous conversation in this session:");
+                foreach (var msg in session.ConversationHistory.TakeLast(3))
+                {
+                    prompt.AppendLine($"  - {msg}");
+                }
+            }
+            
+            prompt.AppendLine();
+            prompt.AppendLine("HOW TO RESPOND AS A MENTOR:");
+            prompt.AppendLine("• ACKNOWLEDGE what they've shared - show you heard them");
+            prompt.AppendLine("• CHALLENGE their thinking - don't just agree");
+            prompt.AppendLine("• CONNECT it to leadership principles");
+            prompt.AppendLine("• PROVIDE insight they hadn't considered");
+            prompt.AppendLine("• Reference EXACTLY what they said - use their words");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("FORMATTING RULES (APA Style):");
+            prompt.AppendLine("• Use bullet points (•) for lists of 3 or more items");
+            prompt.AppendLine("• Numbers (1., 2., 3.) for sequential steps only");
+            prompt.AppendLine("• Define acronyms on first use");
+            prompt.AppendLine("• Proper capitalization for business terms");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("IMPORTANT - DO NOT:");
+            prompt.AppendLine("• Do NOT ask follow-up questions");
+            prompt.AppendLine("• Do NOT prompt for more information");
+            prompt.AppendLine("• Do NOT say 'tell me more' or similar");
+            prompt.AppendLine("• This is acknowledgment and insight, not interrogation");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("LENGTH:");
+            
+            // Adjust response length based on user's communication style
+            if (userStyle == "concise")
+            {
+                prompt.AppendLine("• ULTRA CONCISE: 2-3 sentences maximum");
+                prompt.AppendLine("• One key insight, that's it");
+                prompt.AppendLine("• Example: 'That's leadership growth. Keep pushing through.'");
+            }
+            else if (userStyle == "detailed")
+            {
+                prompt.AppendLine("• Provide a thorough response - 6-8 sentences");
+                prompt.AppendLine("• Include context and deeper meaning");
+                prompt.AppendLine("• Share what this means for their leadership journey");
+            }
+            else // balanced
+            {
+                prompt.AppendLine("• Keep it to 3-5 sentences");
+                prompt.AppendLine("• Balance acknowledgment with insight");
+                prompt.AppendLine("• Focus on what matters most");
+            }
+            
+            prompt.AppendLine();
+            prompt.AppendLine("MENTORING TONE:");
+            prompt.AppendLine("• You're their guide, not their cheerleader");
+            prompt.AppendLine("• Be warm but professional");
+            prompt.AppendLine("• Challenge them to grow");
+            prompt.AppendLine("• Share wisdom from experience");
+            prompt.AppendLine();
+            prompt.AppendLine("Respond as Chris Cooper the mentor would:");
+
+            return prompt.ToString();
+        }
+
+        private async Task<string> BuildBurningFiresAIPrompt(string userMessage, string userId)
+        {
+            // Get user's communication style preference
+            var userStyle = await GetUserCommunicationStyle(userId);
+            
+            var prompt = new StringBuilder();
+            
+            prompt.AppendLine("You are Chris Cooper, founder of Two-Brain Business. A business owner has come to you");
+            prompt.AppendLine("with what they're calling 'burning fires' - urgent leadership challenges that need immediate guidance.");
+            prompt.AppendLine("You're their mentor, not their employee. Be supportive but also challenge them to grow.");
+            prompt.AppendLine("IMPORTANT: They may run any type of business - don't assume it's a gym or fitness business.");
+            prompt.AppendLine("NEVER give out personal contact information, email addresses, or phone numbers.");
+            prompt.AppendLine();
+            
+            prompt.AppendLine($"WHAT THEY SAID: \"{userMessage}\"");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("YOUR MENTORING APPROACH AS CHRIS:");
+            prompt.AppendLine("• Acknowledge their urgency without matching their panic");
+            prompt.AppendLine("• Share what you've learned from helping hundreds of business owners");
+            prompt.AppendLine("• Give them perspective - is this really a crisis or just uncomfortable?");
+            prompt.AppendLine("• Provide clear guidance they can act on TODAY");
+            prompt.AppendLine("• Challenge them to see the opportunity in this challenge");
+            prompt.AppendLine("• Be the wise mentor who's been through worse and survived");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("FORMATTING RULES (APA Style):");
+            prompt.AppendLine("• When listing multiple items (3 or more), use a bulleted list with • symbols");
+            prompt.AppendLine("• For sequential steps, use numbers (1., 2., 3.)");
+            prompt.AppendLine("• Define any acronyms on first use: 'Key Performance Indicators (KPIs)'");
+            prompt.AppendLine("• Use proper capitalization for business terms");
+            prompt.AppendLine("• Format any data or metrics clearly");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("CONVERSATION STYLE:");
+            prompt.AppendLine("• Start with empathy but quickly move to action");
+            prompt.AppendLine("• Use 'I've seen...' or 'In my experience...' to share wisdom");
+            prompt.AppendLine("• Ask yourself: 'What would I tell my younger self in this situation?'");
+            prompt.AppendLine("• Reference their specific situation using their exact words");
+            prompt.AppendLine("• End with a thought-provoking question or challenge, not a service offer");
+            prompt.AppendLine();
+            
+            // Check if they explicitly said "burning fires"
+            var lowerMessage = userMessage.ToLower();
+            if (lowerMessage.Contains("burning fire") || lowerMessage.Contains("burning fires"))
+            {
+                prompt.AppendLine("They used the phrase 'burning fires' - acknowledge this naturally as their way of");
+                prompt.AppendLine("describing urgency, but don't make a big deal of the specific phrase.");
+                prompt.AppendLine();
+            }
+            
+            // Adjust response based on communication style
+            if (userStyle == "concise")
+            {
+                prompt.AppendLine("CONCISE STYLE REQUIRED:");
+                prompt.AppendLine("• 3-5 sentences maximum");
+                prompt.AppendLine("• One clear action + one insight");
+                prompt.AppendLine("• Skip the stories, get to the point");
+                prompt.AppendLine("• Still maintain mentoring tone");
+            }
+            else if (userStyle == "detailed")
+            {
+                prompt.AppendLine("DETAILED STYLE PREFERRED:");
+                prompt.AppendLine("• Share a relevant story from your experience");
+                prompt.AppendLine("• Explain the psychology behind the solution");
+                prompt.AppendLine("• Provide context and multiple perspectives");
+                prompt.AppendLine("• 7-10 sentences is appropriate");
+            }
+            else // balanced
+            {
+                prompt.AppendLine("BALANCED APPROACH:");
+                prompt.AppendLine("• 5-7 sentences");
+                prompt.AppendLine("• One brief example or story");
+                prompt.AppendLine("• Focus on actionable wisdom");
+                prompt.AppendLine("• Include both what to do and why");
+            }
+            
+            prompt.AppendLine();
+            prompt.AppendLine("LEADERSHIP PRINCIPLES TO APPLY:");
+            prompt.AppendLine("• Leaders solve problems, they don't just worry about them");
+            prompt.AppendLine("• Every crisis is a chance to improve systems");
+            prompt.AppendLine("• Your team is watching how you handle this");
+            prompt.AppendLine("• Short-term pain often leads to long-term gain");
+            prompt.AppendLine("• The owner's mindset determines the business's outcome");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("REMEMBER:");
+            prompt.AppendLine("• You're Chris Cooper - experienced, wise, but also human");
+            prompt.AppendLine("• You've made mistakes and learned from them");
+            prompt.AppendLine("• You care about their success but won't coddle them");
+            prompt.AppendLine("• This is mentoring, not consulting - guide them to find their own strength");
+            prompt.AppendLine("• Use proper formatting but keep the tone conversational");
+            prompt.AppendLine();
+            
+            // Try to search for relevant curriculum if available
+            if (_weaviateService != null)
+            {
+                try
+                {
+                    var searchResults = await _weaviateService.SearchCurriculum(userMessage, 2);
+                    if (searchResults != null && searchResults.Any())
+                    {
+                        prompt.AppendLine("RELEVANT RESOURCES FROM YOUR CURRICULUM:");
+                        foreach (var result in searchResults.Take(2))
+                        {
+                            prompt.AppendLine($"• {result.Title}: Could be helpful for this situation");
+                        }
+                        prompt.AppendLine("Mention these ONLY if truly relevant, and do so naturally like:");
+                        prompt.AppendLine("'There's actually a framework I've developed for this...' or");
+                        prompt.AppendLine("'I've written about this exact situation...'");
+                        prompt.AppendLine();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not search curriculum for burning fires");
+                }
+            }
+            
+            prompt.AppendLine("Now respond as Chris Cooper would - as a mentor who's been there, not a consultant with a framework:");
+
+            return prompt.ToString();
+        }
+
+        private string BuildRegularChatAIPrompt(string userMessage, string userId, List<Services.ConversationMessage> history, string userStyle)
+        {
+            var prompt = new StringBuilder();
+            
+            prompt.AppendLine("You are Chris Cooper, founder of Two-Brain Business, having a mentoring conversation");
+            prompt.AppendLine("with a business owner. They trust you as their guide, not their friend.");
+            prompt.AppendLine("Challenge them to think differently. Don't just validate - elevate their thinking.");
+            prompt.AppendLine("IMPORTANT: They may run any type of business - don't assume it's a gym or fitness business.");
+            prompt.AppendLine("NEVER give out personal contact information, email addresses, or phone numbers.");
+            prompt.AppendLine();
+            
+            // Add conversation history for context awareness
+            if (history != null && history.Any())
+            {
+                prompt.AppendLine("CONVERSATION CONTEXT (recent messages):");
+                foreach (var msg in history.TakeLast(3))
+                {
+                    prompt.AppendLine($"• {msg.Role}: {msg.Message}");
+                }
+                prompt.AppendLine();
+            }
+            
+            prompt.AppendLine($"THEY JUST SAID: \"{userMessage}\"");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("YOUR MENTORING APPROACH:");
+            prompt.AppendLine("• Diagnose the real issue, not just the symptom");
+            prompt.AppendLine("• Share what's worked for successful business owners");
+            prompt.AppendLine("• Give them ONE clear thing to implement");
+            prompt.AppendLine("• Challenge their assumptions");
+            prompt.AppendLine("• End with a thought that makes them think deeper");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("FORMATTING RULES (APA Style):");
+            prompt.AppendLine("• Use bullet points (•) for lists of 3 or more items");
+            prompt.AppendLine("• Numbers (1., 2., 3.) for sequential steps");
+            prompt.AppendLine("• Define acronyms on first use: e.g., 'Return on Investment (ROI)'");
+            prompt.AppendLine("• Capitalize business terms properly");
+            prompt.AppendLine("• Format metrics and data clearly");
+            prompt.AppendLine();
+            
+            // Apply communication style
+            if (userStyle == "concise")
+            {
+                prompt.AppendLine("CONCISE STYLE:");
+                prompt.AppendLine("• 3-4 sentences maximum");
+                prompt.AppendLine("• One insight, one action");
+                prompt.AppendLine("• No stories or examples");
+                prompt.AppendLine("• Get to the point immediately");
+            }
+            else if (userStyle == "detailed")
+            {
+                prompt.AppendLine("DETAILED STYLE:");
+                prompt.AppendLine("• 6-8 sentences");
+                prompt.AppendLine("• Include a brief case study or example");
+                prompt.AppendLine("• Explain the psychology behind your advice");
+                prompt.AppendLine("• Provide context and nuance");
+            }
+            else // balanced
+            {
+                prompt.AppendLine("BALANCED STYLE:");
+                prompt.AppendLine("• 4-6 sentences");
+                prompt.AppendLine("• One key insight with supporting context");
+                prompt.AppendLine("• Focus on actionable wisdom");
+            }
+            
+            prompt.AppendLine();
+            prompt.AppendLine("REMEMBER:");
+            prompt.AppendLine("• Use their exact words when referencing their situation");
+            prompt.AppendLine("• If they mention specific numbers or metrics, incorporate them");
+            prompt.AppendLine("• Sound like Chris Cooper the mentor, not a generic coach");
+            prompt.AppendLine("• Be CONTEXT-AWARE - this is part of an ongoing conversation");
+            prompt.AppendLine("• Your job is to make them think, not just feel better");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("LEADERSHIP PRINCIPLES TO CONSIDER:");
+            prompt.AppendLine("• Owners create their own problems and solutions");
+            prompt.AppendLine("• Systems beat willpower every time");
+            prompt.AppendLine("• What gets measured gets managed");
+            prompt.AppendLine("• Leadership is about clarity, not motivation");
+            prompt.AppendLine("• The business reflects the owner's mindset");
+            prompt.AppendLine();
+            
+            prompt.AppendLine("Respond as Chris Cooper the mentor - guide them to their own breakthrough:");
+
+            return prompt.ToString();
+        }
+
+        private async Task<string> GetAIResponse(string prompt)
+        {
+            try
+            {
+                var request = new
+                {
+                    model = "gpt-4",
+                    messages = new[]
+                    {
+                        new { role = "system", content = prompt },
+                        new { role = "user", content = "Please provide your leadership coaching response." }
+                    },
+                    max_tokens = 500,
+                    temperature = 0.7
+                };
+
+                var json = JsonSerializer.Serialize(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseJson = await response.Content.ReadAsStringAsync();
+                    var responseObj = JsonSerializer.Deserialize<JsonElement>(responseJson);
+                    return responseObj.GetProperty("choices")[0]
+                                     .GetProperty("message")
+                                     .GetProperty("content").GetString() ?? 
+                           "I'm here to support your leadership development. What specific challenge would you like to work on today?";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calling OpenAI API");
+            }
+
+            // If AI fails, use AI to generate error response instead of hardcoded message
+            try
+            {
+                var errorPrompt = "Generate a supportive response as Chris Cooper would when there's a technical difficulty, but maintain focus on leadership development.";
+                var errorRequest = new
+                {
+                    model = "gpt-4",
+                    messages = new[]
+                    {
+                        new { role = "system", content = errorPrompt },
+                        new { role = "user", content = "Please provide your response." }
+                    },
+                    max_tokens = 200,
+                    temperature = 0.7
+                };
+
+                var errorJson = JsonSerializer.Serialize(errorRequest);
+                var errorContent = new StringContent(errorJson, Encoding.UTF8, "application/json");
+
+                var errorResponse = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", errorContent);
+                
+                if (errorResponse.IsSuccessStatusCode)
+                {
+                    var errorResponseJson = await errorResponse.Content.ReadAsStringAsync();
+                    var errorResponseObj = JsonSerializer.Deserialize<JsonElement>(errorResponseJson);
+                    return errorResponseObj.GetProperty("choices")[0]
+                                         .GetProperty("message")
+                                         .GetProperty("content").GetString() ?? 
+                           "I'm experiencing some technical difficulties, but I'm still here to help with your leadership journey. What would you like to discuss today?";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calling OpenAI API for error response");
+            }
+
+            return "I'm experiencing some technical difficulties, but I'm still here to help with your leadership journey. What would you like to discuss today?";
+        }
+
+        private async Task<int> GetUserCurrentDay(string userId)
+        {
+            try
+            {
+                _logger.LogInformation("GetUserCurrentDay called with userId: {UserId}", userId);
+                
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+                
+                // Handle special case for "admin" user mapping to "admin@twobrain.ai"
+                var effectiveUserId = userId == "admin" ? "admin@twobrain.ai" : userId;
+                
+                var cmd = new NpgsqlCommand(@"
+                    SELECT COALESCE(up.current_day, 1) as current_day
+                    FROM users u
+                    LEFT JOIN user_profiles up ON u.id::text = up.user_id::text
+                    WHERE u.id::text = $1 OR u.email = $1", conn);
+                    
+                cmd.Parameters.AddWithValue(effectiveUserId);
+                
+                var result = await cmd.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 1;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user current day for {UserId}", userId);
+                return 1;
+            }
+        }
+
+        private async Task<DailyPrompt?> GetDailyPromptFromDatabase(int dayNumber)
+        {
+            try
+            {
+                _logger.LogInformation("GetDailyPromptFromDatabase called for day: {DayNumber}", dayNumber);
+                
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+                
+                // Simpler query - just get the text fields we need
+                var cmd = new NpgsqlCommand(@"
+                    SELECT prompt_title, prompt_text
+                    FROM leadership_daily_prompts
+                    WHERE day_number = $1 AND is_active = true
+                    ORDER BY version DESC
+                    LIMIT 1", conn);
+                
+                cmd.Parameters.AddWithValue(dayNumber);
+                
+                await using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    var title = reader.GetString(0);
+                    var text = reader.GetString(1);
+                    
+                    _logger.LogInformation("Retrieved prompt from DB - Title: {Title}, Text: {Text}", title, text);
+                    
+                    return new DailyPrompt
+                    {
+                        PromptTitle = title,
+                        PromptText = text,
+                        FillInBlanks = new List<string>(),
+                        FollowUpQuestions = new List<string>()
+                    };
+                }
+                else
+                {
+                    _logger.LogWarning("No prompt found in database for day {DayNumber}", dayNumber);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting daily prompt for day {Day}", dayNumber);
+            }
+
+            return null;
+        }
+
+        private async Task StoreDailyPromptSession(string userId, int dayNumber, DailyPrompt dailyPrompt)
+        {
+            try
+            {
+                if (_redis?.IsConnected == true)
+                {
+                    var db = _redis.GetDatabase();
+                    var session = new DailyPromptSession
+                    {
+                        DayNumber = dayNumber,
+                        StartTime = DateTime.UtcNow,
+                        DailyPrompt = dailyPrompt.PromptText,
+                        PromptTitle = dailyPrompt.PromptTitle
+                    };
+                    
+                    var sessionJson = JsonSerializer.Serialize(session);
+                    await db.StringSetAsync($"daily_prompt_session:{userId}", sessionJson, TimeSpan.FromHours(24));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error storing daily prompt session for user {UserId}", userId);
+            }
+        }
+
+        private string GetTimeOfDay()
+        {
+            var hour = DateTime.Now.Hour;
+            if (hour < 12) return "morning";
+            if (hour < 17) return "afternoon";
+            return "evening";
+        }
+
+        private async Task<DailyPromptSession?> GetDailyPromptSession(string userId)
+        {
+            try
+            {
+                if (_redis?.IsConnected == true)
+                {
+                    var db = _redis.GetDatabase();
+                    var sessionJson = await db.StringGetAsync($"daily_prompt_session:{userId}");
+                    
+                    if (sessionJson.HasValue)
+                    {
+                        return JsonSerializer.Deserialize<DailyPromptSession>(sessionJson!);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting daily prompt session for user {UserId}", userId);
+            }
+
+            return null;
+        }
+
+        private async Task UpdateDailyPromptSession(string userId, DailyPromptSession session)
+        {
+            try
+            {
+                if (_redis?.IsConnected == true)
+                {
+                    var db = _redis.GetDatabase();
+                    var sessionJson = JsonSerializer.Serialize(session);
+                    await db.StringSetAsync($"daily_prompt_session:{userId}", sessionJson, TimeSpan.FromHours(24));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating daily prompt session for user {UserId}", userId);
+            }
+        }
+
+        private async Task CompleteDailyPrompt(string userId, int dayNumber)
+        {
+            try
+            {
+                if (_redis?.IsConnected == true)
+                {
+                    var db = _redis.GetDatabase();
+                    await db.KeyDeleteAsync($"daily_prompt_session:{userId}");
+                }
+
+                // Mark daily prompt as completed in database
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+                
+                var cmd = new NpgsqlCommand(@"
+                    INSERT INTO user_prompt_deliveries (user_id, day_number, delivered_at, completed_at)
+                    VALUES ($1::uuid, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    ON CONFLICT (user_id, day_number, DATE(delivered_at)) DO UPDATE SET
+                    completed_at = CURRENT_TIMESTAMP", conn);
+                
+                cmd.Parameters.AddWithValue(Guid.TryParse(userId, out var userGuid) ? userGuid : Guid.NewGuid());
+                cmd.Parameters.AddWithValue(dayNumber);
+                
+                await cmd.ExecuteNonQueryAsync();
+                
+                // Increment the user's current day for next time
+                var updateCmd = new NpgsqlCommand(@"
+                    UPDATE user_data 
+                    SET current_day = current_day + 1 
+                    WHERE user_id = $1", conn);
+                    
+                updateCmd.Parameters.AddWithValue(userId);
+                await updateCmd.ExecuteNonQueryAsync();
+                
+                _logger.LogInformation("User {UserId} completed day {Day} and advanced to day {NextDay}", 
+                    userId, dayNumber, dayNumber + 1);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error completing daily prompt for user {UserId}", userId);
+            }
+        }
+        
+        private async Task<string> GetUserCommunicationStyle(string userId)
+        {
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+                
+                var cmd = new NpgsqlCommand(@"
+                    SELECT communication_style 
+                    FROM user_preferences 
+                    WHERE user_id = $1", conn);
+                    
+                cmd.Parameters.AddWithValue(userId);
+                var result = await cmd.ExecuteScalarAsync();
+                
+                return result?.ToString() ?? "balanced";
+            }
+            catch
+            {
+                return "balanced"; // Default to balanced if we can't get preference
+            }
+        }
+        
+        private string GetFeedbackRequest(string communicationStyle)
+        {
+            return communicationStyle?.ToLower() switch
+            {
+                "concise" => "\n\n💭 Quick reflection: How did today's prompt help you? (Brief response please)",
+                "detailed" => "\n\n💭 Reflection time: Please share your thoughts on today's prompt. How did it challenge your thinking? What insights did you gain? What actions will you take based on this reflection? Take your time to provide a thorough response.",
+                _ => "\n\n💭 How did today's prompt resonate with you? What's your key takeaway?"
+            };
+        }
+        
+        private string GetCompletionMessage(int dayNumber, string communicationStyle)
+        {
+            return communicationStyle?.ToLower() switch
+            {
+                "concise" => $"✅ Day {dayNumber} complete! Great work. Come back tomorrow for your next prompt.",
+                "detailed" => $"✨ Excellent reflection today! You've completed Day {dayNumber} of your leadership journey. Your insights show real growth and deep thinking. The way you're processing these prompts demonstrates a commitment to continuous improvement. Tomorrow's prompt will build on today's insights. Keep up this exceptional work!",
+                _ => $"✨ Great job! You've completed Day {dayNumber}. Your insights today show real progress. See you tomorrow for the next prompt!"
+            };
+        }
+        
+        private string GetAcknowledgmentResponse(string aiResponse)
+        {
+            // Take the first part of the AI response as acknowledgment
+            // If the response has multiple paragraphs, take the first one
+            var paragraphs = aiResponse.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+            return paragraphs.FirstOrDefault() ?? aiResponse;
+        }
+        
+        private async Task<string> GetFollowUpWithKeyPhrases(DailyPromptSession session)
+        {
+            try
+            {
+                // Generate natural AI follow-up that includes the options conversationally
+                var prompt = "You are Chris Cooper. The user just shared their daily reflection and you acknowledged it. Now naturally mention that they have options to continue their leadership journey today. Mention in a conversational way that they can say 'done for the day' to finish, 'burning fires' for urgent issues, or 'Other Tinker Level Fires' for other challenges. Make it sound natural and supportive, not like a menu. Keep it to 2-3 sentences maximum.";
+                
+                var aiResponse = await GetAIResponse(prompt);
+                
+                // Validate AI response and provide fallback
+                if (!string.IsNullOrEmpty(aiResponse) && aiResponse.Length > 10)
+                {
+                    _logger.LogInformation("Generated natural key phrases: {Response}", aiResponse);
+                    return aiResponse;
+                }
+                else
+                {
+                    _logger.LogWarning("AI key phrase generation failed, using natural fallback");
+                    return "You can wrap up when you're ready, or let me know if something urgent needs attention - those burning fires we can tackle together.";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating natural key phrases, using fallback");
+                return "You can wrap up when you're ready, or let me know if something urgent needs attention.";
+            }
+        }
+        
+        private async Task ClearDailyPromptSession(string userId)
+        {
+            try
+            {
+                // Clear Redis session data
+                if (_redis != null)
+                {
+                    var db = _redis.GetDatabase();
+                    await db.KeyDeleteAsync($"daily_prompt_session:{userId}");
+                    _logger.LogInformation("Cleared Redis daily prompt session for user {UserId}", userId);
+                }
+                
+                // Note: We don't clear the completion record from user_prompt_deliveries
+                // That stays for progress tracking
+                
+                _logger.LogInformation("Daily prompt session cleared for user {UserId} - fresh start enabled", userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error clearing daily prompt session for user {UserId}", userId);
+            }
+        }
+        
+        private async Task ClearAllActiveSessions(string userId)
+        {
+            try
+            {
+                // Clear all Redis sessions for the user
+                if (_redis?.IsConnected == true)
+                {
+                    var db = _redis.GetDatabase();
+                    
+                    // Clear daily prompt session
+                    await db.KeyDeleteAsync($"daily_prompt_session:{userId}");
+                    
+                    // Clear any other session keys
+                    await db.KeyDeleteAsync($"session:{userId}:active");
+                    await db.KeyDeleteAsync($"burning_fire_session:{userId}");
+                    await db.KeyDeleteAsync($"general_chat_session:{userId}");
+                    
+                    _logger.LogInformation("Cleared all active sessions for user {UserId}", userId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error clearing all sessions for user {UserId}", userId);
+            }
+        }
+        
+        private string GetWelcomeMessage(string timeOfDay, string firstName)
+        {
+            var greetings = new Dictionary<string, string[]>
+            {
+                ["morning"] = new[]
+                {
+                    $"Good morning, {firstName}! Ready to tackle today's leadership challenges?",
+                    $"Morning, {firstName}! What's on your mind as we start the day?",
+                    $"Hey {firstName}, good morning! Let's make today count. What can I help you with?"
+                },
+                ["afternoon"] = new[]
+                {
+                    $"Good afternoon, {firstName}! How's your day going so far?",
+                    $"Hey {firstName}, afternoon check-in. What's on your mind?",
+                    $"Afternoon, {firstName}! Let's tackle whatever's on your plate."
+                },
+                ["evening"] = new[]
+                {
+                    $"Good evening, {firstName}! Time to reflect on the day. What's on your mind?",
+                    $"Evening, {firstName}! Let's wrap up any loose ends from today.",
+                    $"Hey {firstName}, evening! How can I help you wind down the day?"
+                }
+            };
+            
+            var messages = greetings.ContainsKey(timeOfDay) ? greetings[timeOfDay] : greetings["afternoon"];
+            var random = new Random();
+            var selectedMessage = messages[random.Next(messages.Length)];
+            
+            // Add options hint
+            return selectedMessage + "\n\nYou can ask for your daily prompt, discuss burning fires, or just chat about leadership.";
+        }
+    }
+
+    // Request/Response Models
+    public class ChatRequest
+    {
+        public string Message { get; set; } = "";
+        public string? ConversationId { get; set; }
+        public string? UserId { get; set; }
+        public string? UserName { get; set; }
+        public string? BusinessName { get; set; }
+        public int? CurrentDay { get; set; }
+    }
+
+    public class ChatResponse
+    {
+        public string Response { get; set; } = "";
+        public string ConversationId { get; set; } = "";
+        public int CurrentDay { get; set; }
+        public DailyPrompt? DailyPrompt { get; set; }
+        public string? UserProgress { get; set; }
+        public bool IsError { get; set; }
+        public bool IsDailyPrompt { get; set; }
+        public int DayNumber { get; set; }
+        public bool IsDailyPromptComplete { get; set; }
+        public bool IsBurningFires { get; set; }
+        public bool PromptCompleted { get; set; }
+    }
+
+    public class DailyPrompt
+    {
+        public string PromptTitle { get; set; } = "";
+        public string PromptText { get; set; } = "";
+        public List<string> FillInBlanks { get; set; } = new();
+        public List<string> FollowUpQuestions { get; set; } = new();
+    }
+
+    public class DailyPromptSession
+    {
+        public int DayNumber { get; set; }
+        public DateTime StartTime { get; set; }
+        public string DailyPrompt { get; set; } = "";
+        public string PromptTitle { get; set; } = "";
+        public List<string>? ConversationHistory { get; set; }
+        public bool AwaitingFeedback { get; set; } = false;
+    }
+}

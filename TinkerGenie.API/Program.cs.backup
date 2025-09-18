@@ -1,0 +1,89 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using TinkerGenie.API.Services;
+using OpenAI;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// CORS configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// OpenAI Services - PROPER REGISTRATION
+var openAiApiKey = builder.Configuration["OpenAI:ApiKey"];
+if (!string.IsNullOrEmpty(openAiApiKey))
+{
+    // Register OpenAI client
+    builder.Services.AddSingleton<OpenAIClient>(provider => new OpenAIClient(openAiApiKey));
+    
+    // Register ChatClient using factory pattern
+    builder.Services.AddSingleton<OpenAI.Chat.ChatClient>(provider =>
+    {
+        var openAiClient = provider.GetRequiredService<OpenAIClient>();
+        return openAiClient.GetChatClient("gpt-4o-mini");
+    });
+    
+    // Register our custom OpenAI service
+    builder.Services.AddScoped<IOpenAIService, OpenAIService>();
+}
+
+// JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(o =>
+{
+    o.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = "TinkerGenieAPI",
+        ValidAudience = "TinkerGenieApp",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("TinkerGenieJWTSecretKey2025VeryLongAndSecure")),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+// Health check endpoint
+app.MapGet("/health", () => Results.Ok(new 
+{ 
+    status = "healthy", 
+    timestamp = DateTime.UtcNow,
+    environment = app.Environment.EnvironmentName,
+    domain = "tinker.twobrain.ai"
+}));
+
+app.Run();

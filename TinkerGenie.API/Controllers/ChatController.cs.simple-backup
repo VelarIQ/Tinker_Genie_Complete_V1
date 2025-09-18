@@ -1,0 +1,192 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TinkerGenie.API.Data;
+using System.Text.Json;
+using System.Net.Http;
+using System.Text;
+
+namespace TinkerGenie.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ChatController : ControllerBase
+    {
+        private readonly TinkerGenieContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly HttpClient _httpClient;
+        private readonly ILogger<ChatController> _logger;
+
+        public ChatController(TinkerGenieContext context, IConfiguration configuration, ILogger<ChatController> logger)
+        {
+            _context = context;
+            _configuration = configuration;
+            _logger = logger;
+            _httpClient = new HttpClient();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PostMessage([FromBody] ChatRequest request)
+        {
+            try
+            {
+                _logger.LogInformation($"Received chat request: {request.Message}");
+
+                // Get or create user
+                var user = await GetOrCreateUser(request.UserEmail ?? "anonymous@example.com");
+                
+                // Get or create conversation
+                var conversation = await GetOrCreateConversation(user.Id, request.ConversationId);
+
+                // Save user message
+                await SaveMessage(conversation.Id, user.Id, "user", request.Message);
+
+                // Get AI response
+                var aiResponse = await GetAIResponse(request.Message);
+
+                // Save AI response
+                await SaveMessage(conversation.Id, user.Id, "genie", aiResponse);
+
+                // Update conversation
+                conversation.LastMessageAt = DateTime.UtcNow;
+                conversation.MessageCount += 2;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { 
+                    response = aiResponse, 
+                    conversationId = conversation.Id.ToString() 
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing chat request");
+                return Ok(new { 
+                    response = "I'm having trouble connecting right now. Let me try again - how can I help you today?", 
+                    conversationId = Guid.NewGuid().ToString() 
+                });
+            }
+        }
+
+        private async Task<User> GetOrCreateUser(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = email,
+                    Username = email.Split('@')[0],
+                    Role = "user",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+            return user;
+        }
+
+        private async Task<GenieConversation> GetOrCreateConversation(Guid userId, string? conversationId)
+        {
+            GenieConversation conversation = null;
+
+            if (!string.IsNullOrEmpty(conversationId) && Guid.TryParse(conversationId, out var convId))
+            {
+                conversation = await _context.GenieConversations.FirstOrDefaultAsync(c => c.Id == convId);
+            }
+
+            if (conversation == null)
+            {
+                conversation = new GenieConversation
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Title = "New Chat",
+                    ConversationType = "chat",
+                    Status = "active",
+                    MessageCount = 0,
+                    StartedAt = DateTime.UtcNow,
+                    LastMessageAt = DateTime.UtcNow
+                };
+                _context.GenieConversations.Add(conversation);
+                await _context.SaveChangesAsync();
+            }
+
+            return conversation;
+        }
+
+        private async Task SaveMessage(Guid conversationId, Guid userId, string sender, string message)
+        {
+            var msg = new ConversationMessage
+            {
+                Id = Guid.NewGuid(),
+                ConversationId = conversationId,
+                UserId = userId,
+                Sender = sender,
+                MessageText = message,
+                Content = message,
+                MessageType = "text",
+                IsUser = sender == "user",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.ConversationMessages.Add(msg);
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task<string> GetAIResponse(string userMessage)
+        {
+            try
+            {
+                var openaiApiKey = _configuration["OpenAI:ApiKey"];
+                if (string.IsNullOrEmpty(openaiApiKey))
+                {
+                    return "I'm a TinkerGenie assistant! I'm here to help with your business questions. Unfortunately, my AI brain isn't fully connected yet, but I'm working on it!";
+                }
+
+                var request = new
+                {
+                    model = "gpt-3.5-turbo",
+                    messages = new[]
+                    {
+                        new { role = "system", content = "You are TinkerGenie, a helpful business assistant. Be friendly, concise, and helpful." },
+                        new { role = "user", content = userMessage }
+                    },
+                    max_tokens = 300,
+                    temperature = 0.7
+                };
+
+                _httpClient.DefaultRequestHeaders.Authorization = 
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", openaiApiKey);
+
+                var json = JsonSerializer.Serialize(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseJson = await response.Content.ReadAsStringAsync();
+                    var responseObj = JsonSerializer.Deserialize<JsonElement>(responseJson);
+                    return responseObj.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "I'm here to help!";
+                }
+                else
+                {
+                    return "Hello! I'm TinkerGenie, your business assistant. How can I help you today?";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calling OpenAI API");
+                return "Hello! I'm TinkerGenie, your business assistant. I'm having some technical difficulties, but I'm still here to help you!";
+            }
+        }
+    }
+
+    public class ChatRequest
+    {
+        public string Message { get; set; } = "";
+        public string? ConversationId { get; set; }
+        public string? UserEmail { get; set; }
+    }
+}

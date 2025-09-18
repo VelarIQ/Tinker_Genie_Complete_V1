@@ -1,0 +1,28 @@
+[Unit]
+Description=TinkerGenie API Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=notify
+User=root
+WorkingDirectory=/var/www/tinker-genie-clean/published
+ExecStart=/usr/bin/dotnet TinkerGenie.API.dll --urls=http://0.0.0.0:8765
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=tinker-api
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+# Resource limits for stability
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Health check
+ExecStartPost=/bin/sleep 5
+ExecStartPost=/bin/curl -f http://localhost:8765/health || exit 1
+
+[Install]
+WantedBy=multi-user.target

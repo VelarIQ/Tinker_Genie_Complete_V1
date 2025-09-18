@@ -1,0 +1,238 @@
+using Microsoft.EntityFrameworkCore;
+using TinkerGenie.API.Data;
+using TinkerGenie.API.Services;
+using TinkerGenie.API.Hubs;
+using StackExchange.Redis;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using OpenAI;
+using OpenAI.Chat;
+using System.ClientModel;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Add SignalR with Redis backplane for scaling to 100+ users
+var redisConnection = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? 
+    "24.144.119.69:6379,password=***PASSWORD***";
+
+builder.Services.AddSignalR(options => 
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.HandshakeTimeout = TimeSpan.FromSeconds(5);
+    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+    options.MaximumReceiveMessageSize = 32 * 1024; // 32KB max
+})
+.AddStackExchangeRedis(redisConnection, options =>
+{
+    options.Configuration.ChannelPrefix = "TinkerGenie";
+});
+
+// Database Context
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? 
+    "Host=161.35.5.159;Database=tinker_genie;Username=genie_admin;Password=***PASSWORD***";
+builder.Services.AddDbContext<TinkerGenieContext>(options =>
+    options.UseNpgsql(connectionString));
+
+// Add Redis
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    try 
+    {
+        return ConnectionMultiplexer.Connect("24.144.119.69:6379,password=***PASSWORD***");
+    }
+    catch 
+    {
+        return null!; // Return null if Redis unavailable
+    }
+});
+
+// ---- OpenAI v2 wiring ----
+builder.Services.AddSingleton(sp =>
+{
+    var key = Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+              ?? builder.Configuration["OpenAI:ApiKey"]
+              ?? throw new InvalidOperationException("OPENAI_API_KEY not set");
+    return new OpenAIClient(key);
+});
+
+// Provide a ChatClient factory for the model you want
+builder.Services.AddScoped(sp =>
+{
+    var client = sp.GetRequiredService<OpenAIClient>();
+    return client.GetChatClient("gpt-4o-mini");
+});
+
+// (optional) IHttpClientFactory for fallbacks / tools
+builder.Services.AddHttpClient();
+
+// Your own chat abstraction
+builder.Services.AddScoped<IChatService, OpenAiChatService>();
+
+// Register all services that exist
+builder.Services.AddScoped<IOpenAIService, OpenAIService>();
+builder.Services.AddScoped<IConversationService, ConversationService>();
+builder.Services.AddScoped<IWeaviateService, WeaviateService>();
+builder.Services.AddScoped<IUserDataIsolationService, UserDataIsolationService>();
+
+// New session management services
+builder.Services.AddScoped<ISessionManagerService, SessionManagerService>();
+builder.Services.AddScoped<ICurriculumSearchService, CurriculumSearchService>();
+
+// Redis Message Broker for cross-instance communication
+builder.Services.AddSingleton<IRedisMessageBroker, RedisMessageBroker>();
+builder.Services.AddHostedService<RedisMessageBroker>();
+
+// Connection monitoring for 100+ users
+builder.Services.AddSingleton<IConnectionMonitorService, ConnectionMonitorService>();
+builder.Services.AddHostedService<ConnectionMonitorService>(provider => 
+    (ConnectionMonitorService)provider.GetRequiredService<IConnectionMonitorService>());
+
+// Health checks for load balancer
+builder.Services.AddHealthChecks()
+    .AddNpgSql(connectionString, name: "database")
+    .AddRedis("24.144.119.69:6379,password=***PASSWORD***", name: "redis");
+
+// Add Authentication with the TBB-provided JWT secret
+var jwtKey = "TinkerGenieJWTSecretKey2025VeryLongAndSecure";
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
+        };
+        
+        // Extract JWT token from query string for WebSocket connections
+        options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.HttpContext.Request.Path.StartsWithSegments("/chatHub") || 
+                    context.HttpContext.Request.Path.StartsWithSegments("/syncHub"))
+                {
+                    var accessToken = context.Request.Query["access_token"];
+                    if (!string.IsNullOrEmpty(accessToken))
+                    {
+                        context.Token = accessToken;
+                        Console.WriteLine($"JWT token extracted from query string for {context.HttpContext.Request.Path}");
+                    }
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowTinker", policy =>
+    {
+        policy.WithOrigins("https://tinker.twobrain.ai")
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials();
+    });
+});
+
+var app = builder.Build();
+
+// Configure pipeline - CORRECT ORDER
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseCors("AllowTinker");
+app.UseRouting();           // MUST come first
+app.UseAuthentication();    // Then authentication
+app.UseAuthorization();     // Then authorization
+
+// Map SignalR Hubs
+app.MapHub<ChatHub>("/chatHub").RequireAuthorization();
+app.MapHub<SyncHub>("/syncHub").RequireAuthorization();
+
+// Allow SignalR negotiation without authentication
+app.MapPost("/chatHub/negotiate", async (HttpContext context) =>
+{
+    // SignalR negotiation endpoint - no auth required
+    return Results.Ok();
+});
+
+app.MapPost("/syncHub/negotiate", async (HttpContext context) =>
+{
+    // SignalR negotiation endpoint - no auth required
+    return Results.Ok();
+});
+
+app.MapControllers();       // Finally controllers
+
+// Health endpoint
+app.MapGet("/health", () => Results.Ok(new {
+    status = "healthy",
+    timestamp = DateTime.UtcNow,
+    version = "1.0.0"
+}));
+
+// OpenAI health check endpoint
+app.MapGet("/api/health", () =>
+{
+    return Results.Ok(new { 
+        ok = true, 
+        status = "healthy",
+        timestamp = DateTime.UtcNow,
+        services = new {
+            api = "running",
+            weaviate = "configured",
+            redis = "configured"
+        }
+    });
+});
+
+// Status endpoint for monitoring
+app.MapGet("/api/status", (IConnectionMonitorService? connectionMonitor) =>
+{
+    var stats = connectionMonitor?.GetConnectionStats() ?? new Dictionary<string, int>();
+    
+    return Results.Ok(new
+    {
+        service = "TinkerGenie API",
+        status = "running",
+        timestamp = DateTime.UtcNow,
+        version = "1.0.0",
+        instance = Environment.MachineName,
+        websocket = new
+        {
+            connections = stats.GetValueOrDefault("total_connections", 0),
+            users = stats.GetValueOrDefault("unique_users", 0),
+            capacity = stats.GetValueOrDefault("server_capacity", 75),
+            percentage = stats.GetValueOrDefault("capacity_percentage", 0)
+        },
+        endpoints = new
+        {
+            health = "/api/health",
+            chat = "/api/chat",
+            signalr = "/chatHub"
+        }
+    });
+});
+
+app.Run();
+
+public class ChatRequest
+{
+    public string Message { get; set; } = "";
+    public string? UserEmail { get; set; }
+}

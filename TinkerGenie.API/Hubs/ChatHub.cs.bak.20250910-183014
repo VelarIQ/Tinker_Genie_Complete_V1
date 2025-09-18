@@ -1,0 +1,205 @@
+using Microsoft.AspNetCore.SignalR;
+using System.Text.Json;
+
+namespace TinkerGenie.API.Hubs
+{
+    public class ChatHub : Hub
+    {
+        private readonly ILogger<ChatHub> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
+        private readonly string _openAiApiKey;
+        private readonly string _openAiModel;
+
+        public ChatHub(ILogger<ChatHub> logger, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        {
+            _logger = logger;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
+            _openAiApiKey = _configuration["OpenAI:ApiKey"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "your-api-key-here";
+            _openAiModel = _configuration["OpenAI:Model"] ?? "gpt-4";
+        }
+
+        public async Task SendMessage(string message, string? conversationId = null)
+        {
+            try
+            {
+                _logger.LogInformation("WebSocket message received: {Message}", message);
+                
+                // Get user ID from connection context
+                var userId = Context.User?.Identity?.Name ?? "anonymous";
+                
+                // Show typing indicator
+                await Clients.Caller.SendAsync("ReceiveTypingIndicator", true);
+                
+                // Get AI response
+                var aiResponse = await GetAIResponse(message, userId);
+                
+                // Hide typing indicator
+                await Clients.Caller.SendAsync("ReceiveTypingIndicator", false);
+                
+                // Send response
+                await Clients.Caller.SendAsync("ReceiveMessage", new
+                {
+                    type = "ReceiveMessage",
+                    message = aiResponse,
+                    conversationId = conversationId,
+                    timestamp = DateTime.UtcNow,
+                    isError = false
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in SendMessage: {ErrorMessage}", ex.Message);
+                
+                var errorResponse = new
+                {
+                    type = "ReceiveMessage",
+                    message = "I'm experiencing some technical difficulties, but I'm still here to help with your leadership journey. What would you like to discuss today?",
+                    conversationId = conversationId,
+                    timestamp = DateTime.UtcNow,
+                    isError = true
+                };
+                
+                await Clients.Caller.SendAsync("ReceiveMessage", errorResponse);
+            }
+        }
+
+        public async Task SendDailyPromptRequest()
+        {
+            try
+            {
+                _logger.LogInformation("Daily prompt request received");
+                
+                var userId = Context.User?.Identity?.Name ?? "anonymous";
+                var currentDay = 1; // This should be retrieved from database
+                
+                var dailyPrompt = await GetDailyPrompt(currentDay, userId);
+                
+                await Clients.Caller.SendAsync("ReceiveMessage", new
+                {
+                    type = "ReceiveMessage",
+                    message = dailyPrompt,
+                    isDailyPrompt = true,
+                    dayNumber = currentDay,
+                    questionsRemaining = 3,
+                    timestamp = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in SendDailyPromptRequest: {ErrorMessage}", ex.Message);
+            }
+        }
+
+        private async Task<string> GetAIResponse(string userMessage, string userId)
+        {
+            try
+            {
+                _logger.LogInformation("Starting WebSocket OpenAI API request with message: {UserMessage}", userMessage);
+                
+                var prompt = await BuildAIPrompt(userMessage, userId);
+                
+                var request = new
+                {
+                    model = _openAiModel,
+                    messages = new[]
+                    {
+                        new { role = "system", content = prompt },
+                        new { role = "user", content = "Please provide your leadership coaching response." }
+                    },
+                    max_tokens = 500,
+                    temperature = 0.7,
+                    top_p = 1.0,
+                    frequency_penalty = 0,
+                    presence_penalty = 0
+                };
+
+                var json = JsonSerializer.Serialize(request);
+                _logger.LogInformation("WebSocket OpenAI request JSON: {RequestJson}", json);
+                
+                var httpClient = _httpClientFactory.CreateClient();
+                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_openAiApiKey}");
+                
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync("https://api.openai.com/v1/chat/completions", content);
+                
+                _logger.LogInformation("WebSocket OpenAI API response status: {StatusCode} {ReasonPhrase}", 
+                    response.StatusCode, response.ReasonPhrase);
+                
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("WebSocket OpenAI API response content: {ResponseContent}", responseContent);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseObj = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                    var aiResponse = responseObj.GetProperty("choices")[0]
+                                         .GetProperty("message")
+                                         .GetProperty("content").GetString() ?? 
+                               "I'm here to support your leadership development. What specific challenge would you like to work on today?";
+                    
+                    _logger.LogInformation("Successfully received WebSocket AI response: {AiResponse}", aiResponse);
+                    return aiResponse;
+                }
+                else
+                {
+                    _logger.LogError("WebSocket OpenAI API request failed with status {StatusCode}: {ResponseContent}", 
+                        response.StatusCode, responseContent);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception in WebSocket OpenAI API call: {ExceptionMessage}", ex.Message);
+            }
+
+            // Fallback response
+            return "I'm experiencing some technical difficulties, but I'm still here to help with your leadership journey. What would you like to discuss today?";
+        }
+
+        private async Task<string> BuildAIPrompt(string userMessage, string userId)
+        {
+            var prompt = new System.Text.StringBuilder();
+            
+            // Add system context
+            prompt.AppendLine("You are TinkerGenie, an advanced AI leadership coach and mentor. You provide direct, actionable leadership guidance in the style of Chris Cooper - concise, impactful, and focused on results.");
+            prompt.AppendLine();
+            prompt.AppendLine("Key principles:");
+            prompt.AppendLine("- Be direct and concise (2-3 sentences max per response)");
+            prompt.AppendLine("- Ask one tough question that makes them think");
+            prompt.AppendLine("- Focus on action and results");
+            prompt.AppendLine("- Use professional, human tone");
+            prompt.AppendLine("- Address burning fires with urgency");
+            prompt.AppendLine();
+            prompt.AppendLine("User message: " + userMessage);
+            
+            return prompt.ToString();
+        }
+
+        private async Task<string> GetDailyPrompt(int dayNumber, string userId)
+        {
+            var prompts = new Dictionary<int, string>
+            {
+                { 1, "Day 1 - Mirror Check\nLook yourself in the mirror for 60 seconds. Ask: \"What am I feeling right now, and what's the honest truth about why?\" No fixing—just noticing. Take a moment to reflect." },
+                { 2, "Day 2 - Energy Audit\nTrack your energy levels throughout today. When do you feel most alive? What drains you? Notice the patterns without judgment." },
+                { 3, "Day 3 - Communication Check\nBefore your next important conversation, ask: \"What do I really want them to understand?\" Then communicate that clearly." }
+            };
+
+            return prompts.GetValueOrDefault(dayNumber, "Welcome to your leadership development journey. What challenge would you like to tackle today?");
+        }
+
+        public override async Task OnConnectedAsync()
+        {
+            _logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
+            await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            _logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
+            await base.OnDisconnectedAsync(exception);
+        }
+
+        public Task Ping() => Task.CompletedTask;
+    }
+}
+

@@ -1,0 +1,626 @@
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Net.Http.Headers;
+using System.Text;
+using Npgsql;
+using TinkerGenie.API.Services;
+using StackExchange.Redis;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
+namespace TinkerGenie.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize] // Require authentication for all endpoints
+    public class ChatController : ControllerBase
+    {
+        private readonly HttpClient _httpClient;
+        private readonly ILogger<ChatController> _logger;
+        private readonly IWeaviateService? _weaviateService;
+        private readonly IConnectionMultiplexer? _redis;
+        private readonly string _openAiApiKey;
+        private readonly string _connectionString;
+
+        public ChatController(
+            IConfiguration configuration, 
+            ILogger<ChatController> logger, 
+            IConnectionMultiplexer? redis = null,
+            IWeaviateService? weaviateService = null)
+        {
+            _logger = logger;
+            _weaviateService = weaviateService;
+            _redis = redis;
+            _httpClient = new HttpClient();
+            _openAiApiKey = configuration["OpenAI:ApiKey"] ?? "";
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+            _httpClient.DefaultRequestHeaders.Authorization = 
+                new AuthenticationHeaderValue("Bearer", _openAiApiKey);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Chat([FromBody] ChatRequest request)
+        {
+            try
+            {
+                var userId = User.FindFirst("userId")?.Value ?? request.UserId ?? "anonymous";
+                var firstName = User.FindFirst("firstName")?.Value ?? request.UserName ?? "Leader";
+                var businessName = User.FindFirst("businessName")?.Value ?? request.BusinessName ?? "your business";
+                
+                _logger.LogInformation("Chat request from user: {UserId}, message: {Message}", userId, request.Message);
+
+                // Check if this is a daily prompt request
+                if (IsDailyPromptRequest(request.Message))
+                {
+                    return await HandleDailyPromptRequest(userId, firstName, businessName, request.ConversationId);
+                }
+
+                // Check if user is in a daily prompt session
+                var dailyPromptSession = await GetDailyPromptSession(userId);
+                if (dailyPromptSession != null)
+                {
+                    return await HandleDailyPromptResponse(userId, request.Message, dailyPromptSession, request.ConversationId);
+                }
+
+                // Check if this is a burning fires scenario (separate from daily prompts)
+                if (IsBurningFiresScenario(request.Message))
+                {
+                    return await HandleBurningFiresRequest(userId, request.Message, request.ConversationId);
+                }
+
+                // Regular chat - use AI for everything
+                return await HandleRegularChat(userId, request.Message, request.ConversationId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in chat endpoint for user: {UserId}", request.UserId);
+                
+                // Use AI to generate error response instead of hardcoded message
+                var errorResponse = await GetAIResponse($"User encountered an error: {ex.Message}. Provide a supportive response as Chris Cooper would, acknowledging the technical difficulty but maintaining focus on their leadership development.");
+                
+                return Ok(new ChatResponse
+                {
+                    Response = errorResponse,
+                    ConversationId = request.ConversationId ?? Guid.NewGuid().ToString(),
+                    IsError = true
+                });
+            }
+        }
+
+        private bool IsDailyPromptRequest(string message)
+        {
+            var dailyPromptKeywords = new[] { "daily prompt", "give me my daily prompt", "today's prompt", "leadership prompt" };
+            var lowerMessage = message?.ToLower() ?? "";
+            return dailyPromptKeywords.Any(keyword => lowerMessage.Contains(keyword));
+        }
+
+        private async Task<IActionResult> HandleDailyPromptRequest(string userId, string firstName, string businessName, string? conversationId)
+        {
+            try
+            {
+                // Check if user already has an active daily prompt session
+                var existingSession = await GetDailyPromptSession(userId);
+                if (existingSession != null)
+                {
+                    _logger.LogInformation("User {UserId} already has active daily prompt session for day {Day}", userId, existingSession.DayNumber);
+                    return Ok(new ChatResponse
+                    {
+                        Response = $"You already have an active daily prompt session for Day {existingSession.DayNumber}. Please continue with your current session or complete it first.",
+                        IsDailyPrompt = true,
+                        DayNumber = existingSession.DayNumber,
+                        IsDailyPromptComplete = existingSession.QuestionsAsked >= 2,
+                        QuestionsRemaining = Math.Max(0, 2 - existingSession.QuestionsAsked),
+                        ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    });
+                }
+
+                // Get user's current day
+                var currentDay = await GetUserCurrentDay(userId);
+                
+                // Get daily prompt from database
+                var dailyPrompt = await GetDailyPromptFromDatabase(currentDay);
+                if (dailyPrompt == null)
+                {
+                    return Ok(new ChatResponse
+                    {
+                        Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: No daily prompt available in database. Please check the API connection and try again.",
+                        IsError = true,
+                        ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    });
+                }
+
+                // Store daily prompt session in Redis
+                await StoreDailyPromptSession(userId, currentDay, dailyPrompt);
+
+                // Deliver prompt and wait for response (don't ask questions immediately)
+                var response = $"This is Day {currentDay} of your leadership journey. {dailyPrompt.PromptText}";
+                
+                _logger.LogInformation("Delivered daily prompt for user {UserId}, day {Day}", userId, currentDay);
+
+                return Ok(new ChatResponse
+                {
+                    Response = response,
+                    IsDailyPrompt = true,
+                    DayNumber = currentDay,
+                    IsDailyPromptComplete = false,
+                    QuestionsRemaining = 2,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling daily prompt request for user {UserId}", userId);
+                return Ok(new ChatResponse
+                {
+                    Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: Database connection failed. Please check the API connection and try again.",
+                    IsError = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+        }
+
+        private async Task<IActionResult> HandleDailyPromptResponse(string userId, string userMessage, DailyPromptSession session, string? conversationId)
+        {
+            try
+            {
+                // Use AI to evaluate the user's response and provide appropriate follow-up
+                var aiPrompt = BuildDailyPromptAIPrompt(userMessage, session, userId);
+                var aiResponse = await GetAIResponse(aiPrompt);
+
+                // Update question count
+                session.QuestionsAsked++;
+                await UpdateDailyPromptSession(userId, session);
+
+                // Check if we've reached the 2-question limit
+                if (session.QuestionsAsked >= 2)
+                {
+                    await CompleteDailyPrompt(userId, session.DayNumber);
+                    aiResponse += " You've completed your daily leadership exploration. We'll see you tomorrow, or if you have burning fires or other questions, ask and we can help.";
+                }
+
+                return Ok(new ChatResponse
+                {
+                    Response = aiResponse,
+                    IsDailyPrompt = true,
+                    DayNumber = session.DayNumber,
+                    IsDailyPromptComplete = session.QuestionsAsked >= 2,
+                    QuestionsRemaining = Math.Max(0, 2 - session.QuestionsAsked),
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling daily prompt response for user {UserId}", userId);
+                return Ok(new ChatResponse
+                {
+                    Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: Database connection failed. Please check the API connection and try again.",
+                    IsError = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+        }
+
+        private async Task<IActionResult> HandleBurningFiresRequest(string userId, string userMessage, string? conversationId)
+        {
+            try
+            {
+                // Use AI to handle burning fires with Chris Cooper style
+                var aiPrompt = BuildBurningFiresAIPrompt(userMessage, userId);
+                var aiResponse = await GetAIResponse(aiPrompt);
+
+                return Ok(new ChatResponse
+                {
+                    Response = aiResponse,
+                    IsBurningFires = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling burning fires request for user {UserId}", userId);
+                return Ok(new ChatResponse
+                {
+                    Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: Database connection failed. Please check the API connection and try again.",
+                    IsError = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+        }
+
+        private async Task<IActionResult> HandleRegularChat(string userId, string userMessage, string? conversationId)
+        {
+            try
+            {
+                // Use AI for all regular chat - no hardcoded responses
+                var aiPrompt = BuildRegularChatAIPrompt(userMessage, userId);
+                var aiResponse = await GetAIResponse(aiPrompt);
+
+                return Ok(new ChatResponse
+                {
+                    Response = aiResponse,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling regular chat for user {UserId}", userId);
+                return Ok(new ChatResponse
+                {
+                    Response = "ERROR - Daily Prompt API Failed. Status: 500. Error: Database connection failed. Please check the API connection and try again.",
+                    IsError = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                });
+            }
+        }
+
+        private bool IsBurningFiresScenario(string message)
+        {
+            // More specific burning fires detection - avoid false positives
+            var urgentPatterns = new[]
+            {
+                "urgent", "emergency", "crisis", "problem", "issue", "stuck",
+                "can't", "won't", "failed", "broken", "wrong", "mistake", "error",
+                "stressed", "overwhelmed", "deadline", "pressure", "conflict",
+                "burning fire", "critical situation", "immediate attention"
+            };
+
+            var lowerMessage = message?.ToLower() ?? "";
+            return urgentPatterns.Any(pattern => lowerMessage.Contains(pattern));
+        }
+
+        private string BuildDailyPromptAIPrompt(string userMessage, DailyPromptSession session, string userId)
+        {
+            var prompt = new StringBuilder();
+            
+            prompt.AppendLine("You are TinkerGenie, an AI leadership development coach created by Chris Cooper of Two-Brain Business.");
+            prompt.AppendLine("You are currently in a daily prompt session with a user who has just responded to their leadership prompt.");
+            prompt.AppendLine();
+            prompt.AppendLine($"USER RESPONSE: {userMessage}");
+            prompt.AppendLine($"QUESTIONS ASKED SO FAR: {session.QuestionsAsked}/2");
+            prompt.AppendLine();
+            prompt.AppendLine("RESPONSE GUIDELINES:");
+            prompt.AppendLine("- Respond in Chris Cooper's direct, practical leadership style");
+            prompt.AppendLine("- Acknowledge their response and provide meaningful feedback");
+            prompt.AppendLine("- Ask ONE follow-up question to deepen their reflection");
+            prompt.AppendLine("- Keep responses concise but impactful");
+            prompt.AppendLine("- Focus on leadership development and personal growth");
+            prompt.AppendLine("- If this is their second question, prepare them for completion");
+            prompt.AppendLine();
+            prompt.AppendLine("Provide your response as Chris Cooper would:");
+
+            return prompt.ToString();
+        }
+
+        private string BuildBurningFiresAIPrompt(string userMessage, string userId)
+        {
+            var prompt = new StringBuilder();
+            
+            prompt.AppendLine("You are TinkerGenie, an AI leadership development coach created by Chris Cooper of Two-Brain Business.");
+            prompt.AppendLine("The user is experiencing a 'burning fire' - an urgent leadership challenge that needs immediate attention.");
+            prompt.AppendLine();
+            prompt.AppendLine($"URGENT MESSAGE: {userMessage}");
+            prompt.AppendLine();
+            prompt.AppendLine("RESPONSE GUIDELINES:");
+            prompt.AppendLine("- Respond with urgency and directness as Chris Cooper would");
+            prompt.AppendLine("- Acknowledge the urgency and provide immediate support");
+            prompt.AppendLine("- Ask specific questions to understand the situation");
+            prompt.AppendLine("- Offer practical, actionable advice");
+            prompt.AppendLine("- Maintain focus on leadership development even in crisis");
+            prompt.AppendLine();
+            prompt.AppendLine("Provide your response as Chris Cooper would:");
+
+            return prompt.ToString();
+        }
+
+        private string BuildRegularChatAIPrompt(string userMessage, string userId)
+        {
+            var prompt = new StringBuilder();
+            
+            prompt.AppendLine("You are TinkerGenie, an AI leadership development coach created by Chris Cooper of Two-Brain Business.");
+            prompt.AppendLine("You help gym owners and entrepreneurs develop their leadership skills through a structured 180-day personal development journey.");
+            prompt.AppendLine();
+            prompt.AppendLine($"USER MESSAGE: {userMessage}");
+            prompt.AppendLine();
+            prompt.AppendLine("RESPONSE GUIDELINES:");
+            prompt.AppendLine("- Respond in Chris Cooper's direct, practical leadership style");
+            prompt.AppendLine("- Focus on leadership development and personal growth");
+            prompt.AppendLine("- Reference Two-Brain Business methodology when relevant");
+            prompt.AppendLine("- Provide actionable advice for gym owners and entrepreneurs");
+            prompt.AppendLine("- Ask follow-up questions to deepen reflection");
+            prompt.AppendLine("- Encourage progress in their leadership journey");
+            prompt.AppendLine();
+            prompt.AppendLine("Provide your response as Chris Cooper would:");
+
+            return prompt.ToString();
+        }
+
+        private async Task<string> GetAIResponse(string prompt)
+        {
+            try
+            {
+                var request = new
+                {
+                    model = "gpt-4",
+                    messages = new[]
+                    {
+                        new { role = "system", content = prompt },
+                        new { role = "user", content = "Please provide your leadership coaching response." }
+                    },
+                    max_tokens = 500,
+                    temperature = 0.7
+                };
+
+                var json = JsonSerializer.Serialize(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseJson = await response.Content.ReadAsStringAsync();
+                    var responseObj = JsonSerializer.Deserialize<JsonElement>(responseJson);
+                    return responseObj.GetProperty("choices")[0]
+                                     .GetProperty("message")
+                                     .GetProperty("content").GetString() ?? 
+                           "I'm here to support your leadership development. What specific challenge would you like to work on today?";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calling OpenAI API");
+            }
+
+            // If AI fails, use AI to generate error response instead of hardcoded message
+            try
+            {
+                var errorPrompt = "Generate a supportive response as Chris Cooper would when there's a technical difficulty, but maintain focus on leadership development.";
+                var errorRequest = new
+                {
+                    model = "gpt-4",
+                    messages = new[]
+                    {
+                        new { role = "system", content = errorPrompt },
+                        new { role = "user", content = "Please provide your response." }
+                    },
+                    max_tokens = 200,
+                    temperature = 0.7
+                };
+
+                var errorJson = JsonSerializer.Serialize(errorRequest);
+                var errorContent = new StringContent(errorJson, Encoding.UTF8, "application/json");
+
+                var errorResponse = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", errorContent);
+                
+                if (errorResponse.IsSuccessStatusCode)
+                {
+                    var errorResponseJson = await errorResponse.Content.ReadAsStringAsync();
+                    var errorResponseObj = JsonSerializer.Deserialize<JsonElement>(errorResponseJson);
+                    return errorResponseObj.GetProperty("choices")[0]
+                                         .GetProperty("message")
+                                         .GetProperty("content").GetString() ?? 
+                           "I'm experiencing some technical difficulties, but I'm still here to help with your leadership journey. What would you like to discuss today?";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calling OpenAI API for error response");
+            }
+
+            return "I'm experiencing some technical difficulties, but I'm still here to help with your leadership journey. What would you like to discuss today?";
+        }
+
+        private async Task<int> GetUserCurrentDay(string userId)
+        {
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+                
+                var cmd = new NpgsqlCommand(@"
+                    SELECT COALESCE(up.current_day, 1) as current_day
+                    FROM users u
+                    LEFT JOIN user_profiles up ON u.id::text = up.user_id::text
+                    WHERE u.id::text = $1 OR u.email = $1", conn);
+                    
+                cmd.Parameters.AddWithValue(userId);
+                
+                var result = await cmd.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 1;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user current day for {UserId}", userId);
+                return 1;
+            }
+        }
+
+        private async Task<DailyPrompt?> GetDailyPromptFromDatabase(int dayNumber)
+        {
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+                
+                var cmd = new NpgsqlCommand(@"
+                    SELECT prompt_title, prompt_text, 
+                           COALESCE(fill_in_blanks_jsonb, '[]'::jsonb),
+                           COALESCE(follow_up_questions::jsonb, '[]'::jsonb)
+                    FROM leadership_daily_prompts
+                    WHERE day_number = $1 AND is_active = true
+                    ORDER BY version DESC
+                    LIMIT 1", conn);
+                
+                cmd.Parameters.AddWithValue(dayNumber);
+                
+                await using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    var fillInBlanks = new List<string>();
+                    var followUpQuestions = new List<string>();
+                    
+                    if (!reader.IsDBNull(2))
+                    {
+                        var fillInBlanksJson = reader.GetString(2);
+                        fillInBlanks = JsonSerializer.Deserialize<List<string>>(fillInBlanksJson) ?? new List<string>();
+                    }
+                    
+                    if (!reader.IsDBNull(3))
+                    {
+                        var followUpJson = reader.GetString(3);
+                        followUpQuestions = JsonSerializer.Deserialize<List<string>>(followUpJson) ?? new List<string>();
+                    }
+                    
+                    return new DailyPrompt
+                    {
+                        PromptTitle = reader.GetString(0),
+                        PromptText = reader.GetString(1),
+                        FillInBlanks = fillInBlanks,
+                        FollowUpQuestions = followUpQuestions
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting daily prompt for day {Day}", dayNumber);
+            }
+
+            return null;
+        }
+
+        private async Task StoreDailyPromptSession(string userId, int dayNumber, DailyPrompt dailyPrompt)
+        {
+            try
+            {
+                if (_redis?.IsConnected == true)
+                {
+                    var db = _redis.GetDatabase();
+                    var session = new DailyPromptSession
+                    {
+                        DayNumber = dayNumber,
+                        QuestionsAsked = 0,
+                        StartTime = DateTime.UtcNow
+                    };
+                    
+                    var sessionJson = JsonSerializer.Serialize(session);
+                    await db.StringSetAsync($"daily_prompt_session:{userId}", sessionJson, TimeSpan.FromHours(24));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error storing daily prompt session for user {UserId}", userId);
+            }
+        }
+
+        private async Task<DailyPromptSession?> GetDailyPromptSession(string userId)
+        {
+            try
+            {
+                if (_redis?.IsConnected == true)
+                {
+                    var db = _redis.GetDatabase();
+                    var sessionJson = await db.StringGetAsync($"daily_prompt_session:{userId}");
+                    
+                    if (sessionJson.HasValue)
+                    {
+                        return JsonSerializer.Deserialize<DailyPromptSession>(sessionJson!);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting daily prompt session for user {UserId}", userId);
+            }
+
+            return null;
+        }
+
+        private async Task UpdateDailyPromptSession(string userId, DailyPromptSession session)
+        {
+            try
+            {
+                if (_redis?.IsConnected == true)
+                {
+                    var db = _redis.GetDatabase();
+                    var sessionJson = JsonSerializer.Serialize(session);
+                    await db.StringSetAsync($"daily_prompt_session:{userId}", sessionJson, TimeSpan.FromHours(24));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating daily prompt session for user {UserId}", userId);
+            }
+        }
+
+        private async Task CompleteDailyPrompt(string userId, int dayNumber)
+        {
+            try
+            {
+                if (_redis?.IsConnected == true)
+                {
+                    var db = _redis.GetDatabase();
+                    await db.KeyDeleteAsync($"daily_prompt_session:{userId}");
+                }
+
+                // Mark daily prompt as completed in database
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+                
+                var cmd = new NpgsqlCommand(@"
+                    INSERT INTO user_prompt_deliveries (user_id, day_number, delivered_at, completed_at)
+                    VALUES ($1::uuid, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    ON CONFLICT (user_id, day_number, DATE(delivered_at)) DO UPDATE SET
+                    completed_at = CURRENT_TIMESTAMP", conn);
+                
+                cmd.Parameters.AddWithValue(Guid.TryParse(userId, out var userGuid) ? userGuid : Guid.NewGuid());
+                cmd.Parameters.AddWithValue(dayNumber);
+                
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error completing daily prompt for user {UserId}", userId);
+            }
+        }
+    }
+
+    // Request/Response Models
+    public class ChatRequest
+    {
+        public string Message { get; set; } = "";
+        public string? ConversationId { get; set; }
+        public string? UserId { get; set; }
+        public string? UserName { get; set; }
+        public string? BusinessName { get; set; }
+        public int? CurrentDay { get; set; }
+    }
+
+    public class ChatResponse
+    {
+        public string Response { get; set; } = "";
+        public string ConversationId { get; set; } = "";
+        public int CurrentDay { get; set; }
+        public DailyPrompt? DailyPrompt { get; set; }
+        public string? UserProgress { get; set; }
+        public bool IsError { get; set; }
+        public bool IsDailyPrompt { get; set; }
+        public int DayNumber { get; set; }
+        public bool IsDailyPromptComplete { get; set; }
+        public int QuestionsRemaining { get; set; }
+        public bool IsBurningFires { get; set; }
+    }
+
+    public class DailyPrompt
+    {
+        public string PromptTitle { get; set; } = "";
+        public string PromptText { get; set; } = "";
+        public List<string> FillInBlanks { get; set; } = new();
+        public List<string> FollowUpQuestions { get; set; } = new();
+    }
+
+    public class DailyPromptSession
+    {
+        public int DayNumber { get; set; }
+        public int QuestionsAsked { get; set; }
+        public DateTime StartTime { get; set; }
+    }
+}

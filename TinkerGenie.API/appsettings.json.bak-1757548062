@@ -1,0 +1,30 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "Urls": "http://localhost:8765",
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=161.35.5.159;Database=tinker_genie;Username=genie_admin;Password=TinkerGenie1234"
+  },
+  "Redis": {
+    "ConnectionString": "24.144.119.69:6379,password=TinkerGenie1234"
+  },
+  "OpenAI": {
+    "ApiKey": "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",
+    "Model": "gpt-4o-mini"
+  },
+        "Weaviate": {
+          "Url": "http://localhost:8082",
+          "ApiKey": "",
+          "Model": "text2vec-transformers"
+        },
+  "Jwt": {
+    "Key": "TinkerGenie2025SecretKeyForJWTTokensMinimum32Characters",
+    "Issuer": "TinkerGenieAPI",
+    "Audience": "TinkerGenieApp"
+  }
+}
