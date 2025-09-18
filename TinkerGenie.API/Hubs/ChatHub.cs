@@ -72,6 +72,11 @@ namespace TinkerGenie.API.Hubs
                     var burningResult = await HandleBurningFiresRequest(userId, message, conversationId);
                     aiResponse = burningResult.Response;
                 }
+                else if (IsTinkerLevelRequest(message))
+                {
+                    var tinkerResult = await HandleTinkerLevelRequest(userId, message, conversationId);
+                    aiResponse = tinkerResult.Response;
+                }
                 else
                 {
                     // Regular chat - use existing chat logic
@@ -180,6 +185,16 @@ namespace TinkerGenie.API.Hubs
             return lowerMessage.Contains("burning fire") || lowerMessage.Contains("urgent help");
         }
 
+        private bool IsTinkerLevelRequest(string message)
+        {
+            var lowerMessage = message?.ToLower() ?? "";
+            return lowerMessage.Contains("other tinker level fires") || 
+                   lowerMessage.Contains("other tinker level issues") ||
+                   lowerMessage.Contains("tinker level") ||
+                   lowerMessage.Contains("tinker issue") ||
+                   lowerMessage.Contains("tinker problem");
+        }
+
         private async Task<ChatResponse> HandleDailyPromptRequest(string userId, string firstName, string businessName, string? conversationId)
         {
             try
@@ -278,6 +293,39 @@ namespace TinkerGenie.API.Hubs
                 {
                     Response = "I understand this is urgent. Tell me exactly what's happening right now.",
                     IsError = true,
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                };
+            }
+        }
+
+        private async Task<ChatResponse> HandleTinkerLevelRequest(string userId, string message, string? conversationId)
+        {
+            try
+            {
+                // Create NEW conversation ID for Other Tinker Level (separate sidebar entry)
+                var newConversationId = Guid.NewGuid().ToString();
+                _logger.LogInformation("Creating new Tinker Level conversation {ConversationId} for strategic leadership coaching", newConversationId);
+                
+                // Strategic leadership coaching response (vs crisis management)
+                var response = "I'm here to help you with strategic leadership challenges. Let's dive into what's on your mind.\n\nWhat specific leadership area would you like to work on? Team development, business growth, operational efficiency, or something else?";
+                
+                // Save conversation for sidebar (new entry)
+                await _conversationService.SaveConversation(userId, message, response);
+                
+                return new ChatResponse
+                {
+                    Response = response,
+                    ConversationId = newConversationId,
+                    IsBurningFires = false, // Strategic, not crisis
+                    IsDailyPrompt = false
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling Tinker Level request for user {UserId}", userId);
+                return new ChatResponse
+                {
+                    Response = "I'm here to help with your leadership challenges. What would you like to work on?",
                     ConversationId = conversationId ?? Guid.NewGuid().ToString()
                 };
             }
