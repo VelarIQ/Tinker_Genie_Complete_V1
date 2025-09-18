@@ -228,7 +228,7 @@ namespace TinkerGenie.API.Hubs
                     {
                         Response = "I couldn't find today's leadership prompt. Please contact support if this persists.",
                         IsError = true,
-                        ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                        ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString()
                     };
                 }
 
@@ -249,7 +249,7 @@ namespace TinkerGenie.API.Hubs
                     DayNumber = currentDay,
                     IsDailyPromptComplete = false,
                     QuestionsRemaining = 2,
-                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString()
                 };
             }
             catch (Exception ex)
@@ -259,7 +259,7 @@ namespace TinkerGenie.API.Hubs
                 {
                     Response = "I'm having trouble accessing your daily prompt. Please try again.",
                     IsError = true,
-                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString()
                 };
             }
         }
@@ -286,7 +286,7 @@ namespace TinkerGenie.API.Hubs
                 return new ChatResponse
                 {
                     Response = aiResponse,
-                    ConversationId = conversationId ?? Guid.NewGuid().ToString(),
+                    ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString(),
                     IsBurningFires = true
                 };
             }
@@ -297,7 +297,7 @@ namespace TinkerGenie.API.Hubs
                 {
                     Response = "I understand this is urgent. Tell me exactly what's happening right now.",
                     IsError = true,
-                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString()
                 };
             }
         }
@@ -360,7 +360,7 @@ namespace TinkerGenie.API.Hubs
                 return new ChatResponse
                 {
                     Response = "I'm here to help with your leadership challenges. What would you like to work on?",
-                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString()
                 };
             }
         }
@@ -406,7 +406,7 @@ namespace TinkerGenie.API.Hubs
                 return new ChatResponse
                 {
                     Response = aiResponse,
-                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString()
                 };
             }
             catch (Exception ex)
@@ -416,7 +416,7 @@ namespace TinkerGenie.API.Hubs
                 {
                     Response = "Let me help you with that. What specific challenge are you facing?",
                     IsError = true,
-                    ConversationId = conversationId ?? Guid.NewGuid().ToString()
+                    ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString()
                 };
             }
         }
@@ -553,7 +553,8 @@ namespace TinkerGenie.API.Hubs
             prompt.AppendLine("Response requirements:");
             prompt.AppendLine("- Give the FIRST step they must take RIGHT NOW");
             prompt.AppendLine("- Be ultra-specific and actionable");
-            prompt.AppendLine("- Maximum 2 sentences for the action");
+            prompt.AppendLine("- BALANCED style: EXACTLY 2-3 sentences MAXIMUM (user selected balanced)");
+            prompt.AppendLine("- Example: 'Do X right now. This helps because Y. Can you start immediately?'");
             prompt.AppendLine("- Then ask: 'Can you do this in the next hour?'");
             prompt.AppendLine();
             
