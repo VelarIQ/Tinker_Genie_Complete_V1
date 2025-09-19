@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticating...</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #FFD700;
+            font-family: -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .loader {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <h2>Authenticating...</h2>
+    </div>
+    <script>
+        // Extract token from URL hash
+        const params = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = params.get('access_token');
+        
+        if (accessToken) {
+            // Store the token
+            localStorage.setItem('token', accessToken);
+            localStorage.setItem('userId', '1');
+            localStorage.setItem('userName', 'Leader');
+            localStorage.setItem('hasGoogleAuth', 'true');
+            
+            // Redirect based on onboarding status
+            if (!localStorage.getItem('hasCompletedOnboarding')) {
+                window.location.href = '/onboarding.html';
+            } else {
+                window.location.href = '/chat.html';
+            }
+        } else {
+            // No token - redirect to login
+            alert('Authentication failed');
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>

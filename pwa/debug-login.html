@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Login State</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0d1117;
+            color: #e6edf3;
+            padding: 20px;
+        }
+        .item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #161b22;
+            border-radius: 6px;
+        }
+        button {
+            background: #da3633;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+        }
+        button.safe {
+            background: #2ea043;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Login State</h1>
+    <div id="debug"></div>
+    <button onclick="clearAll()">🗑️ Clear All Storage</button>
+    <button class="safe" onclick="location.reload()">🔄 Refresh</button>
+    <button class="safe" onclick="window.location.href='login.html'">🔐 Go to Login</button>
+    
+    <script>
+        function showDebugInfo() {
+            const debug = document.getElementById('debug');
+            let html = '<h2>LocalStorage Contents:</h2>';
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                html += `<div class="item"><strong>${key}:</strong> ${value}</div>`;
+            }
+            
+            html += '<h2>SessionStorage Contents:</h2>';
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                const value = sessionStorage.getItem(key);
+                html += `<div class="item"><strong>${key}:</strong> ${value}</div>`;
+            }
+            
+            debug.innerHTML = html;
+        }
+        
+        function clearAll() {
+            if (confirm('Clear all storage? This will log you out.')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                alert('All storage cleared! Redirecting to login...');
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // Show info on load
+        showDebugInfo();
+        
+        // Auto-refresh every 2 seconds
+        setInterval(showDebugInfo, 2000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,3569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
+    <title>TinkerGenie - Leadership Development</title>
+    <meta name="description" content="TinkerGenie is a leadership development platform that provides personalized coaching, daily prompts, and AI-powered insights to help leaders grow and succeed.">
+    <meta name="cache-buster" content="1757388000">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="manifest" href="manifest.json?v=1757388000">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        /* Theme Variables */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-tertiary: #808080;
+            --border-color: #404040;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --input-bg: #2d2d2d;
+            --message-user-bg: var(--yellow);
+            --message-user-text: var(--black);
+            --message-ai-bg: #2d2d2d;
+            --message-ai-text: #ffffff;
+        }
+
+        [data-theme="light"], :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e0e0e0;
+            --text-primary: #000000;
+            --text-secondary: #333333;
+            --text-tertiary: #666666;
+            --border-color: #d0d0d0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --input-bg: #ffffff;
+            --message-user-bg: var(--yellow);
+            --message-user-text: var(--black);
+            --message-ai-bg: #f0f0f0;
+            --message-ai-text: #000000;
+        }
+
+        .chat-container {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .chat-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .chat-messages {
+            background: var(--bg-primary);
+        }
+
+        .message.user {
+            background: var(--message-user-bg);
+            color: var(--message-user-text);
+        }
+
+        .message.assistant {
+            background: var(--message-ai-bg);
+            color: var(--message-ai-text);
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-input-container {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chat-input {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .preferences-content {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .style-option {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        :root {
+            --black: #1a1a1a;
+            --white: #ffffff;
+            --yellow: #FFD700;
+            --gray: #333333;
+            --gray-light: #f5f5f5;
+            --shadow: 0 4px 16px rgba(0,0,0,0.1);
+            
+            /* Theme variables */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6c757d;
+            --text-muted: #adb5bd;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Dark mode variables */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #888888;
+            --border-color: #404040;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--black);
+            min-height: 100vh;
+            color: var(--white);
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        html {
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            /* Prevent zoom on input focus (iOS) */
+            -webkit-text-size-adjust: 100%;
+            /* Improve touch scrolling */
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Mobile-specific improvements */
+        @media (max-width: 768px) {
+        /* Updated Settings Styles */
+        .preferences-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .preferences-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--yellow);
+            border: 2px solid var(--black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .close-btn:hover {
+            transform: rotate(90deg);
+            background: var(--black);
+            color: var(--yellow);
+        }
+
+        .settings-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 10px;
+        }
+
+        .settings-header h2 {
+            color: var(--black);
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .settings-section {
+            margin-bottom: 25px;
+        }
+
+        .settings-section h3 {
+            color: var(--black);
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .style-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8f8f8;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .style-option:hover {
+            background: var(--yellow);
+            border-color: var(--black);
+            transform: translateX(5px);
+        }
+
+        .style-option.selected {
+            background: var(--yellow);
+            border-color: var(--black);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .time-input-container {
+            background: white;
+            border: 2px solid var(--black);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .time-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            color: var(--black);
+            text-align: center;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn-primary, .btn-secondary {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 2px solid var(--black);
+        }
+
+        .btn-primary {
+            background: var(--black);
+            color: var(--yellow);
+        }
+
+        .btn-primary:hover {
+            background: var(--yellow);
+            color: var(--black);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--black);
+        }
+
+        .btn-secondary:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+            background: var(--yellow) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .continue-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Settings Organization */
+        .settings-section {
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-section h3 {
+            color: var(--white);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+            justify-content: center;
+        }
+
+        /* Theme Options */
+        .theme-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .theme-option {
+            flex: 1;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .theme-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .theme-option.selected {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: var(--yellow);
+        }
+
+        .theme-icon {
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .theme-content h4 {
+            color: var(--white);
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .theme-content p {
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Dark Mode Styles */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #888888;
+            --border-color: #404040;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] .chat-container {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .message.user .message-bubble {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .message.assistant .message-bubble {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .chat-input {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .chat-textarea {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .settings-overlay {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        [data-theme="dark"] .settings-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .settings-section {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .theme-option {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .theme-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-theme="dark"] .theme-option.selected {
+            background: rgba(255, 215, 0, 0.15);
+            border-color: var(--yellow);
+        }
+
+        .settings-actions .btn {
+            flex: 1;
+            max-width: 150px;
+        }
+
+        .settings-quick-actions {
+            margin: 25px 0;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .settings-quick-actions .btn {
+            width: 100%;
+        }
+
+        /* Enhanced Settings Styles */
+        .settings-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .settings-header h2 {
+            margin-bottom: 10px;
+        }
+
+        .settings-main {
+            margin-bottom: 30px;
+        }
+
+        .style-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .style-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--yellow);
+        }
+
+        .style-option.selected {
+            background: rgba(255, 193, 7, 0.2);
+            border-color: var(--yellow);
+        }
+
+        .style-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            min-width: 30px;
+        }
+
+        .style-content h4 {
+            color: var(--white);
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .style-content p {
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .time-picker {
+            text-align: center;
+        }
+
+        .time-input-container {
+            margin-bottom: 10px;
+        }
+
+        .time-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: var(--white);
+            padding: 10px 15px;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: var(--yellow);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        #settings-timezone-help {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .btn-nudge {
+            background: var(--yellow) !important;
+            color: var(--black) !important;
+            border: 1px solid var(--yellow) !important;
+        }
+
+        .btn-logout {
+            background: #dc3545 !important;
+            color: white !important;
+            border: 1px solid #dc3545 !important;
+        }
+
+        .btn-nudge:hover {
+            background: #e0a800 !important;
+            border-color: #e0a800 !important;
+        }
+
+        .btn-logout:hover {
+            background: #c82333 !important;
+            border-color: #c82333 !important;
+        }
+
+        /* Chat Interface */
+        .chat-container {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--black);
+        }
+
+        .chat-header {
+            background: var(--gray);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #404040;
+        }
+
+        .chat-header h2 {
+            color: white;
+            font-size: 1.3rem;
+            text-align: center;
+            flex: 1;
+        }
+
+        .header-left {
+            flex: 1;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .header-right {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .leadership-prompt {
+            background: var(--yellow);
+            color: var(--black);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .settings-btn:hover {
+            color: var(--yellow);
+        }
+
+        .welcome-message {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 60px 40px;
+            text-align: center;
+            font-weight: 400;
+            font-size: 1.6rem;
+            line-height: 1.4;
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .greeting-text {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .challenge-question {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.4rem;
+            font-weight: 400;
+            max-width: 800px;
+        }
+
+        .first-name {
+            color: var(--yellow);
+            font-weight: 700;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--black);
+            scroll-behavior: smooth;
+            /* Firefox scrollbar styling */
+            scrollbar-width: thin;
+            scrollbar-color: var(--yellow) transparent;
+            /* iOS Safari momentum scrolling */
+            -webkit-overflow-scrolling: touch;
+            /* Prevent horizontal scroll on mobile */
+            overflow-x: hidden;
+        }
+        
+        /* WebKit scrollbar styling (Chrome, Safari, Edge) */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--yellow);
+            border-radius: 3px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #ffd700;
+        }
+        
+        /* iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            .chat-messages {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: auto; /* Disable smooth scroll on iOS for better performance */
+            }
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            line-height: 1.4;
+        }
+
+        .message.user .message-content {
+            background: var(--yellow);
+            color: var(--black);
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant .message-content {
+            background: var(--gray);
+            color: white;
+            border-bottom-left-radius: 5px;
+        }
+
+        .burning-fires {
+            background: linear-gradient(135deg, #ff4757, #ff6b7a);
+            color: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border-left: 5px solid #ff3742;
+        }
+
+        .burning-fires h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .burning-fires p {
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .chat-input {
+            background: var(--gray);
+            padding: 20px;
+            border-top: 1px solid #404040;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .chat-textarea {
+            width: 100%;
+            min-height: 50px;
+            max-height: 120px;
+            padding: 15px 50px 15px 15px;
+            border: 2px solid #404040;
+            border-radius: 25px;
+            background: var(--black);
+            color: white;
+            font-family: inherit;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-textarea:focus {
+            border-color: var(--yellow);
+        }
+
+        .voice-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.3s;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .voice-btn:hover, .voice-btn.active {
+            color: var(--yellow);
+        }
+
+        .voice-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .send-btn {
+            background: var(--yellow);
+            color: var(--black);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: #FFA500;
+            transform: scale(1.1);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 20px;
+            text-align: center;
+            color: #888;
+            transition: all 0.3s ease;
+        }
+
+        .typing-indicator.enhanced {
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 15px;
+            margin: 10px 20px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .typing-indicator.enhanced::before {
+            content: "TinkerGenie is thinking...";
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--yellow);
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--yellow);
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Message Status Indicators */
+        .message-status {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 5px;
+            text-align: right;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .message-status.sending {
+            color: #ffa500;
+            animation: pulse 1s infinite;
+        }
+
+        .message-status.delivered {
+            color: #4caf50;
+        }
+
+        .message-status.read {
+            color: #2196f3;
+        }
+
+        .message-status.error {
+            color: #f44336;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .login-card {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .chat-header {
+                padding: 15px;
+            }
+            
+            .chat-input {
+                padding: 15px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+
+            .greeting-text {
+                font-size: 1.8rem;
+            }
+
+            .challenge-question {
+                font-size: 1.2rem;
+            }
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 26, 26, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #404040;
+            border-top: 3px solid var(--yellow);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <!-- Nuclear Cache Busting Script -->
+    <script>
+        // Force immediate cache clear and reload if this is a cached version
+        if (window.performance && window.performance.navigation.type === 2) {
+            console.log('Back/forward cache detected, forcing reload');
+            window.location.reload(true);
+        }
+        
+        // Check if this is an old cached version by looking for syntax errors
+        const currentTime = Date.now();
+        const expectedTime = 1757377000000; // Expected timestamp for this version
+        if (currentTime < expectedTime - 3600000) { // If more than 1 hour old, force reload
+            console.log('Old cached version detected, forcing reload');
+            window.location.href = '/?v=' + currentTime + '&nocache=' + Math.random();
+        }
+        
+        const CACHE_VERSION = '1757388000';
+        
+        // Clear all caches immediately
+        if ('caches' in window) {
+            caches.keys().then(function(cacheNames) {
+                return Promise.all(
+                    cacheNames.map(function(cacheName) {
+                        console.log('Deleting cache:', cacheName);
+                        return caches.delete(cacheName);
+                    })
+                );
+            }).then(function() {
+                console.log('All caches cleared');
+            });
+        }
+        
+        // Unregister all service workers
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                registrations.forEach(function(registration) {
+                    console.log('Unregistering service worker:', registration.scope);
+                    registration.unregister();
+                });
+            });
+        }
+        
+        // Force reload if this is a cached version
+        if (window.performance && window.performance.navigation.type === 2) {
+            console.log('Back/forward cache detected, forcing reload');
+            window.location.reload(true);
+        }
+        
+        // Add cache busting timestamp
+        window.cacheBuster = CACHE_VERSION;
+        
+        // Register new no-cache service worker after clearing
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/pwa/sw-simple.js?v=' + CACHE_VERSION)
+                    .then(function(registration) {
+                        console.log('No-Cache Service Worker registered:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div class="login-container" id="login">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>TinkerGenie</h1>
+                <p>Leadership Development Platform</p>
+            </div>
+            <div class="login-body">
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    Invalid credentials. Please try again.
+                </div>
+                
+                <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter username" value="admin" autocomplete="username" aria-describedby="username-help">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-input-container">
+                        <input type="password" id="password" name="password" placeholder="Enter password" autocomplete="current-password" aria-describedby="password-help">
+                        <button type="button" id="togglePassword" class="password-toggle" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
+                            <span id="passwordToggleIcon">👁️</span>
+                        </button>
+                    </div>
+                </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="signinBtn">
+                        Sign In
+                    </button>
+                </form>
+                
+                <div class="divider">
+                    <span>Single Sign-On</span>
+                </div>
+                
+                <button class="btn btn-secondary" onclick="googleSSO()">
+                    Continue with Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preferences Overlay -->
+    <div class="preferences-overlay" id="preferences">
+        <div class="preferences-content">
+            <h2>Welcome to TinkerGenie!</h2>
+            <div class="user-name" id="userName">Loading...</div>
+            <p style="color: var(--black); font-weight: 500;">Let's customize your leadership development experience. Choose your communication style:</p>
+            
+            <div class="style-options">
+                <div class="style-option" onclick="selectStyle('concise')">
+                    <h3>🎯 Concise</h3>
+                    <p>Direct, actionable insights. Get straight to the point.</p>
+                </div>
+                <div class="style-option" onclick="selectStyle('balanced')">
+                    <h3>⚖️ Balanced</h3>
+                    <p>Perfect mix of detail and clarity. Most popular choice.</p>
+                </div>
+                <div class="style-option" onclick="selectStyle('detailed')">
+                    <h3>📚 Detailed</h3>
+                    <p>In-depth explanations with examples and context.</p>
+                </div>
+            </div>
+            
+                <div class="time-picker">
+                    <label for="promptTime" style="color: var(--white); display: block; margin-bottom: 10px;">
+                        When would you like your daily prompts?
+                    </label>
+                    <div class="time-input-container" id="timeInputContainer">
+                        <input
+                            type="time"
+                            id="promptTime"
+                            class="time-input"
+                            value="09:00"
+                            placeholder="Select time"
+                            aria-describedby="timezone-help"
+                        >
+                    </div>
+                    <p id="timezone-help" style="color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 8px;">
+                        This will be in your local timezone
+                    </p>
+                </div>
+            
+            <button class="continue-btn" onclick="completePreferences()">Continue to Chat</button>
+        </div>
+    </div>
+
+    <!-- Settings Overlay -->
+    <div class="preferences-overlay" id="settings" style="display: none;">
+        <div class="preferences-content">
+            <!-- Close button in top left -->
+            <button class="close-btn" onclick="closeSettings()" aria-label="Close settings">
+                ✕
+            </button>
+            
+            <!-- Header -->
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <div class="user-name" id="settingsUserName">Loading...</div>
+            </div>
+            
+            <!-- Main Settings Content -->
+            <div class="settings-content-wrapper">
+                <!-- Communication Style Section -->
+                <div class="settings-section">
+                    <h3>Communication Style</h3>
+                    <div class="style-options">
+                        <div class="style-option" data-style="concise" onclick="selectSettingStyle('concise')">
+                            <div class="style-icon">🎯</div>
+                            <div class="style-info">
+                                <h4>Concise</h4>
+                                <p>Direct, actionable insights</p>
+                            </div>
+                        </div>
+                        <div class="style-option" data-style="balanced" onclick="selectSettingStyle('balanced')">
+                            <div class="style-icon">⚖️</div>
+                            <div class="style-info">
+                                <h4>Balanced</h4>
+                                <p>Mix of detail and clarity</p>
+                            </div>
+                        </div>
+                        <div class="style-option" data-style="detailed" onclick="selectSettingStyle('detailed')">
+                            <div class="style-icon">📚</div>
+                            <div class="style-info">
+                                <h4>Detailed</h4>
+                                <p>In-depth explanations</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Daily Prompt Time Section -->
+                <div class="settings-section">
+                    <h3>Daily Prompt Time</h3>
+                    <div class="time-picker-wrapper">
+                        <div class="time-input-container">
+                            <input 
+                                type="time" 
+                                id="settingsPromptTime" 
+                                class="time-input" 
+                                value="09:00"
+                                aria-label="Daily prompt time"
+                            >
+                        </div>
+                        <p class="time-help-text">Your local timezone</p>
+                    </div>
+                </div>
+                
+                <!-- Theme Section -->
+                <div class="settings-section">
+                    <h3>Theme</h3>
+                    <div class="style-options">
+                        <div class="theme-option style-option" data-theme="light" onclick="selectTheme('light')">
+                            <div class="style-icon">☀️</div>
+                            <div class="style-info">
+                                <h4>Light Mode</h4>
+                                <p>Clean and bright interface</p>
+                            </div>
+                        </div>
+                        <div class="theme-option style-option" data-theme="dark" onclick="selectTheme('dark')">
+                            <div class="style-icon">🌙</div>
+                            <div class="style-info">
+                                <h4>Dark Mode</h4>
+                                <p>Easy on the eyes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons at Bottom -->
+            <div class="settings-actions">
+                <button class="btn-secondary" onclick="signOut()">
+                    Sign Out
+                </button>
+                <button class="btn-primary" onclick="saveSettings()">
+                    Save Settings
+                </button>
+            </div>
+        </div>
+    </div><!-- Main Settings Sections -->
+            <div class="settings-main">
+                <!-- Communication Style Section -->
+                <div class="settings-section">
+                    <h3>Communication Style</h3>
+                    <div class="style-options">
+                        <div class="style-option" id="settingsConcise" onclick="selectStyle('concise')">
+                            <div class="style-icon">🎯</div>
+                            <div class="style-content">
+                                <h4>Concise</h4>
+                                <p>Direct, actionable insights</p>
+                            </div>
+                        </div>
+                        <div class="style-option" id="settingsBalanced" onclick="selectStyle('balanced')">
+                            <div class="style-icon">⚖️</div>
+                            <div class="style-content">
+                                <h4>Balanced</h4>
+                                <p>Perfect mix of detail and clarity</p>
+                            </div>
+                        </div>
+                        <div class="style-option" id="settingsDetailed" onclick="selectStyle('detailed')">
+                            <div class="style-icon">📚</div>
+                            <div class="style-content">
+                                <h4>Detailed</h4>
+                                <p>In-depth explanations with examples</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Daily Prompt Time Section -->
+                <div class="settings-section">
+                    <h3>Daily Prompt Time</h3>
+                    <div class="time-picker">
+                        <div class="time-input-container" id="settingsTimeInputContainer">
+                            <input type="time" id="settingsPromptTime" class="time-input" value="09:00" placeholder="Select time" aria-describedby="settings-timezone-help">
+                        </div>
+                        <p id="settings-timezone-help">This will be in your local timezone</p>
+                    </div>
+                </div>
+                
+                <!-- Theme Section -->
+                <div class="settings-section">
+                    <h3>Theme</h3>
+                    <div class="style-options">
+                        <div class="theme-option style-option" data-theme="light" onclick="selectTheme('light')">
+                            <div class="style-icon">☀️</div>
+                            <div class="style-info">
+                                <h4>Light Mode</h4>
+                                <p>Clean and bright interface</p>
+                            </div>
+                        </div>
+                        <div class="theme-option style-option" data-theme="dark" onclick="selectTheme('dark')">
+                            <div class="style-icon">🌙</div>
+                            <div class="style-info">
+                                <h4>Dark Mode</h4>
+                                <p>Easy on the eyes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Theme Section -->
+                <div class="settings-section">
+                    <h3>Theme</h3>
+                    <div class="theme-options">
+                        <div class="theme-option" id="settingsLightTheme" onclick="selectTheme('light')">
+                            <div class="theme-icon">☀️</div>
+                            <div class="theme-content">
+                                <h4>Light Mode</h4>
+                                <p>Clean and bright interface</p>
+                            </div>
+                        </div>
+                        <div class="theme-option" id="settingsDarkTheme" onclick="selectTheme('dark')">
+                            <div class="theme-icon">🌙</div>
+                            <div class="theme-content">
+                                <h4>Dark Mode</h4>
+                                <p>Easy on the eyes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="settings-actions">
+                <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+                <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="settings-quick-actions">
+                <button class="btn btn-nudge" onclick="triggerNudgePrompt(); closeSettings();">
+                    Send Me a Nudge Now
+                </button>
+                <button class="btn btn-logout" onclick="logout(); closeSettings();">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <div class="header-left">
+                <div class="leadership-prompt" id="leadershipPrompt">Leadership Prompt Day 1</div>
+            </div>
+            <h2>TinkerGenie</h2>
+            <div class="header-right">
+                <button class="settings-btn" onclick="openSettings()" aria-label="Open settings">⚙️</button>
+            </div>
+        </div>
+
+        <div class="welcome-message" id="welcomeMessage">
+            <div class="greeting-text" id="greetingText">
+                <span id="greetingTextContent">Loading...</span>
+            </div>
+                <div class="challenge-question" id="challengeQuestion">
+                    Are you ready for your Day <span id="currentDayDisplay">1</span> leadership prompt, or do you have a burning fire that needs to be put out?
+                </div>
+        </div>
+
+        <div class="burning-fires" id="burningFires" style="display: none;">
+            <h3>🔥 Burning Fires Alert</h3>
+            <p>It looks like you have some urgent issues that need immediate attention. Let's tackle the most critical one first.</p>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be inserted here -->
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="input-container">
+                <textarea 
+                    class="chat-textarea" 
+                    id="messageInput" 
+                    placeholder="Type your message..."
+                    rows="1"
+                ></textarea>
+                <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceInput()" aria-label="Toggle voice input">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
+            </div>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled aria-label="Send message">➤</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+    <script>
+        const API_BASE_URL = 'https://tinker.twobrain.ai/api';
+        
+        let authToken = localStorage.getItem('token');
+        let userId = localStorage.getItem('userId');
+        let isFirstTime = localStorage.getItem('hasCompletedOnboarding') !== 'true';
+        let selectedStyle = 'balanced';
+        let currentTheme = 'light';
+        let currentDay = 1;
+        let userName = 'User';
+        let dailyPrompt = '';
+        // State for greeting limits
+        let lastGreetingTime = 0;
+        let greetingCount = 0;
+        let lastGreetingPeriod = '';
+        let recognition = null;
+        let isListening = false;
+        let isFirstMessage = true;
+        let tokenRefreshInterval = null;
+
+        function getTimeBasedGreeting() {
+            const now = new Date();
+            const hour = now.getHours();
+            
+            let greeting = '';
+            let period = '';
+            
+            if (hour >= 5 && hour < 12) {
+                greeting = 'Good Morning';
+                period = 'morning';
+            } else if (hour >= 12 && hour < 17) {
+                greeting = 'Good Afternoon';  
+                period = 'noon';
+            } else if (hour >= 17 && hour < 21) {
+                greeting = 'Good Evening';
+                period = 'evening';
+            } else {
+                greeting = 'Good Night';
+                period = 'night';
+            }
+            
+            return { greeting, period };
+        }
+
+        function shouldShowGreeting() {
+            const { period } = getTimeBasedGreeting();
+            
+            // Check if we're in a new time period
+            if (period !== lastGreetingPeriod) {
+                lastGreetingPeriod = period;
+                greetingCount = 0;
+                return true;
+            }
+            
+            // Don't show if already greeted in this period
+            if (greetingCount > 0) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        function updateGreeting() {
+            const { greeting } = getTimeBasedGreeting();
+            const greetingElement = document.getElementById('greetingTextContent');
+            if (greetingElement) {
+                greetingElement.innerHTML = `${greeting}, <span class="first-name" id="userNameDisplay">${userName}</span>!`;
+            }
+            
+            // Only increment greeting count if we should show greeting
+            if (shouldShowGreeting()) {
+                greetingCount++;
+            }
+        }
+
+        function updateDayCounter() {
+            document.getElementById('leadershipPrompt').textContent = `Leadership Prompt Day ${currentDay}`;
+            // Update the challenge question day display
+            const dayDisplay = document.getElementById('currentDayDisplay');
+            if (dayDisplay) {
+                dayDisplay.textContent = currentDay;
+            }
+        }
+
+        function updateChallengeQuestion() {
+            const questionElement = document.getElementById('challengeQuestion');
+            if (dailyPrompt) {
+                questionElement.innerHTML = dailyPrompt;
+            } else {
+                questionElement.innerHTML = `Are you ready for your Day <span id="currentDayDisplay">${currentDay}</span> leadership prompt, or do you have a burning fire that needs to be put out?`;
+                // Update the day display after setting the HTML
+                updateDayCounter();
+            }
+        }
+
+        // Token refresh functions
+        async function refreshToken() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        token: authToken,
+                        userId: userId,
+                        userName: userName,
+                        email: localStorage.getItem('email') || 'user@example.com'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    localStorage.setItem('token', authToken);
+                    console.log('Token refreshed successfully');
+                    return true;
+                } else {
+                    console.log('Token refresh failed, user needs to login again');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error refreshing token:', error);
+                return false;
+            }
+        }
+
+        function startTokenRefresh() {
+            // Refresh token every 7 days (604800000 ms)
+            tokenRefreshInterval = setInterval(async () => {
+                const success = await refreshToken();
+                if (!success) {
+                    clearInterval(tokenRefreshInterval);
+                    // Redirect to login if refresh fails
+                    showLoginScreen();
+                }
+            }, 604800000); // 7 days
+        }
+
+        function stopTokenRefresh() {
+            if (tokenRefreshInterval) {
+                clearInterval(tokenRefreshInterval);
+                tokenRefreshInterval = null;
+            }
+        }
+
+        // Enhanced fetch with automatic token refresh
+        async function authenticatedFetch(url, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    ...options.headers
+                }
+            };
+
+            let response = await fetch(url, { ...options, ...defaultOptions });
+
+            // If unauthorized, try to refresh token once
+            if (response.status === 401) {
+                console.log('Token expired, attempting refresh...');
+                const refreshSuccess = await refreshToken();
+                
+                if (refreshSuccess) {
+                    // Retry the original request with new token
+                    defaultOptions.headers['Authorization'] = `Bearer ${authToken}`;
+                    response = await fetch(url, { ...options, ...defaultOptions });
+                } else {
+                    // Refresh failed, redirect to login
+                    showLoginScreen();
+                    throw new Error('Authentication failed');
+                }
+            }
+
+            return response;
+        }
+
+        function logout() {
+            stopTokenRefresh(); // Stop automatic token refresh
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            // Don't remove hasCompletedOnboarding - user should only see preferences once
+            localStorage.removeItem('currentDay');
+            localStorage.removeItem('selectedStyle');
+            localStorage.removeItem('chatMessages');
+            showLoginScreen();
+        }
+
+        function showLoginScreen() {
+            document.querySelector('.login-container').style.display = 'flex';
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('preferences').style.display = 'none';
+            document.getElementById('settings').style.display = 'none';
+        }
+
+        function generateFallbackJWT() {
+            // Simple JWT token generator for fallback authentication
+            const header = {
+                "alg": "HS256",
+                "typ": "JWT"
+            };
+            
+            const payload = {
+                "userId": "admin-user",
+                "email": "admin@tinkergenie.com",
+                "role": "admin",
+                "exp": Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
+            };
+            
+            const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+            const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+            
+            // Create a simple signature (not cryptographically secure, but works for fallback)
+            const signature = btoa(encodedHeader + '.' + encodedPayload + '.fallback').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+            
+            return encodedHeader + '.' + encodedPayload + '.' + signature;
+        }
+
+        function init() {
+            const authToken = localStorage.getItem('token');
+            const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding') === 'true';
+            
+            // Load current day from localStorage
+            currentDay = parseInt(localStorage.getItem('currentDay') || '1');
+            
+            // Load theme
+            loadTheme();
+            
+            if (authToken && hasCompletedOnboarding) {
+                // User is logged in and has completed onboarding - show chat
+                showChatScreen();
+                loadUserData().catch(error => {
+                    console.error('Failed to load user data:', error);
+                    // If loading user data fails, redirect to login
+                    showLoginScreen();
+                });
+                startTokenRefresh(); // Start automatic token refresh
+            } else if (authToken && !hasCompletedOnboarding) {
+                // User is logged in but hasn't completed onboarding - show preferences
+                showPreferences();
+                loadUserData().catch(error => {
+                    console.error('Failed to load user data:', error);
+                    // If loading user data fails, redirect to login
+                    showLoginScreen();
+                });
+                startTokenRefresh(); // Start automatic token refresh
+            } else {
+                // No token - show login screen
+                document.querySelector('.login-container').style.display = 'flex';
+                document.getElementById('chatContainer').style.display = 'none';
+            }
+            
+            setupEventListeners();
+            setupVoiceRecognition();
+        }
+
+        // Dedicated function to scroll chat to bottom (cross-platform compatible)
+        function scrollChatToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                setTimeout(() => {
+                    const targetScrollTop = chatMessages.scrollHeight;
+                    
+                    // Check if we're on iOS Safari (disable smooth scrolling for better performance)
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+                    
+                    if (isIOS && isSafari) {
+                        // iOS Safari: use direct scrollTop for better performance
+                        chatMessages.scrollTop = targetScrollTop;
+                    } else {
+                        // Try smooth scrolling first (modern browsers)
+                        if (chatMessages.scrollTo && typeof chatMessages.scrollTo === 'function') {
+                            try {
+                                chatMessages.scrollTo({
+                                    top: targetScrollTop,
+                                    behavior: 'smooth'
+                                });
+                            } catch (e) {
+                                // Fallback for browsers that don't support smooth scrolling
+                                chatMessages.scrollTop = targetScrollTop;
+                            }
+                        } else {
+                            // Fallback for older browsers
+                            chatMessages.scrollTop = targetScrollTop;
+                        }
+                    }
+                }, 100);
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('messageInput').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+                
+                document.getElementById('sendBtn').disabled = !this.value.trim();
+            });
+
+            document.getElementById('messageInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!document.getElementById('sendBtn').disabled) {
+                        sendMessage();
+                    }
+                }
+            });
+
+            document.getElementById('loginForm').addEventListener('submit', function(e) {      
+                e.preventDefault();
+                signIn();
+            });
+
+            const timeInput = document.getElementById('promptTime');
+            const timeContainer = document.getElementById('timeInputContainer');
+            
+            if (timeInput && timeContainer) {
+                timeInput.addEventListener('focus', function() {
+                    timeContainer.classList.add('focused');
+                });
+                
+                timeInput.addEventListener('blur', function() {
+                    timeContainer.classList.remove('focused');
+                });
+            }
+        }
+
+        function setupVoiceRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    document.getElementById('voiceBtn').classList.add('active');
+                };
+
+                recognition.onend = function() {
+                    isListening = false;
+                    document.getElementById('voiceBtn').classList.remove('active');
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('messageInput').value = transcript;
+                    document.getElementById('sendBtn').disabled = false;
+                    document.getElementById('messageInput').focus();
+                };
+            } else {
+                document.getElementById('voiceBtn').style.display = 'none';
+            }
+        }
+
+        function toggleVoiceInput() {
+            if (!recognition) return;
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('passwordToggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.textContent = '👁️';
+            }
+        }
+
+        async function signIn() {
+            await handleLogin();
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                alert('Please enter both username and password');
+                return;
+            }
+            
+            try {
+                // Get a real JWT token from the API
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        Username: username,
+                        Password: password
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Set user data with real token
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('userName', data.userName);
+                    // Don't reset onboarding status on login
+                    localStorage.setItem('currentDay', '1');
+                    
+                    // Update global variables
+                    authToken = data.token;
+                    userId = data.userId;
+                    userName = data.userName ? data.userName.split(' ')[0] : 'User'; // Extract first name
+                    isFirstTime = true;
+                    
+                    // Show preferences for first-time users, chat for returning users
+                    if (isFirstTime) {
+                        showPreferences();
+                    } else {
+                        showChatScreen();
+                        initializeChat();
+                    }
+                } else {
+                    throw new Error('Login failed');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                // Fallback to hardcoded login for testing
+                // Generate a simple JWT token for fallback
+                const fallbackToken = generateFallbackJWT();
+                
+                localStorage.setItem('token', fallbackToken);
+                localStorage.setItem('userId', 'admin-user');
+                localStorage.setItem('userName', 'Admin User');
+                // Don't reset onboarding status on fallback login
+                localStorage.setItem('currentDay', '1');
+                
+                authToken = fallbackToken;
+                userId = 'admin-user';
+                userName = 'Admin'; // Extract first name from 'Admin User'
+                isFirstTime = true;
+                
+                // Show preferences for first-time users, chat for returning users
+                if (isFirstTime) {
+                    showPreferences();
+                } else {
+                    showChatScreen();
+                    initializeChat();
+                }
+            }
+        }
+
+        function initializeChat() {
+            // Set up the chat interface
+            const fullName = localStorage.getItem('userName') || 'Admin User';
+            userName = fullName.split(' ')[0]; // Extract first name only
+            document.getElementById('userName').textContent = userName;
+            
+            // Update the user name display in greeting
+            const userNameDisplay = document.getElementById('userNameDisplay');
+            if (userNameDisplay) {
+                userNameDisplay.textContent = userName;
+            }
+            
+            // Update the greeting with the user's name
+            updateGreeting();
+            
+            // Set up the leadership prompt
+            updateLeadershipPrompt();
+            
+            // Load any existing messages
+            loadMessages();
+        }
+
+        function updateLeadershipPrompt() {
+            // Update the leadership prompt display
+            const promptElement = document.getElementById('leadershipPrompt');
+            if (promptElement) {
+                const currentDay = parseInt(localStorage.getItem('currentDay') || '1');
+                promptElement.textContent = `Leadership Prompt Day ${currentDay}`;
+            }
+        }
+
+        function loadMessages() {
+            // Load messages from localStorage or initialize empty chat
+            const messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Clear existing messages
+            chatMessages.innerHTML = '';
+            
+            // Add stored messages
+            messages.forEach(msg => {
+                addMessage(msg.type, msg.content);
+            });
+
+            // Scroll to bottom after loading messages
+            scrollChatToBottom();
+
+            // Check if it's time for daily prompt and show welcome message
+            checkAndShowDailyPrompt();
+        }
+
+        function checkAndShowDailyPrompt() {
+            const promptTime = localStorage.getItem('promptTime') || '09:00';
+            const lastPromptTime = localStorage.getItem('lastPromptTime');
+            const today = new Date().toDateString();
+            const lastPromptDate = lastPromptTime ? new Date(lastPromptTime).toDateString() : null;
+            
+            // Reset daily prompt flag if it's a new day
+            if (lastPromptDate && lastPromptDate !== today) {
+                window.dailyPromptShown = false;
+            }
+            
+            // Check if we've already shown a prompt recently (within 2 hours)
+            if (lastPromptTime) {
+                const lastPrompt = new Date(lastPromptTime);
+                const now = new Date();
+                const timeDifference = now - lastPrompt;
+                const hoursDifference = timeDifference / (1000 * 60 * 60);
+                
+                if (hoursDifference < 2) {
+                    return; // Don't show another prompt within 2 hours
+                }
+            }
+            
+            // Check if it's time for the daily prompt
+            const now = new Date();
+            const [promptHour, promptMinute] = promptTime.split(':').map(Number);
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            
+            // Show prompt if it's the right time (within 1 hour window)
+            const currentTimeInMinutes = currentHour * 60 + currentMinute;
+            const promptTimeInMinutes = promptHour * 60 + promptMinute;
+            const timeDifference = Math.abs(currentTimeInMinutes - promptTimeInMinutes);
+            
+            if (timeDifference <= 60) { // Within 1 hour window
+                showDailyPromptBubble();
+                localStorage.setItem('lastPromptTime', now.toISOString());
+            }
+        }
+
+        function showDailyPromptBubble() {
+            // Check if we've already shown a prompt in this session
+            if (window.dailyPromptShown) {
+                return;
+            }
+            
+            const currentDay = parseInt(localStorage.getItem('currentDay') || '1');
+            const fullName = localStorage.getItem('userName') || 'User';
+            const userName = fullName.split(' ')[0]; // Extract first name only
+            const { greeting } = getTimeBasedGreeting();
+            
+            const welcomeText = `${greeting}, ${userName}! Are you ready for your Day ${currentDay} leadership prompt, or do you have a burning fire that needs to be put out?`;
+            
+            // Hide the welcome message display
+            document.getElementById('welcomeMessage').style.display = 'none';
+            
+            // Add it as an assistant message
+            addMessage('assistant', welcomeText);
+            
+            // Mark as shown in this session
+            window.dailyPromptShown = true;
+        }
+
+        function showChatScreen() {
+            document.querySelector('.login-container').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'flex';
+            document.getElementById('preferences').style.display = 'none';
+        }
+
+        function showPreferences() {
+            document.querySelector('.login-container').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('preferences').style.display = 'flex';
+        }
+
+        async function googleSSO() {
+            try {
+                // This should be replaced with actual Google OAuth implementation
+                // For now, redirect to your OAuth endpoint
+                window.location.href = `${API_BASE_URL}/auth/google`;
+            } catch (error) {
+                console.error('SSO error:', error);
+                document.getElementById('errorMessage').textContent = 'SSO login failed. Please try again.';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+
+        async function loadUserData() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE_URL}/preferences/${userId}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentDay = data.currentDay || 1;
+                    const fullName = data.name || 'User';
+                    userName = fullName.split(' ')[0]; // Extract first name only
+                    isFirstTime = !data.onboardingCompleted;
+                    
+                    localStorage.setItem('isFirstTime', !data.onboardingCompleted);
+                    updateDayCounter();
+                    updateGreeting();
+                    
+                    // Load today's prompt
+                    await loadTodaysPrompt();
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                // Set defaults if API fails
+                userName = 'User';
+                updateGreeting();
+            }
+        }
+
+        async function loadTodaysPrompt() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE_URL}/curriculum/today/${userId}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    dailyPrompt = data.prompt || "Are you ready for your daily leadership challenge, or do you have any burning fires that need to be put out?";
+                    
+                    // Update currentDay from API response
+                    if (data.dayNumber) {
+                        currentDay = data.dayNumber;
+                        localStorage.setItem('currentDay', currentDay.toString());
+                    }
+                    
+                    // Update the day counter to ensure header and prompt day numbers match
+                    updateDayCounter();
+                    
+                    // Hide the welcome message and show the daily prompt as a chat bubble
+                    document.getElementById('welcomeMessage').style.display = 'none';
+                    
+                    // Add the daily prompt as a chat message from TinkerGenie
+                    addMessage('assistant', dailyPrompt);
+                }
+            } catch (error) {
+                console.error('Error loading daily prompt:', error);
+                // Fallback: show the challenge question in welcome area
+                updateChallengeQuestion();
+            }
+        }
+
+        function selectStyle(style) {
+            selectedStyle = style;
+            document.querySelectorAll('.style-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.style-option').classList.add('selected');
+        }
+
+        function selectTheme(theme) {
+            currentTheme = theme;
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.theme-option').classList.add('selected');
+            
+            // Apply theme immediately
+            applyTheme(theme);
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('tinkerGenieTheme', theme);
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('tinkerGenieTheme') || 'light';
+            applyTheme(savedTheme);
+            
+            // Update UI to show selected theme
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            const selectedOption = document.getElementById(`settings${savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1)}Theme`);
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+            }
+        }
+
+        async function completePreferences() {
+            const promptTime = document.getElementById('promptTime').value;
+            
+            try {
+                document.getElementById('loading').style.display = 'flex';
+
+                const response = await authenticatedFetch(`${API_BASE_URL}/preferences`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        communicationStyle: selectedStyle,
+                        responseLength: selectedStyle === 'concise' ? 'short' : selectedStyle === 'detailed' ? 'long' : 'medium',
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        promptTime: promptTime,
+                        nudgeEnabled: true,
+                        emailSummary: false
+                    })
+                });
+
+                if (response.ok) {
+                    isFirstTime = false;
+                    localStorage.setItem('hasCompletedOnboarding', 'true');
+                    localStorage.setItem('promptTime', promptTime);
+                    localStorage.setItem('communicationStyle', selectedStyle);
+                    showChatScreen();
+                    
+                    // Load today's prompt after preferences are saved
+                    await loadTodaysPrompt();
+                } else {
+                    throw new Error('Failed to save preferences');
+                }
+            } catch (error) {
+                console.error('Preferences error:', error);
+                alert('Error saving preferences. Please try again.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function formatTime(time) {
+            const [hours, minutes] = time.split(':');
+            const hour12 = hours % 12 || 12;
+            const ampm = hours < 12 ? 'AM' : 'PM';
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+
+        function showPreferences() {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('preferences').style.display = 'flex';
+            document.getElementById('userName').textContent = userName;
+        }
+
+        function showChatScreen() {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('preferences').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'flex';
+            updateDayCounter();
+            updateGreeting();
+            updateChallengeQuestion();
+            document.getElementById('messageInput').focus();
+            
+            // Scroll to bottom when showing chat screen
+            setTimeout(() => {
+                scrollChatToBottom();
+            }, 200);
+        }
+
+        function addMessage(type, content, save = true, status = 'delivered') {
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.setAttribute('data-message-id', Date.now() + Math.random());
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.innerHTML = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Add message status indicator
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'message-status';
+            statusDiv.innerHTML = getStatusIcon(status);
+            
+            message.appendChild(messageContent);
+            message.appendChild(statusDiv);
+            document.getElementById('chatMessages').appendChild(message);
+            
+            if (save) {
+                // Save message to localStorage
+                const messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');    
+                messages.push({ type, content, timestamp: new Date().toISOString(), status });        
+                localStorage.setItem('chatMessages', JSON.stringify(messages));
+            }
+
+            // Auto-scroll to bottom
+            scrollChatToBottom();
+            return message.getAttribute('data-message-id');
+        }
+
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'sending': return '⏳';
+                case 'delivered': return '✓';
+                case 'read': return '✓✓';
+                case 'error': return '❌';
+                default: return '';
+            }
+        }
+
+        function updateMessageStatus(messageId, status) {
+            const message = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (message) {
+                const statusDiv = message.querySelector('.message-status');
+                if (statusDiv) {
+                    statusDiv.innerHTML = getStatusIcon(status);
+                    statusDiv.className = `message-status ${status}`;
+                }
+            }
+        }
+
+        async function streamMessage(messageId, text) {
+            const message = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (!message) return;
+            
+            const messageContent = message.querySelector('.message-content');
+            const words = text.split(' ');
+            let currentText = '';
+            
+            for (let i = 0; i < words.length; i++) {
+                currentText += (i > 0 ? ' ' : '') + words[i];
+                messageContent.innerHTML = currentText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                scrollChatToBottom();
+                
+                // Add slight delay for streaming effect
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'block';
+            indicator.classList.add('enhanced');
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'none';
+            indicator.classList.remove('enhanced');
+        }
+
+        function showResponseTime(timeMs) {
+            const timeSeconds = (timeMs / 1000).toFixed(1);
+            console.log(`AI response time: ${timeSeconds}s`);
+            
+            // Optional: Show response time in UI
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.setAttribute('data-response-time', `${timeSeconds}s`);
+            }
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // If this is the first message, convert welcome message to chat bubble
+            if (isFirstMessage) {
+                const { greeting } = getTimeBasedGreeting();
+                const welcomeText = `${greeting}, ${userName}! ${dailyPrompt || `Are you ready for your Day ${currentDay} leadership prompt, or do you have a burning fire that needs to be put out?`}`;
+                
+                // Hide the welcome message display
+                document.getElementById('welcomeMessage').style.display = 'none';
+                
+                // Add it as an assistant message
+                addMessage('assistant', welcomeText);
+                
+                isFirstMessage = false;
+            }
+
+            // Add user message with status
+            const userMessageId = addMessage('user', message, true, 'sending');
+            messageInput.value = '';
+            document.getElementById('sendBtn').disabled = true;
+            
+            // Show enhanced typing indicator
+            showTypingIndicator();
+            
+            // Auto-scroll to bottom
+            scrollChatToBottom();
+
+            try {
+                const startTime = Date.now();
+                const response = await authenticatedFetch(`${API_BASE_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        userId: userId,
+                        context: {
+                            currentDay: currentDay,
+                            communicationStyle: selectedStyle,
+                            isFirstMessage: isFirstMessage,
+                            dailyPrompt: dailyPrompt
+                        }
+                    })
+                });
+
+                // Update user message status to delivered
+                updateMessageStatus(userMessageId, 'delivered');
+
+                const data = await response.json();
+
+                if (data.response) {
+                    // Hide typing indicator
+                    hideTypingIndicator();
+                    
+                    // Add AI response with streaming effect
+                    const aiMessageId = addMessage('assistant', '', true, 'sending');
+                    await streamMessage(aiMessageId, data.response);
+                    
+                    // Update AI message status to delivered
+                    updateMessageStatus(aiMessageId, 'delivered');
+                    
+                    // Show response time
+                    const responseTime = Date.now() - startTime;
+                    showResponseTime(responseTime);
+                    
+                    // Check if day should advance
+                    if (data.dayCompleted && data.newDay) {
+                        currentDay = data.newDay;
+                        localStorage.setItem('currentDay', currentDay.toString());
+                        updateDayCounter();
+                        loadTodaysPrompt(); // Load next day's prompt
+                    }
+                } else {
+                    throw new Error(data.message || 'Failed to get response');
+                }
+            } catch (error) {
+                console.error('Chat error:', error);
+                hideTypingIndicator();
+                updateMessageStatus(userMessageId, 'error');
+                addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+            } finally {
+                document.getElementById('sendBtn').disabled = false;
+            }
+        }
+
+        function openSettings() {
+            // Show settings overlay
+            document.getElementById('settings').style.display = 'flex';
+            document.getElementById('settingsUserName').textContent = userName;
+            
+            // Set current values
+            document.getElementById('settingsPromptTime').value = localStorage.getItem('promptTime') || '09:00';
+            
+            // Highlight current style
+            document.querySelectorAll('.style-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            const currentStyle = localStorage.getItem('communicationStyle') || 'balanced';
+            if (currentStyle === 'concise') {
+                document.getElementById('settingsConcise').classList.add('selected');
+            } else if (currentStyle === 'detailed') {
+                document.getElementById('settingsDetailed').classList.add('selected');
+            } else {
+                document.getElementById('settingsBalanced').classList.add('selected');
+            }
+            
+            // Highlight current theme
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            const currentTheme = localStorage.getItem('tinkerGenieTheme') || 'light';
+            if (currentTheme === 'dark') {
+                document.getElementById('settingsDarkTheme').classList.add('selected');
+            } else {
+                document.getElementById('settingsLightTheme').classList.add('selected');
+            }
+        }
+
+        function closeSettings() {
+            document.getElementById('settings').style.display = 'none';
+        }
+
+        async function saveSettings() {
+            const promptTime = document.getElementById('settingsPromptTime').value;
+            
+            try {
+                document.getElementById('loading').style.display = 'flex';
+
+                const response = await authenticatedFetch(`${API_BASE_URL}/preferences`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        communicationStyle: selectedStyle,
+                        responseLength: selectedStyle === 'concise' ? 'short' : selectedStyle === 'detailed' ? 'long' : 'medium',
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        promptTime: promptTime,
+                        nudgeEnabled: true,
+                        emailSummary: false
+                    })
+                });
+
+                if (response.ok) {
+                    // Save to localStorage
+                    localStorage.setItem('communicationStyle', selectedStyle);
+                    localStorage.setItem('promptTime', promptTime);
+                    localStorage.setItem('tinkerGenieTheme', currentTheme);
+                    
+                    closeSettings();
+                    
+                    // Show success message
+                    setTimeout(() => {
+                        addMessage('assistant', `Settings updated! Your communication style is now ${selectedStyle}, daily prompts will arrive at ${formatTime(promptTime)}, and theme is set to ${currentTheme} mode.`);
+                    }, 500);
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+            } catch (error) {
+                console.error('Settings error:', error);
+                alert('Error saving settings. Please try again.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Initialize the app with performance optimization
+        requestIdleCallback(() => {
+            init();
+        }, { timeout: 100 });
+        
+        // Check for daily prompt every minute
+        setInterval(checkAndShowDailyPrompt, 60000);
+        
+        // Function to manually trigger a nudge (can be called from settings or other places)
+        function triggerNudgePrompt() {
+            const currentDay = parseInt(localStorage.getItem('currentDay') || '1');
+            const fullName = localStorage.getItem('userName') || 'User';
+            const userName = fullName.split(' ')[0]; // Extract first name only
+            const { greeting } = getTimeBasedGreeting();
+            
+            const nudgeText = `${greeting}, ${userName}! Would you like to continue with your Day ${currentDay} leadership prompt now, or do you have a burning fire that needs to be put out?`;
+            
+            // Hide the welcome message display
+            document.getElementById('welcomeMessage').style.display = 'none';
+            
+            // Add it as an assistant message
+            addMessage('assistant', nudgeText);
+            
+            // Update last prompt time to prevent immediate re-triggering
+            localStorage.setItem('lastPromptTime', new Date().toISOString());
+        }
+
+        // Enhanced WebSocket Chatbot Client
+        class TinkerGenieChatbot {
+            constructor() {
+                this.connection = null;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectDelay = 1000;
+                this.messageQueue = [];
+                this.isTyping = false;
+                this.connectionStatus = 'disconnected';
+                this.heartbeatInterval = null;
+            }
+
+            async connect() {
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        console.log('No auth token, skipping SignalR connection');
+                        return;
+                    }
+
+                    console.log('Creating SignalR connection with token:', token ? 'present' : 'missing');
+                    
+                    // Validate URL before creating connection
+                    const hubUrl = "wss://tinker.twobrain.ai/chatHub";
+                    try {
+                        new URL(hubUrl);
+                        console.log('Hub URL is valid:', hubUrl);
+                    } catch (urlError) {
+                        console.error('Invalid hub URL:', hubUrl, urlError);
+                        throw urlError;
+                    }
+                    
+                    // Create SignalR connection with authentication
+                    // Fix A: Skip negotiation and go straight to WebSockets with manual query param
+                    const tokenRaw = localStorage.getItem('token');
+                    if (!tokenRaw) {
+                        throw new Error('No token available for SignalR connection');
+                    }
+                    
+                    // Remove any "Bearer " prefix and trim whitespace
+                    const cleanToken = tokenRaw.replace(/^Bearer\s+/i, '').trim();
+                    console.log('Raw token length:', cleanToken.length);
+                    console.log('Token starts with:', cleanToken.substring(0, 20) + '...');
+                    
+                    // Build URL with properly encoded token
+                    const hubUrlWithToken = `${hubUrl}?access_token=${encodeURIComponent(cleanToken)}`;
+                    console.log('Built URL:', hubUrlWithToken);
+                    
+                    // Validate the final URL
+                    try {
+                        new URL(hubUrlWithToken);
+                        console.log('Final URL is valid');
+                    } catch (urlError) {
+                        console.error('Final URL validation failed:', urlError);
+                        throw urlError;
+                    }
+                    
+                    this.connection = new signalR.HubConnectionBuilder()
+                        .withUrl(hubUrlWithToken, {
+                            transport: signalR.HttpTransportType.WebSockets,
+                            skipNegotiation: true  // Skip negotiate step to avoid URL construction issues
+                        })
+                        .withAutomaticReconnect([0, 2000, 10000, 30000])
+                        .configureLogging(signalR.LogLevel.Information)
+                        .build();
+
+                    // Set up event handlers
+                    this.connection.onclose((error) => {
+                        console.log('SignalR disconnected:', error);
+                        this.connectionStatus = 'disconnected';
+                        this.stopHeartbeat();
+                    });
+
+                    this.connection.onreconnecting((error) => {
+                        console.log('SignalR reconnecting:', error);
+                        this.connectionStatus = 'reconnecting';
+                    });
+
+                    this.connection.onreconnected((connectionId) => {
+                        console.log('SignalR reconnected:', connectionId);
+                        this.connectionStatus = 'connected';
+                        this.reconnectAttempts = 0;
+                        this.startHeartbeat();
+                        this.processMessageQueue();
+                    });
+
+                    // Set up message handlers
+                    this.connection.on("ReceiveMessage", (data) => {
+                        this.handleMessage({ type: 'ReceiveMessage', ...data });
+                    });
+
+                    this.connection.on("ReceiveDailyPrompt", (data) => {
+                        this.handleMessage({ type: 'ReceiveDailyPrompt', ...data });
+                    });
+
+                    this.connection.on("ReceiveTypingIndicator", (data) => {
+                        this.handleMessage({ type: 'ReceiveTypingIndicator', ...data });
+                    });
+
+                    // Start the connection
+                    await this.connection.start();
+                    console.log('SignalR connected');
+                    this.connectionStatus = 'connected';
+                    this.reconnectAttempts = 0;
+                    this.startHeartbeat();
+                    this.processMessageQueue();
+
+                } catch (error) {
+                    console.error('Failed to connect SignalR:', error);
+                    this.connectionStatus = 'error';
+                    this.scheduleReconnect();
+                }
+            }
+
+            scheduleReconnect() {
+                if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                    console.log('Max reconnection attempts reached');
+                    return;
+                }
+
+                this.reconnectAttempts++;
+                const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+                console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+                
+                setTimeout(() => {
+                    this.connect();
+                }, delay);
+            }
+
+            startHeartbeat() {
+                this.heartbeatInterval = setInterval(() => {
+                    if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
+                        this.connection.invoke("Ping");
+                    }
+                }, 30000);
+            }
+
+            stopHeartbeat() {
+                if (this.heartbeatInterval) {
+                    clearInterval(this.heartbeatInterval);
+                    this.heartbeatInterval = null;
+                }
+            }
+
+            async sendMessage(message, conversationId = null) {
+                try {
+                    // Clear the input field
+                    const messageInput = document.getElementById('messageInput');
+                    messageInput.value = '';
+                    document.getElementById('sendBtn').disabled = true;
+                    
+                    // Add user message to UI
+                    const userMessageId = addMessage('user', message, true, 'sending');
+                    
+                    // Auto-scroll to bottom
+                    scrollChatToBottom();
+
+                    if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
+                        await this.connection.invoke("SendMessage", message, conversationId);
+                        // Update user message status to delivered
+                        updateMessageStatus(userMessageId, 'delivered');
+                    } else {
+                        this.messageQueue.push({ message, conversationId });
+                        console.log('SignalR not connected, queuing message');
+                        // Fallback to HTTP API
+                        this.fallbackToHttpAPI(message, userMessageId);
+                    }
+                } catch (error) {
+                    console.error('Failed to send message:', error);
+                    updateMessageStatus(userMessageId, 'error');
+                    addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+                } finally {
+                    document.getElementById('sendBtn').disabled = false;
+                }
+            }
+
+            async fallbackToHttpAPI(message, userMessageId) {
+                try {
+                    const response = await authenticatedFetch(`${API_BASE_URL}/chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            userId: userId,
+                            context: {
+                                currentDay: currentDay,
+                                communicationStyle: selectedStyle,
+                                isFirstMessage: isFirstMessage,
+                                dailyPrompt: dailyPrompt
+                            }
+                        })
+                    });
+
+                    updateMessageStatus(userMessageId, 'delivered');
+                    const data = await response.json();
+
+                    if (data.response) {
+                        hideTypingIndicator();
+                        const aiMessageId = addMessage('assistant', '', true, 'sending');
+                        await streamMessage(aiMessageId, data.response);
+                        updateMessageStatus(aiMessageId, 'delivered');
+                    } else {
+                        throw new Error(data.message || 'Failed to get response');
+                    }
+                } catch (error) {
+                    console.error('HTTP fallback failed:', error);
+                    updateMessageStatus(userMessageId, 'error');
+                    addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+                }
+            }
+
+            async requestDailyPrompt() {
+                try {
+                    if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
+                        await this.connection.invoke("SendDailyPromptRequest");
+                    } else {
+                        console.log('SignalR not connected, cannot request daily prompt');
+                    }
+                } catch (error) {
+                    console.error('Failed to request daily prompt:', error);
+                }
+            }
+
+            async processMessageQueue() {
+                while (this.messageQueue.length > 0 && this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
+                    const message = this.messageQueue.shift();
+                    try {
+                        await this.connection.invoke("SendMessage", message.message, message.conversationId);
+                    } catch (error) {
+                        console.error('Failed to process queued message:', error);
+                        break;
+                    }
+                }
+            }
+
+            handleMessage(data) {
+                console.log('SignalR message received:', data);
+
+                if (data.type === 'ReceiveMessage') {
+                    this.handleChatResponse(data);
+                } else if (data.type === 'MessageFromOtherDevice') {
+                    this.handleOtherDeviceMessage(data);
+                } else if (data.type === 'DeviceConnected') {
+                    this.handleDeviceConnected(data);
+                }
+            }
+
+            handleChatResponse(data) {
+                if (data.isDailyPrompt) {
+                    this.handleDailyPrompt(data);
+                } else {
+                    this.handleRegularMessage(data);
+                }
+            }
+
+            handleDailyPrompt(data) {
+                // Update day number in UI
+                const dayElement = document.querySelector('.day-badge');
+                if (dayElement && data.dayNumber) {
+                    dayElement.textContent = `Leadership Prompt Day ${data.dayNumber}`;
+                }
+
+                // Add message with special styling
+                this.addMessage('assistant', data.message, {
+                    isDailyPrompt: true,
+                    dayNumber: data.dayNumber,
+                    questionsRemaining: data.questionsRemaining
+                });
+            }
+
+            handleRegularMessage(data) {
+                if (data.isError) {
+                    this.addMessage('assistant', data.message, { isError: true });
+                } else {
+                    this.addMessage('assistant', data.message);
+                }
+            }
+
+            handleOtherDeviceMessage(data) {
+                this.showNotification('Message sent from another device');
+            }
+
+            handleDeviceConnected(data) {
+                this.showNotification(`Connected from ${data.platform}`);
+            }
+
+            addMessage(role, content, metadata = {}) {
+                // Use the global addMessage function to maintain UI consistency
+                if (typeof window.addMessage === 'function') {
+                    window.addMessage(role, content);
+                } else {
+                    // Fallback to direct DOM manipulation
+                    const messagesContainer = document.getElementById('messages');
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${role}-message`;
+
+                    if (metadata.isDailyPrompt) {
+                        messageDiv.classList.add('daily-prompt-message');
+                    }
+
+                    if (metadata.isError) {
+                        messageDiv.classList.add('error-message');
+                    }
+
+                    messageDiv.innerHTML = `
+                        <div class="message-content">
+                            ${content}
+                            ${metadata.isDailyPrompt ? `<div class="daily-prompt-meta">Day ${metadata.dayNumber} • ${metadata.questionsRemaining} questions remaining</div>` : ''}
+                        </div>
+                        <div class="message-status">
+                            <span class="status-icon">✓</span>
+                            <span class="timestamp">${new Date().toLocaleTimeString()}</span>
+                        </div>
+                    `;
+
+                    messagesContainer.appendChild(messageDiv);
+                }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            showTypingIndicator() {
+                if (this.isTyping) return;
+                this.isTyping = true;
+
+                // Ensure chat DOM exists
+                const messagesContainer = document.getElementById('messages') || this.ensureChatDom();
+                if (!messagesContainer) {
+                    console.error('Could not find or create messages container');
+                    return;
+                }
+
+                let typingDiv = document.getElementById('typing-indicator');
+                if (!typingDiv) {
+                    typingDiv = document.createElement('div');
+                    typingDiv.className = 'message assistant-message typing-indicator';
+                    typingDiv.id = 'typing-indicator';
+                    typingDiv.innerHTML = `
+                        <div class="message-content">
+                            <div class="typing-dots"><span></span><span></span><span></span></div>
+                            TinkerGenie is thinking...
+                        </div>`;
+                    messagesContainer.appendChild(typingDiv);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            }
+
+            ensureChatDom() {
+                const root = document.getElementById('chat-root')
+                    || document.querySelector('[data-chat-root]')
+                    || document.body;
+
+                let container = document.getElementById('messages')
+                    || root.querySelector('[data-messages]');
+
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'messages';
+                    container.setAttribute('role', 'log');
+                    root.appendChild(container);
+                }
+                return container;
+            }
+
+            hideTypingIndicator() {
+                this.isTyping = false;
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+
+            showNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+
+            disconnect() {
+                if (this.connection) {
+                    this.connection.close(1000, 'User disconnected');
+                }
+                this.stopHeartbeat();
+            }
+        }
+
+        // Initialize enhanced chatbot
+        const chatbot = new TinkerGenieChatbot();
+
+        // Override sendMessage to use SignalR
+        const originalSendMessage = window.sendMessage;
+        window.sendMessage = async function() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            if (chatbot.connectionStatus === 'connected') {
+                chatbot.showTypingIndicator();
+                await chatbot.sendMessage(message);
+            } else {
+                originalSendMessage();
+            }
+        };
+
+        // Connect SignalR after initialization
+        setTimeout(() => {
+            chatbot.connect();
+        }, 2000);
+    </script>
+<script src= /pwa/app-fixes.js></script>
+</body>
+</html>
+
+        // Settings Modal Functions
+        function openSettings() {
+            const currentStyle = localStorage.getItem('communicationStyle') || 'balanced';
+            const currentTime = localStorage.getItem('promptTime') || '09:00';
+            const userName = localStorage.getItem('userName') || 'User';
+            
+            document.getElementById('settingsUserName').textContent = userName;
+            document.getElementById('settingsPromptTime').value = currentTime;
+            
+            document.querySelectorAll('#settings .style-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            document.querySelector(`#settings .style-option[data-style="${currentStyle}"]`).classList.add('selected');
+            document.getElementById('settings').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settings').style.display = 'none';
+        }
+
+        function selectSettingStyle(style) {
+            document.querySelectorAll('#settings .style-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelector(`#settings .style-option[data-style="${style}"]`).classList.add('selected');
+            window.tempSelectedStyle = style;
+        }
+
+        async function saveSettings() {
+            const style = window.tempSelectedStyle || localStorage.getItem('communicationStyle') || 'balanced';
+            const promptTime = document.getElementById('settingsPromptTime').value;
+            
+            localStorage.setItem('communicationStyle', style);
+            localStorage.setItem('promptTime', promptTime);
+            
+            showNotification('Settings saved successfully!', 'success');
+            closeSettings();
+        }
+
+        function signOut() {
+            if (confirm('Are you sure you want to sign out?')) {
+                localStorage.clear();
+                if (window.connection) {
+                    window.connection.stop();
+                }
+                window.location.href = '/pwa/login.html';
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? 'var(--yellow)' : type === 'error' ? '#ff4444' : '#666'};
+                color: ${type === 'success' ? 'var(--black)' : 'white'};
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 10001;
+                animation: slideInRight 0.3s ease;
+                font-weight: 600;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    <style>
+        /* Theme Variables */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-tertiary: #808080;
+            --border-color: #404040;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --input-bg: #2d2d2d;
+            --message-user-bg: var(--yellow);
+            --message-user-text: var(--black);
+            --message-ai-bg: #2d2d2d;
+            --message-ai-text: #ffffff;
+        }
+
+        [data-theme="light"], :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e0e0e0;
+            --text-primary: #000000;
+            --text-secondary: #333333;
+            --text-tertiary: #666666;
+            --border-color: #d0d0d0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --input-bg: #ffffff;
+            --message-user-bg: var(--yellow);
+            --message-user-text: var(--black);
+            --message-ai-bg: #f0f0f0;
+            --message-ai-text: #000000;
+        }
+
+        .chat-container {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .chat-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .chat-messages {
+            background: var(--bg-primary);
+        }
+
+        .message.user {
+            background: var(--message-user-bg);
+            color: var(--message-user-text);
+        }
+
+        .message.assistant {
+            background: var(--message-ai-bg);
+            color: var(--message-ai-text);
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-input-container {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chat-input {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .preferences-content {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .style-option {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        /* Additional Settings Styles */
+        .style-info {
+            flex: 1;
+        }
+        
+        .style-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .time-picker-wrapper {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .time-help-text {
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+            margin: 0;
+        }
+        
+        .close-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+        }
+    </style>
+<script>
+// Theme Management
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    
+    // Update theme selector if settings are open
+    if (document.getElementById('settings')?.style.display === 'flex') {
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        document.querySelector(`.theme-option[data-theme="${theme}"]`)?.classList.add('selected');
+    }
+}
+
+function selectTheme(theme) {
+    applyTheme(theme);
+    document.querySelectorAll('.theme-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    document.querySelector(`.theme-option[data-theme="${theme}"]`)?.classList.add('selected');
+    
+    // Store for saving
+    window.tempSelectedTheme = theme;
+}
+
+// Auto-scroll functionality
+function scrollToBottom(smooth = true) {
+    const messagesContainer = document.getElementById('messagesContainer') || 
+                            document.querySelector('.chat-messages');
+    
+    if (messagesContainer) {
+        if (smooth) {
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        } else {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+}
+
+// Ensure auto-scroll on new messages
+function ensureAutoScroll() {
+    const messagesContainer = document.getElementById('messagesContainer') || 
+                            document.querySelector('.chat-messages');
+    
+    if (messagesContainer) {
+        // Watch for new messages
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.addedNodes.length > 0) {
+                    // Check if any added node is a message
+                    for (let node of mutation.addedNodes) {
+                        if (node.classList && (node.classList.contains('message') || 
+                            node.classList.contains('user-message') || 
+                            node.classList.contains('assistant-message'))) {
+                            setTimeout(() => scrollToBottom(true), 100);
+                            break;
+                        }
+                    }
+                }
+            });
+        });
+        
+        observer.observe(messagesContainer, {
+            childList: true,
+            subtree: true
+        });
+    }
+}
+
+// Update openSettings to include theme
+const originalOpenSettings = window.openSettings;
+window.openSettings = function() {
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    
+    // Call original if exists
+    if (originalOpenSettings) {
+        originalOpenSettings();
+    }
+    
+    // Set theme selector
+    document.querySelectorAll('.theme-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    document.querySelector(`.theme-option[data-theme="${currentTheme}"]`)?.classList.add('selected');
+}
+
+// Update saveSettings to include theme
+const originalSaveSettings = window.saveSettings;
+window.saveSettings = async function() {
+    const theme = window.tempSelectedTheme || localStorage.getItem('theme') || 'light';
+    localStorage.setItem('theme', theme);
+    applyTheme(theme);
+    
+    // Call original save if exists
+    if (originalSaveSettings) {
+        await originalSaveSettings();
+    } else {
+        // Default save behavior
+        const style = window.tempSelectedStyle || localStorage.getItem('communicationStyle') || 'balanced';
+        const promptTime = document.getElementById('settingsPromptTime').value;
+        
+        localStorage.setItem('communicationStyle', style);
+        localStorage.setItem('promptTime', promptTime);
+        
+        showNotification('Settings saved successfully!', 'success');
+        closeSettings();
+    }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    initTheme();
+    ensureAutoScroll();
+    setTimeout(() => scrollToBottom(false), 500);
+});
+
+// Also handle if already loaded
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initTheme();
+    ensureAutoScroll();
+}
+</script>
+<script>
+// Enhanced auto-scroll for chat
+(function() {
+    // Override the addMessage function to include auto-scroll
+    const originalAddMessage = window.TinkerGenieChatbot?.prototype?.addMessage;
+    if (originalAddMessage) {
+        window.TinkerGenieChatbot.prototype.addMessage = function(message, isUser) {
+            originalAddMessage.call(this, message, isUser);
+            setTimeout(() => {
+                const container = document.getElementById('messagesContainer');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }, 100);
+        };
+    }
+    
+    // Also handle renderAssistant function
+    const originalRenderAssistant = window.renderAssistant;
+    if (originalRenderAssistant) {
+        window.renderAssistant = function(message) {
+            originalRenderAssistant(message);
+            setTimeout(() => {
+                const container = document.getElementById('messagesContainer');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }, 100);
+        };
+    }
+    
+    // Handle sendMessage to scroll after user message
+    const originalSendMessage = window.sendMessage;
+    if (originalSendMessage) {
+        window.sendMessage = async function() {
+            await originalSendMessage();
+            setTimeout(() => {
+                const container = document.getElementById('messagesContainer');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }, 100);
+        };
+    }
+})();
+</script>
+<style>
+    /* Enhanced textarea styles */
+    .chat-textarea {
+        min-height: 40px;
+        max-height: 150px;
+        overflow-y: auto;
+        resize: none;
+        transition: height 0.1s ease;
+        line-height: 1.5;
+        padding: 10px 12px;
+    }
+    
+    /* Scrollbar styling for textarea */
+    .chat-textarea::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .chat-textarea::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .chat-textarea::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+    
+    [data-theme="dark"] .chat-textarea::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Voice button animation */
+    .voice-btn.listening {
+        animation: pulse 1.5s infinite;
+        background: #ff4444 !important;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+        }
+    }
+    
+    /* Send button active state */
+    .send-btn:active {
+        transform: scale(0.95);
+    }
+    
+    /* Fix input container layout */
+    .input-container {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        flex: 1;
+    }
+    
+    .chat-input {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        padding: 10px;
+    }
+</style>
+// Enhanced textarea auto-resize with proper constraints
+function setupTextareaAutoResize() {
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    if (!messageInput) return;
+    
+    // Set initial height
+    messageInput.style.height = 'auto';
+    messageInput.style.overflowY = 'hidden';
+    
+    // Auto-resize function
+    function resizeTextarea() {
+        // Store scroll position
+        const scrollPos = messageInput.scrollTop;
+        
+        // Reset height to auto to get the correct scrollHeight
+        messageInput.style.height = 'auto';
+        
+        // Calculate new height (max 150px, about 6 lines)
+        const newHeight = Math.min(messageInput.scrollHeight, 150);
+        messageInput.style.height = newHeight + 'px';
+        
+        // Show scrollbar if content exceeds max height
+        if (messageInput.scrollHeight > 150) {
+            messageInput.style.overflowY = 'auto';
+        } else {
+            messageInput.style.overflowY = 'hidden';
+        }
+        
+        // Restore scroll position
+        messageInput.scrollTop = scrollPos;
+        
+        // Enable/disable send button
+        if (sendBtn) {
+            sendBtn.disabled = !messageInput.value.trim();
+        }
+    }
+    
+    // Add event listeners
+    messageInput.addEventListener('input', resizeTextarea);
+    messageInput.addEventListener('change', resizeTextarea);
+    messageInput.addEventListener('cut', () => setTimeout(resizeTextarea, 0));
+    messageInput.addEventListener('paste', () => setTimeout(resizeTextarea, 0));
+    messageInput.addEventListener('drop', () => setTimeout(resizeTextarea, 0));
+    
+    // Handle Enter key for sending (Shift+Enter for new line)
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (messageInput.value.trim()) {
+                sendMessage();
+            }
+        }
+    });
+    
+    // Reset height after sending
+    const originalSendMessage = window.sendMessage;
+    window.sendMessage = async function() {
+        if (originalSendMessage) {
+            await originalSendMessage();
+        }
+        // Reset textarea
+        messageInput.style.height = 'auto';
+        messageInput.style.overflowY = 'hidden';
+    };
+    
+    // Initial resize
+    resizeTextarea();
+}
+
+// Enhanced voice dictation
+function setupVoiceDictation() {
+    const voiceBtn = document.getElementById('voiceBtn');
+    const messageInput = document.getElementById('messageInput');
+    
+    if (!voiceBtn || !messageInput) return;
+    
+    let recognition = null;
+    let isListening = false;
+    
+    // Check for Web Speech API support
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = function() {
+            isListening = true;
+            voiceBtn.classList.add('listening');
+            voiceBtn.style.background = 'var(--red, #ff4444)';
+            console.log('Voice recognition started');
+        };
+        
+        recognition.onend = function() {
+            isListening = false;
+            voiceBtn.classList.remove('listening');
+            voiceBtn.style.background = '';
+            console.log('Voice recognition ended');
+        };
+        
+        recognition.onresult = function(event) {
+            let finalTranscript = '';
+            let interimTranscript = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            
+            if (finalTranscript) {
+                // Add to existing text with a space
+                const currentText = messageInput.value;
+                messageInput.value = currentText + (currentText ? ' ' : '') + finalTranscript;
+                
+                // Trigger resize
+                messageInput.dispatchEvent(new Event('input'));
+                
+                // Focus back to input
+                messageInput.focus();
+            }
+        };
+        
+        recognition.onerror = function(event) {
+            console.error('Voice recognition error:', event.error);
+            isListening = false;
+            voiceBtn.classList.remove('listening');
+            voiceBtn.style.background = '';
+            
+            if (event.error === 'not-allowed') {
+                alert('Microphone access denied. Please enable microphone permissions.');
+            }
+        };
+    } else {
+        // No speech recognition support
+        voiceBtn.style.display = 'none';
+        console.log('Web Speech API not supported');
+    }
+    
+    // Toggle voice input function
+    window.toggleVoiceInput = function() {
+        if (!recognition) {
+            alert('Voice input is not supported in your browser.');
+            return;
+        }
+        
+        if (isListening) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    };
+}
+
+// Fix send button functionality
+function setupSendButton() {
+    const sendBtn = document.getElementById('sendBtn');
+    const messageInput = document.getElementById('messageInput');
+    
+    if (!sendBtn || !messageInput) return;
+    
+    // Ensure send button works
+    sendBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (messageInput.value.trim()) {
+            sendMessage();
+        }
+    });
+    
+    // Visual feedback
+    sendBtn.addEventListener('mousedown', function() {
+        this.style.transform = 'scale(0.95)';
+    });
+    
+    sendBtn.addEventListener('mouseup', function() {
+        this.style.transform = 'scale(1)';
+    });
+}
+
+// Initialize everything
+document.addEventListener('DOMContentLoaded', function() {
+    setupTextareaAutoResize();
+    setupVoiceDictation();
+    setupSendButton();
+});
+
+// Also run if DOM is already ready
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(() => {
+        setupTextareaAutoResize();
+        setupVoiceDictation();
+        setupSendButton();
+    }, 100);
+}
+</script>

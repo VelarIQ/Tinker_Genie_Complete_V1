@@ -1,0 +1,27 @@
+{
+ "Logging": {
+   "LogLevel": {
+     "Default": "Information",
+     "Microsoft.AspNetCore": "Warning"
+   }
+ },
+ "AllowedHosts": "*",
+ "ConnectionStrings": {
+   "DefaultConnection": "Host=161.35.5.159;Database=tinker_genie;Username=genie_admin;Password=***PASSWORD***",
+   "Redis": "localhost:6379,password=***PASSWORD***"
+ },
+ "OpenAI": {
+   "ApiKey": "**API_KEY**",
+   "Model": "gpt-4o-mini"
+ },
+ "WordPress": {
+   "Authority": "https://twobrain.app",
+   "ClientId": "NEEDS_CONFIGURATION",
+   "ClientSecret": "NEEDS_CONFIGURATION"
+ },
+ "JWT": {
+   "Secret": "TinkerGenieJWTSecretKey2025VeryLongAndSecure",
+   "Issuer": "TinkerGenieAPI",
+   "Audience": "TinkerGenieApp"
+ }
+}

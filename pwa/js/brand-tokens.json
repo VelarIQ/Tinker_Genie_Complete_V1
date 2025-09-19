@@ -1,0 +1,25 @@
+{
+  "brand": {
+    "name": "TinkerGenie",
+    "colors": {
+      "primary": "#FFD700",
+      "primary_hover": "#E0B800",
+      "dark": "#1a1a1a",
+      "light": "#ffffff",
+      "muted": "#6c757d",
+      "gray": "#333333",
+      "bg": "#1a1a1a"
+    },
+    "radius": {
+      "sm": "6px",
+      "md": "8px",
+      "lg": "12px",
+      "xl": "16px"
+    },
+    "shadow": {
+      "sm": "0 2px 6px rgba(0,0,0,.08)",
+      "md": "0 6px 18px rgba(0,0,0,.12)",
+      "lg": "0 12px 28px rgba(0,0,0,.18)"
+    }
+  }
+}

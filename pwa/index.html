@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinkerGenie - Leadership Development</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="favicon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            color: #FFD700;
+        }
+        
+        .loading {
+            text-align: center;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            border-top: 3px solid #FFD700;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading">
+        <div class="spinner"></div>
+        <h2>TinkerGenie</h2>
+        <p>Redirecting...</p>
+    </div>
+
+    <script>
+        // PWA service worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(console.error);
+        }
+
+        // Authentication check and redirect
+        function checkAuthAndRedirect() {
+            const authToken = localStorage.getItem('authToken');
+            const userId = localStorage.getItem('userId');
+            
+            if (!authToken || !userId) {
+                // No authentication, redirect to professional login
+                window.location.href = 'login.html';
+            } else {
+                // User is authenticated, check if first-time user
+                const onboardingCompleted = localStorage.getItem(`onboardingCompleted_${userId}`);
+                
+                if (!onboardingCompleted) {
+                    // First-time user, go to chat with preferences modal
+                    window.location.href = 'chat.html?showPreferences=true';
+                } else {
+                    // Existing user, go directly to chat
+                    window.location.href = 'chat.html';
+                }
+            }
+        }
+
+        // Redirect immediately
+        checkAuthAndRedirect();
+    </script>
+</body>
+</html>

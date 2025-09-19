@@ -1,0 +1,17 @@
+[Unit]
+Description=TinkerGenie API on port 5000
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/root/TinkerGenie.API
+ExecStart=/usr/bin/dotnet /root/TinkerGenie.API/TinkerGenie.API.dll
+Restart=always
+RestartSec=10
+Environment="ASPNETCORE_URLS=http://0.0.0.0:5000"
+Environment="ASPNETCORE_ENVIRONMENT=Production"
+Environment="OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE"
+
+[Install]
+WantedBy=multi-user.target

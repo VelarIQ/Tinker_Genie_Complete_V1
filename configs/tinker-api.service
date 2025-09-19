@@ -1,0 +1,17 @@
+[Unit]
+Description=TinkerGenie API Service
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/tinker-genie.env
+Type=simple
+User=root
+WorkingDirectory=/var/www/tinker-genie-clean/TinkerGenie.API
+ExecStart=/usr/local/bin/start-tinker-api-8765.sh
+Restart=always
+RestartSec=10
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target

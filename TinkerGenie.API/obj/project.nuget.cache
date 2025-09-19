@@ -1,0 +1,273 @@
+{
+  "version": 2,
+  "dgSpecHash": "oQe/5KkdX/4=",
+  "success": false,
+  "projectFilePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+  "expectedPackageFiles": [],
+  "logs": [
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Google.Apis.Auth. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Google.Apis.Auth",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Npgsql. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Npgsql",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Google.Apis.Drive.v3. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Google.Apis.Drive.v3",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package StackExchange.Redis. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "StackExchange.Redis",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Microsoft.AspNetCore.OpenApi. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Microsoft.AspNetCore.OpenApi",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package AspNetCore.HealthChecks.Redis. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "AspNetCore.HealthChecks.Redis",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Serilog.AspNetCore. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Serilog.AspNetCore",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Serilog.Sinks.File. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Serilog.Sinks.File",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Microsoft.AspNetCore.SignalR. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Microsoft.AspNetCore.SignalR",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package AspNetCore.HealthChecks.NpgSql. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "AspNetCore.HealthChecks.NpgSql",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package System.IdentityModel.Tokens.Jwt. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "System.IdentityModel.Tokens.Jwt",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Microsoft.IdentityModel.Tokens. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Microsoft.IdentityModel.Tokens",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Microsoft.AspNetCore.Authentication.JwtBearer. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Microsoft.AspNetCore.Authentication.JwtBearer",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Swashbuckle.AspNetCore. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Swashbuckle.AspNetCore",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package WeaviateNET. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "WeaviateNET",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Npgsql.EntityFrameworkCore.PostgreSQL. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package BCrypt.Net-Next. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "BCrypt.Net-Next",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package OpenAI. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "OpenAI",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Microsoft.AspNetCore.Authentication.OpenIdConnect. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Microsoft.AspNetCore.Authentication.OpenIdConnect",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package RestSharp. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "RestSharp",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Serilog.Sinks.Console. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Serilog.Sinks.Console",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Dapper. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Dapper",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package Microsoft.EntityFrameworkCore.Design. No packages exist with this id in source(s): Microsoft Visual Studio Offline Packages",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Microsoft.EntityFrameworkCore.Design",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1102",
+      "level": "Error",
+      "message": "Unable to find package Newtonsoft.Json with version (>= 13.0.3)\r\n  - Found 1 version(s) in Microsoft Visual Studio Offline Packages [ Nearest version: 13.0.1 ]",
+      "projectPath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "filePath": "C:\\Users\\Leighton\\Downloads\\tinker-genie-source\\tinker-genie-complete-export-main\\TinkerGenie.API\\TinkerGenie.API.csproj",
+      "libraryId": "Newtonsoft.Json",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

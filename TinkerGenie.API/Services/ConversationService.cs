@@ -1,0 +1,119 @@
+using System;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using TinkerGenie.API.Data;
+using TinkerGenie.API.Models;
+
+namespace TinkerGenie.API.Services
+{
+    public class ConversationService : IConversationService
+    {
+        private readonly ILogger<ConversationService> _logger;
+        private readonly TinkerGenieContext _context;
+        
+        public ConversationService(ILogger<ConversationService> logger, TinkerGenieContext context)
+        {
+            _logger = logger;
+            _context = context;
+        }
+        
+        public async Task<Guid> SaveConversation(string userId, string userMessage, string aiResponse)
+        {
+            try
+            {
+                // Find or create conversation
+                var userGuid = Guid.TryParse(userId, out var uid) ? uid : Guid.Empty;
+                
+                var conversation = await _context.GenieConversations
+                    .Where(c => c.UserId == userGuid && c.Status == "active")
+                    .OrderByDescending(c => c.LastMessageAt)
+                    .FirstOrDefaultAsync();
+                
+                if (conversation == null)
+                {
+                    conversation = new GenieConversation
+                    {
+                        UserId = userGuid,
+                        ConversationType = "chat",
+                        Status = "active",
+                        StartedAt = DateTime.UtcNow
+                    };
+                    _context.GenieConversations.Add(conversation);
+                }
+                
+                // Add user message
+                _context.ConversationMessages.Add(new ConversationMessage
+                {
+                    ConversationId = conversation.Id,
+                    UserId = userGuid,
+                    Sender = "user",
+                    MessageText = userMessage,
+                    IsUser = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+                
+                // Add AI response
+                _context.ConversationMessages.Add(new ConversationMessage
+                {
+                    ConversationId = conversation.Id,
+                    Sender = "genie",
+                    MessageText = aiResponse,
+                    IsUser = false,
+                    AiModelUsed = "gpt-4o-mini",
+                    CreatedAt = DateTime.UtcNow
+                });
+                
+                // Update conversation
+                conversation.MessageCount += 2;
+                conversation.LastMessageAt = DateTime.UtcNow;
+                
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation($"Saved conversation {conversation.Id} for user {userId}");
+                return conversation.Id;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error saving conversation for user {userId}");
+                return Guid.Empty;
+            }
+        }
+        
+        public async Task<List<ConversationMessage>> GetConversationHistory(string userId, int limit = 10)
+        {
+            try
+            {
+                var userGuid = Guid.TryParse(userId, out var uid) ? uid : Guid.Empty;
+                
+                // Get the most recent active conversation
+                var conversation = await _context.GenieConversations
+                    .Where(c => c.UserId == userGuid && c.Status == "active")
+                    .OrderByDescending(c => c.LastMessageAt)
+                    .FirstOrDefaultAsync();
+                
+                if (conversation == null)
+                {
+                    return new List<ConversationMessage>();
+                }
+                
+                // Get recent messages from this conversation
+                var messages = await _context.ConversationMessages
+                    .Where(m => m.ConversationId == conversation.Id)
+                    .OrderByDescending(m => m.CreatedAt)
+                    .Take(limit)
+                    .OrderBy(m => m.CreatedAt)
+                    .ToListAsync();
+                
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting conversation history for user {userId}");
+                return new List<ConversationMessage>();
+            }
+        }
+    }
+}

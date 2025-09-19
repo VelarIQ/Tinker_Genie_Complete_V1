@@ -1,0 +1,1003 @@
+class TinkerGenieApp {
+    constructor() {
+        try {
+            // Get the REAL authenticated user data from login
+            const authToken = localStorage.getItem('authToken');
+            const userId = localStorage.getItem('userId');
+            const userName = localStorage.getItem('userName');
+            const userEmail = localStorage.getItem('userEmail');
+            const businessName = localStorage.getItem('businessName') || localStorage.getItem('gymName');
+            
+            // Initialize basic state first (before any method calls)
+            this.state = {
+                userId: userId || null,
+                conversationId: null,
+                currentDay: 1,
+                isProcessing: false,
+                lastGreeting: null
+            };
+            
+            // Verify authentication
+            if (!authToken || !userId) {
+                console.error('Not authenticated - redirecting to login');
+                this.authenticated = false;
+                return;
+            }
+            
+            this.authenticated = true;
+            
+            this.authToken = authToken;
+            this.userData = {
+                name: userName || userId || 'User',  // Fallback to userId if userName is empty
+                email: userEmail,
+                businessName: businessName || 'Your Business'
+            };
+            
+            // Debug: Log what name we're using
+            console.log('User data loaded:', { userName, userId, displayName: this.userData.name });
+            
+            // Update state with real user data
+            this.state.userId = userId;
+            this.state.conversationId = localStorage.getItem(`conversation_${userId}`);
+            
+            // Calculate current day based on first login date
+            const firstLoginDate = localStorage.getItem(`firstLoginDate_${userId}`);
+            if (!firstLoginDate) {
+                // First time user - set first login date
+                localStorage.setItem(`firstLoginDate_${userId}`, new Date().toISOString());
+                this.state.currentDay = 1;
+            } else {
+                // Calculate days since first login
+                const firstDate = new Date(firstLoginDate);
+                const today = new Date();
+                const diffTime = Math.abs(today - firstDate);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                this.state.currentDay = diffDays + 1; // Day 1 is the first day
+                
+                // Cap at 180 days
+                if (this.state.currentDay > 180) {
+                    this.state.currentDay = 180;
+                }
+            }
+            
+            localStorage.setItem(`currentDay_${userId}`, this.state.currentDay.toString());
+            this.state.lastGreeting = this.getLastGreeting();
+            
+            // Don't call init() here - it will be called from the HTML after DOM is ready
+        } catch (error) {
+            console.error('Error initializing app:', error);
+            this.authenticated = false;
+            // Can't call showErrorMessage yet, just log
+            console.error('Failed to initialize app. Please refresh the page.');
+        }
+    }
+    
+    getLastGreeting() {
+        const stored = localStorage.getItem(`lastGreeting_${this.state.userId}`);
+        if (!stored) return null;
+        
+        const { timestamp, period } = JSON.parse(stored);
+        const now = new Date();
+        const then = new Date(timestamp);
+        
+        // If it's the same day and same period, don't greet again
+        if (now.toDateString() === then.toDateString()) {
+            const currentPeriod = this.getTimePeriod();
+            if (currentPeriod === period) {
+                return { skipGreeting: true };
+            }
+        }
+        return null;
+    }
+    
+    getTimePeriod() {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'morning';
+        if (hour < 17) return 'afternoon';
+        return 'evening';
+    }
+    
+    init() {
+        // Check if authenticated
+        if (!this.authenticated) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        try {
+            // Hide loading screen if present
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
+            
+            this.setupUI();
+            this.loadConversationHistory();
+            this.loadSidebarConversations();
+            
+            // Check if daily prompt is completed today
+            this.checkDailyPromptStatus();
+            
+            // Start auto-sync for cross-device seamless experience
+            this.startAutoSync();
+            
+            // Start token refresh monitoring (prevents auth failures)
+            this.startTokenRefreshMonitoring();
+            
+            // Show greeting if needed
+            if (!this.state.lastGreeting?.skipGreeting) {
+                this.showGreeting();
+            }
+        } catch (error) {
+            console.error('Error during initialization:', error);
+            this.showErrorMessage('Something went wrong. Please refresh the page.');
+        }
+    }
+    
+    // PHASE 2: TOKEN REFRESH SYSTEM (Prevents auth failures forever)
+    startTokenRefreshMonitoring() {
+        // Check token expiration every 30 minutes
+        setInterval(() => {
+            this.checkAndRefreshToken();
+        }, 30 * 60 * 1000); // 30 minutes
+        
+        // Also check immediately
+        this.checkAndRefreshToken();
+    }
+    
+    async checkAndRefreshToken() {
+        try {
+            if (!this.authToken) return;
+            
+            // Decode JWT to check expiration
+            const tokenParts = this.authToken.split('.');
+            if (tokenParts.length !== 3) return;
+            
+            const payload = JSON.parse(atob(tokenParts[1]));
+            const expirationTime = payload.exp * 1000; // Convert to milliseconds
+            const currentTime = Date.now();
+            const timeUntilExpiry = expirationTime - currentTime;
+            
+            // Refresh if less than 1 hour remaining
+            if (timeUntilExpiry < 60 * 60 * 1000) {
+                console.log('Token expiring soon, refreshing...');
+                await this.refreshAuthToken();
+            }
+        } catch (error) {
+            console.error('Error checking token expiration:', error);
+        }
+    }
+    
+    async refreshAuthToken() {
+        try {
+            const username = localStorage.getItem('userName') || 'user';
+            const response = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.authToken = data.accessToken || data.token;
+                localStorage.setItem('authToken', this.authToken);
+                console.log('Token refreshed successfully');
+            } else {
+                // If refresh fails, redirect to login
+                console.warn('Token refresh failed, redirecting to login');
+                this.logout();
+            }
+        } catch (error) {
+            console.error('Error refreshing token:', error);
+            this.logout();
+        }
+    }
+    
+    // PHASE 3: AUTH RETRY LOGIC (Auto-recovers from auth failures)
+    async authenticatedFetch(url, options = {}) {
+        // Ensure headers exist
+        if (!options.headers) options.headers = {};
+        
+        // Add auth header
+        options.headers['Authorization'] = `Bearer ${this.authToken}`;
+        
+        try {
+            let response = await fetch(url, options);
+            
+            // If 401, try refreshing token and retry once
+            if (response.status === 401) {
+                console.log('Auth failed, attempting token refresh...');
+                await this.refreshAuthToken();
+                
+                // Retry with new token
+                options.headers['Authorization'] = `Bearer ${this.authToken}`;
+                response = await fetch(url, options);
+                
+                // If still 401, redirect to login
+                if (response.status === 401) {
+                    console.warn('Auth failed after refresh, redirecting to login');
+                    this.logout();
+                    return response;
+                }
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Network error in authenticatedFetch:', error);
+            throw error;
+        }
+    }
+    
+    checkDailyPromptStatus() {
+        const completedKey = `dailyPromptCompleted_${this.state.userId}_day${this.state.currentDay}`;
+        const completedDate = localStorage.getItem(completedKey);
+        
+        if (completedDate) {
+            const today = new Date().toDateString();
+            const completed = new Date(completedDate).toDateString();
+            
+            if (today === completed) {
+                // Daily prompt already completed today
+                console.log('Daily prompt already completed for today');
+                this.state.dailyPromptCompleted = true;
+                
+                // Update any daily prompt buttons to show completed state
+                setTimeout(() => {
+                    const dailyPromptBtns = document.querySelectorAll('[onclick*="startDailyPrompt"], [onclick*="startDailyPromptGlobal"]');
+                    dailyPromptBtns.forEach(btn => {
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                        btn.title = "Today's prompt completed! Come back tomorrow.";
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            this.addMessage("You've already completed today's daily prompt. Great job! Come back tomorrow for your next prompt.", 'assistant');
+                        };
+                    });
+                }, 500);
+            }
+        }
+    }
+    
+    setupUI() {
+        // Get elements
+        const input = document.getElementById('message-input');
+        const button = document.getElementById('send-button');
+        
+        // Setup event listeners
+        if (input) {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
+        }
+        
+        if (button) {
+            button.addEventListener('click', () => this.sendMessage());
+        }
+        
+        // Update UI with user info
+        const nameElements = document.querySelectorAll('.user-name');
+        nameElements.forEach(el => {
+            el.textContent = this.userData.name;
+        });
+        
+        const dayBadge = document.getElementById('dayBadge');
+        if (dayBadge) {
+            dayBadge.textContent = `Day ${this.state.currentDay}`;
+        }
+    }
+    
+    showErrorMessage(message) {
+        const container = document.getElementById('chatMessages');
+        if (container) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                background: #f85149;
+                color: white;
+                padding: 16px;
+                border-radius: 8px;
+                margin: 20px;
+                text-align: center;
+                font-weight: 500;
+            `;
+            errorDiv.textContent = message;
+            container.appendChild(errorDiv);
+        }
+    }
+    
+    showGreeting() {
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+        
+        // Hide loading screen if it's still visible
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) {
+            loadingScreen.style.display = 'none';
+        }
+        
+        const period = this.getTimePeriod();
+        // Get the fresh user name in case it wasn't loaded earlier
+        const userName = localStorage.getItem('userName') || this.userData.name;
+        const greeting = `Good ${period}, ${userName}! Welcome to Day ${this.state.currentDay} of your leadership journey.`;
+        
+        // Save greeting state
+        localStorage.setItem(`lastGreeting_${this.state.userId}`, JSON.stringify({
+            timestamp: new Date().toISOString(),
+            period: period
+        }));
+        
+        // Show welcome message
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = 'welcome-message';
+        welcomeDiv.innerHTML = `
+            <div class="welcome-content">
+                <h2>${greeting}</h2>
+                <p>Ready to continue your journey at ${this.userData.businessName}?</p>
+            </div>
+        `;
+        container.appendChild(welcomeDiv);
+    }
+    
+    showTyping(show = true) {
+        const indicator = document.querySelector('.typing-indicator');
+        if (indicator) {
+            indicator.style.display = show ? 'flex' : 'none';
+        }
+        
+        // Auto scroll to bottom
+        const container = document.getElementById('chatMessages');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+    
+    addMessage(content, role) {
+        // CRITICAL: Never add undefined/empty messages
+        if (!content || content === 'undefined' || content.toString().trim().length === 0) {
+            console.warn('Attempted to add undefined/empty message, skipping:', content, role);
+            return;
+        }
+        
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+        
+        const messageDiv = document.createElement('div');
+        const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        messageDiv.className = `message ${role}`;
+        messageDiv.id = messageId;
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-text">${content}</div>
+                <div class="message-actions">
+                    <span class="message-time">${time}</span>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(messageDiv);
+        container.scrollTop = container.scrollHeight;
+        
+        // Messages are saved by the server when processing the chat request
+        // No need to save separately
+    }
+    
+    async sendMessage() {
+        const input = document.getElementById('message-input');
+        if (!input) return;
+        
+        const message = input.value.trim();
+        if (!message || this.state.isProcessing) return;
+
+        // DEBUG: Check for "start fresh" and clear browser localStorage session data
+        if (message.toLowerCase().includes('start fresh')) {
+            console.log('Start fresh detected - clearing browser session data');
+            // Clear browser session data that might be interfering
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && (
+                    key.includes('dailyPrompt') ||
+                    key.includes('currentDay') ||
+                    key.includes('inDailyPrompt') ||
+                    key.includes('lastGreeting')
+                )) {
+                    console.log('Clearing localStorage key:', key);
+                    localStorage.removeItem(key);
+                }
+            }
+        }
+
+        this.state.isProcessing = true;
+        input.value = '';
+        
+        // Add user message
+        this.addMessage(message, 'user');
+        
+        // Show typing indicator
+        this.showTyping(true);
+        
+        try {
+            const response = await this.authenticatedFetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: this.state.userId,
+                    message: message,
+                    conversationId: this.state.conversationId,
+                    sessionType: sessionStorage.getItem('sessionType') || 'general',
+                    businessName: this.userData.businessName,
+                    name: this.userData.name,
+                    currentDay: this.state.currentDay
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Update conversation ID if new
+            if (!this.state.conversationId && data.conversationId) {
+                this.state.conversationId = data.conversationId;
+                localStorage.setItem(`conversation_${this.state.userId}`, data.conversationId);
+            }
+            
+            // Hide typing indicator
+            this.showTyping(false);
+            
+            // Check if response has split format (acknowledgment|SPLIT|follow-up)
+            if (data.response && data.response.includes('|SPLIT|')) {
+                const [acknowledgment, followUp] = data.response.split('|SPLIT|');
+                
+                // NEVER add undefined/empty messages
+                const ackText = acknowledgment?.trim();
+                const followText = followUp?.trim();
+                
+                if (ackText && ackText !== 'undefined' && ackText.length > 0) {
+                    this.addMessage(ackText, 'assistant');
+                }
+                
+                // Add follow-up after a short delay for natural conversation flow
+                if (followText && followText !== 'undefined' && followText.length > 0) {
+                    setTimeout(() => {
+                        this.addMessage(followText, 'assistant');
+                    }, 800);
+                }
+            } else {
+                // Add AI response normally - with validation
+                if (data.response && data.response !== 'undefined' && data.response.trim().length > 0) {
+                    this.addMessage(data.response, 'assistant');
+                }
+            }
+            
+            // Refresh sidebar to show new conversation
+            if (!this.state.conversationId || data.conversationId) {
+                setTimeout(() => this.loadSidebarConversations(), 1500);
+            }
+            
+            // Check if daily prompt was completed
+            if (data.isDailyPromptComplete || data.promptCompleted) {
+                // Mark daily prompt as completed for today
+                const completedKey = `dailyPromptCompleted_${this.state.userId}_day${this.state.currentDay}`;
+                localStorage.setItem(completedKey, new Date().toISOString());
+                
+                // Clear the daily prompt session flag
+                this.state.inDailyPrompt = false;
+                
+                // Disable the daily prompt button for today
+                const dailyPromptBtns = document.querySelectorAll('[onclick*="startDailyPrompt"], [onclick*="startDailyPromptGlobal"]');
+                dailyPromptBtns.forEach(btn => {
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        this.addMessage("You've already completed today's daily prompt. Great job! Come back tomorrow for your next prompt.", 'assistant');
+                    };
+                });
+            }
+            
+        } catch (error) {
+            console.error('Error sending message:', error);
+            this.showTyping(false);
+            this.addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+        } finally {
+            this.state.isProcessing = false;
+        }
+    }
+    
+    async startDailyPrompt() {
+        // Check if daily prompt already completed today
+        const completedKey = `dailyPromptCompleted_${this.state.userId}_day${this.state.currentDay}`;
+        const completedDate = localStorage.getItem(completedKey);
+        
+        if (completedDate) {
+            const today = new Date().toDateString();
+            const completed = new Date(completedDate).toDateString();
+            
+            if (today === completed) {
+                // Already completed today
+                this.addMessage("You've already completed today's daily prompt. Great job! Come back tomorrow for your next prompt.", 'assistant');
+                return;
+            }
+        }
+        
+        // Mark that we're in a daily prompt session
+        this.state.inDailyPrompt = true;
+        this.showTyping(true);
+        
+        try {
+            const response = await this.authenticatedFetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: this.state.userId,
+                    message: 'START_DAILY_PROMPT',  // Correct message format for backend
+                    conversationId: this.state.conversationId,
+                    currentDay: this.state.currentDay,
+                    sessionType: 'daily_prompt',
+                    businessName: this.userData.businessName,
+                    name: this.userData.name
+                })
+            });
+            
+            const data = await response.json();
+            
+            // Update conversation ID if new
+            if (!this.state.conversationId && data.conversationId) {
+                this.state.conversationId = data.conversationId;
+                localStorage.setItem(`conversation_${this.state.userId}`, data.conversationId);
+            }
+            
+            // Hide typing and show the actual prompt from database
+            this.showTyping(false);
+            this.addMessage(data.response, 'assistant');
+            
+            // CRITICAL: Refresh sidebar immediately after first daily prompt response
+            setTimeout(() => this.loadSidebarConversations(), 1500);
+            
+        } catch (error) {
+            console.error('Error starting daily prompt:', error);
+            this.showTyping(false);
+            this.addMessage('Sorry, I couldn\'t load today\'s prompt. Please try again.', 'assistant');
+        }
+    }
+    
+    async startBurningFires() {
+        // Send a message to backend to start burning fires session
+        this.showTyping(true);
+        
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    userId: this.state.userId,
+                    message: 'I need urgent help with a burning fire issue',  // Triggers burning fires in backend
+                    conversationId: this.state.conversationId,
+                    sessionType: 'burning_fires',
+                    businessName: this.userData.businessName,
+                    name: this.userData.name
+                })
+            });
+            
+            const data = await response.json();
+            
+            // Update conversation ID if new
+            if (!this.state.conversationId && data.conversationId) {
+                this.state.conversationId = data.conversationId;
+                localStorage.setItem(`conversation_${this.state.userId}`, data.conversationId);
+            }
+            
+            // Hide typing and show AI response that searches curriculum
+            this.showTyping(false);
+            this.addMessage(data.response, 'assistant');
+            
+            // Set session type for follow-up messages
+            sessionStorage.setItem('sessionType', 'burning_fires');
+            
+        } catch (error) {
+            console.error('Error starting burning fires:', error);
+            this.showTyping(false);
+            this.addMessage('Sorry, I couldn\'t start the burning fires session. Please try again.', 'assistant');
+        }
+    }
+    
+    // CROSS-DEVICE SYNC FUNCTIONALITY
+    startAutoSync() {
+        // Sync every 30 seconds for seamless cross-device experience
+        this.syncInterval = setInterval(() => {
+            this.syncConversations();
+        }, 30000);
+        
+        // Also sync when window gets focus (user switches tabs/devices)
+        window.addEventListener('focus', () => {
+            this.syncConversations();
+        });
+        
+        // Initial sync
+        this.syncConversations();
+    }
+    
+    async syncConversations() {
+        if (!this.state.conversationId) return;
+        
+        try {
+            const lastSync = localStorage.getItem(`lastSync_${this.state.userId}`) || new Date(0).toISOString();
+            
+            const response = await fetch(`/api/conversations/${this.state.userId}/sync?lastSync=${lastSync}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const messages = await response.json();
+                if (messages.length > 0) {
+                    this.mergeConversations(messages);
+                    localStorage.setItem(`lastSync_${this.state.userId}`, new Date().toISOString());
+                }
+            }
+        } catch (error) {
+            console.error('Sync failed:', error);
+        }
+        
+        // Also retry failed messages
+        await this.retryFailedMessages();
+    }
+    
+    mergeConversations(newMessages) {
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+        
+        // Get existing message timestamps to avoid duplicates
+        const existingTimestamps = new Set();
+        container.querySelectorAll('.message').forEach(msg => {
+            const timeEl = msg.querySelector('.message-time');
+            if (timeEl) existingTimestamps.add(timeEl.textContent);
+        });
+        
+        // Add new messages that don't exist yet
+        newMessages.forEach(msg => {
+            const msgTime = new Date(msg.timestamp).toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            if (!existingTimestamps.has(msgTime)) {
+                this.addMessage(msg.content, msg.role);
+            }
+        });
+    }
+    
+    async retryFailedMessages() {
+        const failedMessages = JSON.parse(localStorage.getItem(`failedMessages_${this.state.userId}`) || '[]');
+        if (failedMessages.length === 0) return;
+        
+        const retryBatch = failedMessages.splice(0, 5); // Retry up to 5 at a time
+        const remaining = [];
+        
+        for (const msg of retryBatch) {
+            try {
+                await fetch(`/api/conversations/${this.state.userId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.authToken}`
+                    },
+                    body: JSON.stringify(msg)
+                });
+            } catch (error) {
+                remaining.push(msg); // Keep for next retry
+            }
+        }
+        
+        // Update storage with remaining failed messages
+        const allRemaining = [...remaining, ...failedMessages];
+        if (allRemaining.length > 0) {
+            localStorage.setItem(`failedMessages_${this.state.userId}`, JSON.stringify(allRemaining));
+        } else {
+            localStorage.removeItem(`failedMessages_${this.state.userId}`);
+        }
+    }
+    
+    stopAutoSync() {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+        }
+    }
+    
+    async loadConversationHistory() {
+        try {
+            const response = await fetch(`/api/conversations/${this.state.userId}?limit=50`, {
+                headers: {
+                    'Authorization': `Bearer ${this.authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const messages = await response.json();
+                const container = document.getElementById('chatMessages');
+                
+                if (container && messages.length > 0) {
+                    container.innerHTML = ''; // Clear welcome message
+                    messages.forEach(msg => {
+                        this.addMessage(msg.content, msg.role);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load history:', error);
+        }
+    }
+    
+    async loadSidebarConversations() {
+        try {
+            // Use regular fetch instead of authenticatedFetch for sidebar (might be causing issues)
+            const response = await fetch(`/api/conversations/${this.state.userId}?limit=100`, {
+                headers: {
+                    'Authorization': `Bearer ${this.authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const messages = await response.json();
+                console.log('Sidebar messages received:', messages); // Debug log
+                const sidebar = document.getElementById('sidebar-content');
+                
+                if (!sidebar) return;
+                
+                if (messages.length === 0) {
+                    sidebar.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: #8b949e;">
+                            <p>No previous conversations</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Group messages by conversation/date
+                const conversations = this.groupMessagesByConversation(messages);
+                console.log('Grouped conversations:', conversations); // Debug log
+                
+                // Clear and populate sidebar
+                sidebar.innerHTML = '';
+                
+                conversations.forEach((conv, index) => {
+                    const conversationDiv = document.createElement('div');
+                    conversationDiv.className = 'chat-history-item';
+                    if (index === 0) conversationDiv.classList.add('active');
+                    
+                    // Format date
+                    const date = new Date(conv.timestamp);
+                    const dateStr = this.formatConversationDate(date);
+                    
+                    // Get preview of conversation
+                    const preview = this.truncateMessage(conv.firstMessage || 'New conversation', 50);
+                    
+                    conversationDiv.innerHTML = `
+                        <div class="chat-date">${dateStr}</div>
+                        <div class="chat-preview">${preview}</div>
+                        <button class="delete-chat-btn" onclick="event.stopPropagation(); app.deleteConversation('${conv.id}')" title="Delete conversation">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                        </button>
+                    `;
+                    
+                    // Add click handler to load conversation
+                    conversationDiv.onclick = () => this.loadConversation(conv.id, conv.messages);
+                    
+                    sidebar.appendChild(conversationDiv);
+                });
+            } else {
+                // PHASE 4: ERROR RECOVERY - Show user-friendly error with retry
+                console.error('Failed to load conversations:', response.status);
+                const sidebar = document.getElementById('sidebar-content');
+                if (sidebar) {
+                    sidebar.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
+                            <p>Unable to load chat history</p>
+                            <button onclick="app.loadSidebarConversations()" style="
+                                background: var(--accent-color); 
+                                color: var(--message-user-text); 
+                                border: none; 
+                                padding: 8px 16px; 
+                                border-radius: 6px; 
+                                margin-top: 10px;
+                                cursor: pointer;
+                            ">Retry</button>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load sidebar conversations:', error);
+            // PHASE 4: ERROR RECOVERY - Graceful fallback UI
+            const sidebar = document.getElementById('sidebar-content');
+            if (sidebar) {
+                sidebar.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
+                        <p>Connection issue</p>
+                        <button onclick="app.loadSidebarConversations()" style="
+                            background: var(--accent-color); 
+                            color: var(--message-user-text); 
+                            border: none; 
+                            padding: 8px 16px; 
+                            border-radius: 6px; 
+                            margin-top: 10px;
+                            cursor: pointer;
+                        ">Retry</button>
+                    </div>
+                `;
+            }
+        }
+    }
+    
+    groupMessagesByConversation(messages) {
+        const conversations = [];
+        let currentConversation = null;
+        
+        messages.forEach(msg => {
+            // Group by conversation ID or by time gaps (30 minutes)
+            if (!currentConversation || 
+                (msg.conversationId && msg.conversationId !== currentConversation.id) ||
+                (new Date(msg.timestamp) - new Date(currentConversation.lastTimestamp) > 30 * 60 * 1000)) {
+                
+                currentConversation = {
+                    id: msg.conversationId || `conv_${Date.now()}_${Math.random()}`,
+                    timestamp: msg.timestamp,
+                    lastTimestamp: msg.timestamp,
+                    firstMessage: msg.message || msg.userMessage || msg.content || 'New conversation',
+                    messages: []
+                };
+                conversations.push(currentConversation);
+            }
+            
+            currentConversation.lastTimestamp = msg.timestamp;
+            currentConversation.messages.push(msg);
+            console.log('Added message to conversation:', msg); // Debug message structure
+        });
+        
+        return conversations;
+    }
+    
+    formatConversationDate(date) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+        const conversationDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        
+        if (conversationDate.getTime() === today.getTime()) {
+            return `Today ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        } else if (conversationDate.getTime() === yesterday.getTime()) {
+            return `Yesterday ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        } else {
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+    }
+    
+    truncateMessage(text, maxLength) {
+        if (!text) return 'New conversation';
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
+    
+    async loadConversation(conversationId, messages) {
+        console.log('Loading conversation:', conversationId, 'with messages:', messages); // Debug
+        
+        // Clear current chat
+        const container = document.getElementById('chatMessages');
+        if (container) {
+            container.innerHTML = '';
+            
+            // Load the selected conversation's messages
+            messages.forEach((msg, index) => {
+                console.log(`Message ${index}:`, msg); // Debug each message
+                
+                // Handle both old format (userMessage/aiResponse) and new format (message/role)
+                if (msg.role === 'user' && msg.message) {
+                    this.addMessage(msg.message, 'user');
+                } else if (msg.role === 'assistant' && msg.message) {
+                    this.addMessage(msg.message, 'assistant');
+                } else if (msg.userMessage) {
+                    this.addMessage(msg.userMessage, 'user');
+                } else if (msg.aiResponse) {
+                    this.addMessage(msg.aiResponse, 'assistant');
+                } else {
+                    console.warn('Unable to parse message:', msg); // Debug unparseable messages
+                }
+            });
+            
+            // Update conversation ID
+            this.state.conversationId = conversationId;
+            localStorage.setItem(`conversation_${this.state.userId}`, conversationId);
+            
+            // Update active state in sidebar
+            document.querySelectorAll('.chat-history-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.chat-history-item').classList.add('active');
+        }
+    }
+    
+    async deleteConversation(conversationId) {
+        if (!confirm('Remove this conversation from your history? (This will hide it from view but preserve it for compliance purposes)')) return;
+        
+        try {
+            const response = await fetch(`/api/conversations/${this.state.userId}/conversations/${conversationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${this.authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                // Reload sidebar
+                this.loadSidebarConversations();
+                
+                // If this was the current conversation, clear the chat
+                if (this.state.conversationId === conversationId) {
+                    const container = document.getElementById('chatMessages');
+                    if (container) {
+                        container.innerHTML = '';
+                        this.showGreeting();
+                    }
+                    this.state.conversationId = null;
+                    localStorage.removeItem(`conversation_${this.state.userId}`);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to delete conversation:', error);
+        }
+    }
+    
+    
+    // Clean logout function
+    async logout() {
+        try {
+            // Notify server
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.authToken}`
+                }
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            // Clear all local data
+            this.stopAutoSync();
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Clear caches if available
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+            }
+            
+            // Redirect to login
+            window.location.href = 'login.html';
+        }
+    }
+}
+
+// Expose the class globally
+window.TinkerGenieApp = TinkerGenieApp;
+
+// Make available globally for inline onclick handlers
+window.app = null;

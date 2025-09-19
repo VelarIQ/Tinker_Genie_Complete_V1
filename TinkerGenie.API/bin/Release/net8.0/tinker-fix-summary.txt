@@ -1,0 +1,50 @@
+TINKERGENIE SYSTEM STATUS & COMMANDS
+===================================
+
+CURRENT STATUS (as of last check):
+- API: Running on localhost:8080 ✓
+- PM2: tinker-api process online ✓
+- Health check: localhost:8080/health returns JSON ✓
+- Issue: Nginx not routing /health endpoint to domain
+
+COMMANDS TO FIX NGINX ROUTING:
+-----------------------------
+
+1. Add /health endpoint to nginx config:
+sed -i '/location \/api\/ {/i\    location /health {\n        proxy_pass http://localhost:8080/health;\n        proxy_http_version 1.1;\n        proxy_set_header Host $host;\n    }\n' /etc/nginx/sites-available/tinker.twobrain.ai
+
+2. Reload nginx:
+systemctl reload nginx
+
+3. Test the fix:
+curl https://tinker.twobrain.ai/health
+
+VERIFICATION COMMANDS:
+---------------------
+pm2 status
+curl http://localhost:8080/health
+nginx -t
+curl https://tinker.twobrain.ai/api/auth/login -X POST -H "Content-Type: application/json" -d '{"username":"admin","password":"TinkerAdmin2025!"}'
+
+CURRENT WORKING COMPONENTS:
+--------------------------
+- PWA: https://tinker.twobrain.ai loads properly
+- API Backend: Responding on localhost:8080
+- Database: Connected (PostgreSQL)
+- PM2 Process: Running dotnet TinkerGenie.API.dll
+- SSL: Working (Let's Encrypt)
+
+NGINX CONFIG LOCATION:
+---------------------
+/etc/nginx/sites-available/tinker.twobrain.ai
+
+PM2 LOGS:
+--------
+pm2 logs tinker-api --lines 10
+
+SYSTEM ARCHITECTURE:
+-------------------
+User -> tinker.twobrain.ai -> Nginx -> localhost:8080 -> .NET API
+
+The issue is just the missing /health route in nginx configuration.
+Once fixed, the entire system should be fully operational.

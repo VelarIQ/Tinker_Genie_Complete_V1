@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>TinkerGenie - Leadership Development</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        /* CSS Variables for Theming */
+        :root {
+            /* Dark Theme (Default) */
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #57606a;
+            --accent-color: #FFD700;
+            --accent-hover: #FFA500;
+            --danger-color: #f85149;
+            --success-color: #3fb950;
+            --message-user-bg: #FFD700;
+            --message-user-text: #0d1117;
+            --message-assistant-bg: #21262d;
+            --message-assistant-text: #e6edf3;
+            --input-bg: #0d1117;
+            --header-bg: #161b22;
+            --sidebar-bg: #161b22;
+            --modal-bg: #161b22;
+            --modal-border: #FFD700;
+            /* Settings Modal Dark */
+            --settings-header-bg: #21262d;
+            --settings-value-bg: #0d1117;
+            --hover-bg: #1c2128;
+        }
+        
+        /* Light Theme */
+        body.light-theme {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f6f8fa;
+            --bg-tertiary: #e1e4e8;
+            --border-color: #d0d7de;
+            --text-primary: #24292e;
+            --text-secondary: #57606a;
+            --text-muted: #6a737d;
+            --accent-color: #FFC107;
+            --accent-hover: #FFA000;
+            --danger-color: #d73a49;
+            --success-color: #28a745;
+            --message-user-bg: #FFC107;
+            --message-user-text: #24292e;
+            --message-assistant-bg: #f6f8fa;
+            --message-assistant-text: #24292e;
+            --input-bg: #ffffff;
+            --header-bg: #f6f8fa;
+            --sidebar-bg: #f6f8fa;
+            --modal-bg: #ffffff;
+            --modal-border: #FFC107;
+            /* Settings Modal Light */
+            --settings-header-bg: #f8f9fa;
+            --settings-value-bg: #f8f9fa;
+            --hover-bg: #e9ecef;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        /* Main Layout Container */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        
+        /* Mobile Sidebar Toggle */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -320px;
+                z-index: 999;
+                transition: left 0.3s ease;
+            }
+            
+            .sidebar.active {
+                left: 0;
+            }
+            
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 998;
+            }
+            
+            .sidebar-overlay.active {
+                display: block;
+            }
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-primary);
+        }
+        
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .sidebar-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .chat-history-item {
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            position: relative;
+        }
+        
+        .chat-history-item:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+        
+        .chat-history-item.active {
+            background: var(--bg-secondary);
+            border-color: var(--accent-color);
+        }
+        
+        .chat-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .chat-preview {
+            font-size: 14px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .delete-chat-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s;
+            padding: 4px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chat-history-item:hover .delete-chat-btn {
+            opacity: 1;
+        }
+        
+        .delete-chat-btn:hover {
+            color: var(--danger-color);
+            transform: scale(1.1);
+        }
+        
+        /* Main Chat Container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Chat Header */
+        .chat-header {
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 68px;
+            flex-shrink: 0;
+        }
+        
+        .menu-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        
+        @media (max-width: 768px) {
+            .menu-btn {
+                display: block;
+            }
+        }
+        
+        .menu-btn:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .menu-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-primary);
+        }
+        
+        .chat-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .settings-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .settings-btn:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .settings-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-secondary);
+        }
+        
+        .settings-btn:hover svg {
+            fill: var(--accent-color);
+        }
+        
+        .new-chat-btn {
+            background: var(--accent-color);
+            border: none;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            color: var(--message-user-text);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .new-chat-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg-primary);
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Message Styles */
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: messageSlide 0.3s ease-out;
+        }
+        
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message.assistant {
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            line-height: 1.5;
+            position: relative;
+        }
+        
+        .message.user .message-content {
+            background: var(--message-user-bg);
+            color: var(--message-user-text);
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.assistant .message-content {
+            background: var(--message-assistant-bg);
+            color: var(--message-assistant-text);
+            border-bottom-left-radius: 4px;
+        }
+        
+        /* Chat Input */
+        .chat-input {
+            background: var(--header-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 76px;
+            flex-shrink: 0;
+        }
+        
+        .message-input {
+            flex: 1;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 12px 20px;
+            font-size: 15px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .message-input:focus {
+            border-color: var(--accent-color);
+        }
+        
+        .voice-btn, .send-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .voice-btn svg, .send-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-secondary);
+        }
+        
+        .voice-btn:hover, .send-btn:hover:not(:disabled) {
+            background: var(--bg-tertiary);
+        }
+        
+        .voice-btn:hover svg, .send-btn:hover:not(:disabled) svg {
+            fill: var(--accent-color);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .voice-btn.recording {
+            background: var(--danger-color);
+        }
+        
+        .voice-btn.recording svg {
+            fill: white;
+        }
+        
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            padding: 20px;
+            animation: messageSlide 0.3s ease-out;
+        }
+        
+        .typing-indicator.active {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typingBounce {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* Loading Screen */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Scrollbar Styles */
+        .chat-messages::-webkit-scrollbar,
+        .sidebar-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track,
+        .sidebar-content::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb,
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover,
+        .sidebar-content::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        body.light-theme .modal {
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--modal-bg);
+            border: 2px solid var(--modal-border);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-title {
+            color: var(--accent-color);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .modal-subtitle {
+            color: var(--text-primary);
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .modal-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        
+        .modal-btn {
+            padding: 20px 40px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 200px;
+        }
+        
+        .modal-btn-primary {
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+            color: var(--bg-primary);
+        }
+        
+        .modal-btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #ff6b7a);
+            color: white;
+        }
+        
+        .modal-btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* Preferences Options */
+        .pref-style-option {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .pref-style-option:hover,
+        .pref-style-option.selected {
+            border-color: var(--accent-color);
+        }
+        
+        .pref-style-option h4 {
+            color: var(--accent-color);
+            margin-bottom: 5px;
+        }
+        
+        .pref-style-option p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .time-input {
+            width: 100%;
+            padding: 12px;
+            background: var(--input-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+        
+        /* Professional Settings Modal */
+        .settings-popup {
+            background: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -45%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+        
+        .settings-header {
+            background: var(--settings-header-bg);
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .settings-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .settings-title svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent-color);
+        }
+        
+        .settings-close-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .settings-close-btn:hover {
+            background: var(--hover-bg);
+        }
+        
+        .settings-close-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-secondary);
+        }
+        
+        .settings-close-btn:hover svg {
+            fill: var(--text-primary);
+        }
+        
+        .settings-body {
+            padding: 24px;
+        }
+        
+        .setting-group {
+            margin-bottom: 24px;
+        }
+        
+        .setting-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .setting-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .setting-value-box {
+            background: var(--settings-value-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .setting-value-box:hover {
+            border-color: var(--accent-color);
+            background: var(--modal-bg);
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
+        }
+        
+        .setting-value-text {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .setting-value-box svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-secondary);
+        }
+        
+        .progress-indicator {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .settings-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0 24px;
+        }
+        
+        .settings-footer {
+            padding: 24px;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+        
+        .logout-btn:active {
+            transform: translateY(0);
+        }
+        
+        .logout-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: white;
+        }
+        
+        .theme-toggle {
+            display: flex;
+            gap: 10px;
+            padding: 4px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+        }
+        
+        .theme-option {
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+        
+        .theme-option.active {
+            background: var(--accent-color);
+            color: var(--bg-primary);
+        }
+        
+        .progress-container {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-color), var(--accent-hover));
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">Previous Chats</h3>
+                <p class="sidebar-subtitle">Your leadership journey</p>
+            </div>
+            <div class="sidebar-content" id="sidebar-content">
+                <!-- Chat history will be loaded here dynamically -->
+            </div>
+        </div>
+        
+        <!-- Main Chat Container -->
+        <div class="chat-container">
+            <!-- Mobile Sidebar Overlay -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+            
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <button class="menu-btn" onclick="toggleSidebar()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                    </svg>
+                </button>
+                <h2>TinkerGenie</h2>
+                <div class="header-right">
+                    <button class="new-chat-btn" onclick="startNewChat()" title="New Chat" aria-label="Start New Chat">
+                        New Chat
+                    </button>
+                    <button class="settings-btn" onclick="openSettingsModal()" title="Settings" aria-label="Open Settings">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.65-.07-.97l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.08-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.32-.07.64-.07.97c0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <!-- Loading indicator -->
+                <div id="loadingScreen">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+            
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="chat-input">
+                <input type="text" id="message-input" class="message-input" placeholder="Type your message here...">
+                <button id="voice-button" class="voice-btn" onclick="toggleDictation()" title="Voice Input" aria-label="Start Voice Input">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
+                </button>
+                <button id="send-button" class="send-btn" onclick="sendMessageClick()" disabled title="Send Message" aria-label="Send Message">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="modal">
+        <div class="modal-content" style="text-align: center; max-width: 600px;">
+            <h1 class="modal-title" style="font-size: 48px; margin-bottom: 30px;">
+                <span id="timeGreeting">Welcome Back</span>, <span id="modalUserName">User</span>!
+            </h1>
+            <p class="modal-subtitle">
+                Day <span id="modalDayNumber">1</span> of Your Leadership Journey
+            </p>
+            <p class="modal-description" style="margin-bottom: 40px;">
+                Daily prompts scheduled for: <span id="modalScheduledTime">9:00 AM</span>
+            </p>
+            <div class="modal-buttons">
+                <button onclick="startDailyPromptFromModal()" class="modal-btn modal-btn-primary">
+                    📖 Get My Day <span id="modalDayText">1</span> Prompt
+                </button>
+                <button onclick="startBurningFiresFromModal()" class="modal-btn modal-btn-danger">
+                    🔥 Burning Fires
+                </button>
+            </div>
+            <button onclick="closeWelcomeModal()" class="modal-btn modal-btn-secondary" style="margin-top: 20px;">
+                Start with regular chat
+            </button>
+        </div>
+    </div>
+
+    <!-- Preferences Modal (for first-time users) -->
+    <div id="preferencesModal" class="modal" style="background: rgba(0, 0, 0, 0.95) !important;">
+        <div class="modal-content" style="background: transparent !important; border: none !important; max-width: 520px; padding: 0;">
+            <div style="background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255, 215, 0, 0.1);">
+                <!-- Header with gradient -->
+                <div style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); padding: 48px 40px; text-align: center;">
+                    <h1 style="color: #1a1a1a; font-size: 32px; font-weight: 700; margin-bottom: 8px;">
+                        Welcome, <span id="prefUserName">User</span>! 👋
+                    </h1>
+                    <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-weight: 500;">
+                        Let's personalize your leadership journey
+                    </p>
+                </div>
+                
+                <!-- Body -->
+                <div style="padding: 48px 40px; background: #ffffff;">
+                    <!-- Communication Style Section -->
+                    <p style="font-size: 13px; font-weight: 500; color: #4a5568; margin-bottom: 16px; letter-spacing: 0.2px; text-transform: uppercase;">
+                        Communication Style
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px;">
+                        <div onclick="selectPrefStyle('concise', this)" class="pref-style-choice" style="
+                            background: #f7f8fa;
+                            border: 2px solid #e5e7eb;
+                            border-radius: 12px;
+                            padding: 16px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            gap: 16px;
+                        ">
+                            <span style="font-size: 20px;">🎯</span>
+                            <div>
+                                <h3 style="color: #1a1a1a; font-size: 15px; font-weight: 600; margin-bottom: 4px;">Concise</h3>
+                                <p style="color: #6b7280; font-size: 13px; margin: 0;">Quick, actionable insights. 2-3 sentences max. Perfect for busy schedules.</p>
+                            </div>
+                        </div>
+                        <div onclick="selectPrefStyle('balanced', this)" class="pref-style-choice" style="
+                            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                            border: 2px solid #FFD700;
+                            border-radius: 12px;
+                            padding: 16px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            gap: 16px;
+                            transform: translateX(4px);
+                            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+                        ">
+                            <span style="font-size: 20px;">⚖️</span>
+                            <div>
+                                <h3 style="color: #1a1a1a; font-size: 15px; font-weight: 600; margin-bottom: 4px;">Balanced</h3>
+                                <p style="color: #1a1a1a; font-size: 13px; margin: 0;">Moderate detail with examples. The sweet spot for most leaders.</p>
+                            </div>
+                        </div>
+                        <div onclick="selectPrefStyle('detailed', this)" class="pref-style-choice" style="
+                            background: #f7f8fa;
+                            border: 2px solid #e5e7eb;
+                            border-radius: 12px;
+                            padding: 16px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            gap: 16px;
+                        ">
+                            <span style="font-size: 20px;">📚</span>
+                            <div>
+                                <h3 style="color: #1a1a1a; font-size: 15px; font-weight: 600; margin-bottom: 4px;">Detailed</h3>
+                                <p style="color: #6b7280; font-size: 13px; margin: 0;">In-depth analysis with stories and multiple perspectives.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Time Section -->
+                    <div style="margin-bottom: 32px;">
+                        <p style="font-size: 13px; font-weight: 500; color: #4a5568; margin-bottom: 16px; letter-spacing: 0.2px; text-transform: uppercase;">
+                            Daily Prompt Time
+                        </p>
+                        <input type="time" id="prefPromptTime" value="09:00" style="
+                            width: 100%;
+                            background: #f7f8fa;
+                            border: 2px solid #e5e7eb;
+                            border-radius: 12px;
+                            padding: 14px 16px;
+                            font-size: 15px;
+                            font-weight: 500;
+                            color: #1a1a1a;
+                            text-align: center;
+                            outline: none;
+                            transition: all 0.3s ease;
+                        " onfocus="this.style.borderColor='#FFD700'; this.style.background='#ffffff';" onblur="this.style.borderColor='#e5e7eb'; this.style.background='#f7f8fa';">
+                        <p style="color: #9ca3af; font-size: 12px; margin-top: 8px; text-align: center;">
+                            You can change this anytime in settings
+                        </p>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 12px; margin-top: 40px;">
+                        <button onclick="skipPreferences()" style="
+                            flex: 1;
+                            padding: 16px;
+                            border-radius: 12px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            background: #ffffff;
+                            color: #6b7280;
+                            border: 2px solid #e5e7eb;
+                            transition: all 0.3s;
+                        " onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='#ffffff'">
+                            Skip for now
+                        </button>
+                        <button onclick="savePreferences()" style="
+                            flex: 1;
+                            padding: 16px;
+                            border-radius: 12px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                            color: #1a1a1a;
+                            border: none;
+                            transition: all 0.3s;
+                            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(255, 215, 0, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(255, 215, 0, 0.2)'">
+                            Start My Journey
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Progress indicator -->
+                <div style="display: flex; justify-content: center; gap: 8px; padding: 20px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                    <div style="width: 24px; height: 8px; border-radius: 4px; background: #FFD700;"></div>
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #d1d5db;"></div>
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #d1d5db;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="settings-popup">
+            <div class="settings-header">
+                <div class="settings-title">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.65-.07-.97l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.08-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.32-.07.64-.07.97c0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64z"/>
+                    </svg>
+                    Settings
+                </div>
+                <button class="settings-close-btn" onclick="closeSettingsModal()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="settings-body">
+                <div class="setting-group">
+                    <div class="setting-label">Response Style</div>
+                    <div class="setting-value-box" onclick="toggleResponseStyle()">
+                        <span class="setting-value-text" id="responseStyleText">Balanced</span>
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.29 6.71a.996.996 0 000 1.41L13.17 12l-3.88 3.88a.996.996 0 101.41 1.41l4.59-4.59a.996.996 0 000-1.41L10.7 6.7c-.38-.38-1.02-.38-1.41.01z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Daily Prompt Time</div>
+                    <div class="setting-value-box" onclick="togglePromptTime()">
+                        <span class="setting-value-text" id="promptTimeText">9:00 AM</span>
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.29 6.71a.996.996 0 000 1.41L13.17 12l-3.88 3.88a.996.996 0 101.41 1.41l4.59-4.59a.996.996 0 000-1.41L10.7 6.7c-.38-.38-1.02-.38-1.41.01z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Time Zone</div>
+                    <div class="setting-value-box">
+                        <span class="setting-value-text" id="timeZoneText">Eastern Time</span>
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.29 6.71a.996.996 0 000 1.41L13.17 12l-3.88 3.88a.996.996 0 101.41 1.41l4.59-4.59a.996.996 0 000-1.41L10.7 6.7c-.38-.38-1.02-.38-1.41.01z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Current Progress</div>
+                    <div class="progress-indicator">
+                        <span class="setting-value-text" id="progressText">Day 1 of 180</span>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="progressBar" style="width: 1%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Theme</div>
+                    <div class="setting-value-box" onclick="toggleTheme()">
+                        <span class="setting-value-text" id="themeText">Dark Mode</span>
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.29 6.71a.996.996 0 000 1.41L13.17 12l-3.88 3.88a.996.996 0 101.41 1.41l4.59-4.59a.996.996 0 000-1.41L10.7 6.7c-.38-.38-1.02-.38-1.41.01z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-divider"></div>
+            
+            <div class="settings-footer">
+                <button class="logout-btn" onclick="logout()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                    </svg>
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js?v=20250917"></script>
+    <script>
+        // Initialize the app when page loads
+        let app;
+        let isRecording = false;
+        let recognition = null;
+        let selectedPrefStyle = 'balanced';
+        
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(savedTheme);
+        }
+        
+        function setTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.add('light-theme');
+                document.getElementById('lightTheme')?.classList.add('active');
+                document.getElementById('darkTheme')?.classList.remove('active');
+                document.getElementById('themeText').textContent = 'Light Mode';
+            } else {
+                document.body.classList.remove('light-theme');
+                document.getElementById('darkTheme')?.classList.add('active');
+                document.getElementById('lightTheme')?.classList.remove('active');
+                document.getElementById('themeText').textContent = 'Dark Mode';
+            }
+            localStorage.setItem('theme', theme);
+        }
+        
+        function toggleTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize theme
+            initTheme();
+            
+            // Check authentication BEFORE creating app
+            const authToken = localStorage.getItem('authToken');
+            const userId = localStorage.getItem('userId');
+            
+            if (!authToken || !userId) {
+                console.log('No authentication found, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                app = new TinkerGenieApp();
+                
+                // Initialize the app
+                if (app && app.authenticated) {
+                    app.init();
+                    
+                    // Check if first time user or URL parameter
+                    const userId = localStorage.getItem('userId');
+                    const hasCompletedOnboarding = localStorage.getItem(`onboardingCompleted_${userId}`) === 'true';
+                    const urlParams = new URLSearchParams(window.location.search);
+                    
+                    if (!hasCompletedOnboarding || urlParams.get('showPreferences') === 'true') {
+                        // Show preferences modal for first-time setup
+                        showPreferencesModal();
+                        // Clear the URL parameter
+                        if (urlParams.get('showPreferences') === 'true') {
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        }
+                    } else {
+                        // Show welcome modal on every visit
+                        showWelcomeModal();
+                    }
+                    
+                    // Setup speech recognition
+                    setupSpeechRecognition();
+                } else {
+                    // App created but not authenticated, redirect to login
+                    console.log('App not authenticated, redirecting to login');
+                    window.location.href = 'login.html';
+                }
+            } catch (error) {
+                console.error('Failed to initialize app:', error);
+                // Always redirect to login on any error
+                console.log('Initialization error, redirecting to login');
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // Global functions for onclick handlers
+        function sendMessageClick() {
+            if (app && app.sendMessage) {
+                app.sendMessage();
+            }
+        }
+        
+        async function startNewChat() {
+            try {
+                if (!app || !app.authToken) {
+                    console.log('No authentication, redirecting to login');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                const response = await fetch('/api/chat/new', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${app.authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Clear current chat
+                    const container = document.getElementById('chatMessages');
+                    if (container) {
+                        container.innerHTML = '';
+                    }
+                    
+                    // Reset conversation state
+                    app.state.conversationId = data.conversationId;
+                    localStorage.setItem(`conversation_${app.state.userId}`, data.conversationId);
+                    
+                    // Show welcome message
+                    if (data.message) {
+                        app.addMessage(data.message, 'assistant');
+                    }
+                    
+                    // Refresh sidebar
+                    setTimeout(() => app.loadSidebarConversations(), 500);
+                    
+                    console.log('New chat started successfully');
+                } else {
+                    console.error('Failed to start new chat:', response.status);
+                    app.addMessage('Sorry, I couldn\'t start a new chat. Please try again.', 'assistant');
+                }
+            } catch (error) {
+                console.error('Error starting new chat:', error);
+                app.addMessage('Sorry, there was an error starting a new chat.', 'assistant');
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        
+        function toggleDictation() {
+            if (!recognition) {
+                setupSpeechRecognition();
+            }
+            
+            if (recognition) {
+                if (isRecording) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            }
+        }
+        
+        function setupSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = () => {
+                    isRecording = true;
+                    document.getElementById('voice-button')?.classList.add('recording');
+                };
+                
+                recognition.onend = () => {
+                    isRecording = false;
+                    document.getElementById('voice-button')?.classList.remove('recording');
+                };
+                
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    const input = document.getElementById('message-input');
+                    if (input) {
+                        input.value = transcript;
+                        document.getElementById('send-button').disabled = false;
+                    }
+                };
+                
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    isRecording = false;
+                    document.getElementById('voice-button')?.classList.remove('recording');
+                };
+            }
+        }
+        
+        // Welcome Modal Functions
+        function showWelcomeModal() {
+            const userName = localStorage.getItem('userName') || 'User';
+            const scheduledTime = localStorage.getItem('scheduledTime') || '09:00';
+            
+            // Get time-based greeting
+            const currentHour = new Date().getHours();
+            let greeting;
+            if (currentHour < 12) {
+                greeting = 'Good Morning';
+            } else if (currentHour < 18) {
+                greeting = 'Good Afternoon';
+            } else {
+                greeting = 'Good Evening';
+            }
+            
+            document.getElementById('timeGreeting').textContent = greeting;
+            document.getElementById('modalUserName').textContent = userName;
+            document.getElementById('modalDayNumber').textContent = app.state.currentDay;
+            document.getElementById('modalDayText').textContent = app.state.currentDay;
+            
+            // Format scheduled time
+            const [hours, minutes] = scheduledTime.split(':');
+            const h = parseInt(hours);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const displayHours = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+            document.getElementById('modalScheduledTime').textContent = `${displayHours}:${minutes} ${ampm}`;
+            
+            document.getElementById('welcomeModal').classList.add('active');
+        }
+        
+        function closeWelcomeModal() {
+            document.getElementById('welcomeModal').classList.remove('active');
+        }
+        
+        function startDailyPromptFromModal() {
+            closeWelcomeModal();
+            if (app && app.startDailyPrompt) {
+                app.startDailyPrompt();
+            }
+        }
+        
+        function startBurningFiresFromModal() {
+            closeWelcomeModal();
+            if (app && app.startBurningFires) {
+                app.startBurningFires();
+            }
+        }
+        
+        // Preferences Modal Functions
+        function showPreferencesModal() {
+            const userName = localStorage.getItem('userName') || 'User';
+            document.getElementById('prefUserName').textContent = userName;
+            
+            // Get time-based greeting for preferences too
+            const currentHour = new Date().getHours();
+            let greeting;
+            if (currentHour < 12) {
+                greeting = 'Good Morning';
+            } else if (currentHour < 18) {
+                greeting = 'Good Afternoon';
+            } else {
+                greeting = 'Good Evening';
+            }
+            
+            // Update the time-based greeting
+            const greetingElement = document.getElementById('prefTimeGreeting');
+            if (greetingElement) {
+                greetingElement.textContent = greeting;
+            }
+            
+            document.getElementById('preferencesModal').classList.add('active');
+        }
+        
+        function selectPrefStyle(style, element) {
+            selectedPrefStyle = style;
+            
+            // Reset all style options to default
+            document.querySelectorAll('.pref-style-choice').forEach(option => {
+                option.style.background = '#f7f8fa';
+                option.style.border = '2px solid #e5e7eb';
+                option.style.transform = 'translateX(0)';
+                option.style.boxShadow = 'none';
+                
+                // Reset text colors
+                const title = option.querySelector('h3');
+                const desc = option.querySelector('p');
+                if (title) title.style.color = '#1a1a1a';
+                if (desc) desc.style.color = '#6b7280';
+            });
+            
+            // Apply selected style
+            if (element) {
+                element.style.background = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)';
+                element.style.border = '2px solid #FFD700';
+                element.style.transform = 'translateX(4px)';
+                element.style.boxShadow = '0 4px 20px rgba(255, 215, 0, 0.3)';
+                
+                // Update text colors for selected
+                const title = element.querySelector('h3');
+                const desc = element.querySelector('p');
+                if (title) title.style.color = '#1a1a1a';
+                if (desc) desc.style.color = '#1a1a1a';
+            }
+        }
+        
+        function skipPreferences() {
+            // Set default preferences
+            selectedPrefStyle = 'balanced';
+            const promptTime = '09:00';
+            
+            const userId = localStorage.getItem('userId');
+            localStorage.setItem(`onboardingCompleted_${userId}`, 'true');
+            localStorage.setItem('scheduledTime', promptTime);
+            
+            document.getElementById('preferencesModal').classList.remove('active');
+            showWelcomeModal();
+        }
+        
+        async function savePreferences() {
+            const userId = localStorage.getItem('userId');
+            const authToken = localStorage.getItem('authToken');
+            const promptTime = document.getElementById('prefPromptTime').value;
+            
+            if (!userId || !authToken) {
+                console.error('Missing user credentials');
+                alert('Please log in again to save preferences.');
+                return;
+            }
+            
+            console.log('Saving preferences for user:', userId);
+            console.log('Style:', selectedPrefStyle, 'Time:', promptTime);
+            
+            try {
+                const response = await fetch('/api/preferences/' + userId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        communicationStyle: selectedPrefStyle,
+                        promptTime: promptTime,
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'
+                    })
+                });
+                
+                const responseText = await response.text();
+                console.log('Response status:', response.status);
+                console.log('Response:', responseText);
+                
+                if (response.ok) {
+                    localStorage.setItem(`onboardingCompleted_${userId}`, 'true');
+                    localStorage.setItem('scheduledTime', promptTime);
+                    localStorage.setItem('communicationStyle', selectedPrefStyle);
+                    
+                    document.getElementById('preferencesModal').classList.remove('active');
+                    showWelcomeModal();
+                } else {
+                    let errorMessage = 'Failed to save preferences.';
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        if (errorData.error) {
+                            errorMessage = errorData.error;
+                        }
+                    } catch (e) {
+                        // Response wasn't JSON
+                    }
+                    console.error('Failed to save preferences:', errorMessage);
+                    alert(errorMessage + ' Please try again.');
+                }
+            } catch (error) {
+                console.error('Error saving preferences:', error);
+                alert('Network error. Please check your connection and try again.');
+            }
+        }
+        
+        // Settings Modal Functions
+        let settingsData = {
+            communicationStyle: 'balanced',
+            dailyPromptTime: '09:00',
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        };
+        
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+            loadSettingsModal();
+        }
+        
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+        
+        async function loadSettingsModal() {
+            const userId = localStorage.getItem('userId');
+            const authToken = localStorage.getItem('authToken');
+            
+            if (!userId || !authToken) return;
+            
+            try {
+                const response = await fetch(`/api/preferences/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    settingsData.communicationStyle = data.communicationStyle || 'balanced';
+                    settingsData.dailyPromptTime = data.promptTime || data.dailyPromptTime || '09:00';
+                    settingsData.timeZone = data.timezone || data.timeZone || settingsData.timeZone;
+                    
+                    // Update UI
+                    const styleMap = {
+                        'concise': 'Concise',
+                        'balanced': 'Balanced',
+                        'detailed': 'Detailed'
+                    };
+                    document.getElementById('responseStyleText').textContent = styleMap[settingsData.communicationStyle] || 'Balanced';
+                    
+                    // Update time zone
+                    const timeZone = settingsData.timeZone || 'America/New_York';
+                    const timeZoneDisplay = timeZone.replace('_', ' ').replace('/', ' - ');
+                    document.getElementById('timeZoneText').textContent = timeZoneDisplay;
+                    
+                    // Format time
+                    const [hours, minutes] = settingsData.dailyPromptTime.split(':');
+                    const h = parseInt(hours);
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    const displayHours = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                    document.getElementById('promptTimeText').textContent = `${displayHours}:${minutes} ${ampm}`;
+                    
+                    // Update progress
+                    const currentDay = parseInt(localStorage.getItem(`currentDay_${userId}`) || '1');
+                    document.getElementById('progressText').textContent = `Day ${currentDay} of 180`;
+                    const progressPercentage = (currentDay / 180) * 100;
+                    document.getElementById('progressBar').style.width = `${progressPercentage}%`;
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+            }
+        }
+        
+        async function saveSettingsToServer() {
+            const userId = localStorage.getItem('userId');
+            const authToken = localStorage.getItem('authToken');
+            
+            if (!userId || !authToken) return;
+            
+            try {
+                await fetch(`/api/preferences/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        communicationStyle: settingsData.communicationStyle,
+                        promptTime: settingsData.dailyPromptTime,
+                        timezone: settingsData.timeZone
+                    })
+                });
+                
+                localStorage.setItem('scheduledTime', settingsData.dailyPromptTime);
+            } catch (error) {
+                console.error('Failed to save settings:', error);
+            }
+        }
+        
+        function toggleResponseStyle() {
+            const styles = ['concise', 'balanced', 'detailed'];
+            const styleMap = {
+                'concise': 'Concise',
+                'balanced': 'Balanced',
+                'detailed': 'Detailed'
+            };
+            const currentIndex = styles.indexOf(settingsData.communicationStyle);
+            const nextIndex = (currentIndex + 1) % styles.length;
+            settingsData.communicationStyle = styles[nextIndex];
+            document.getElementById('responseStyleText').textContent = styleMap[settingsData.communicationStyle];
+            saveSettingsToServer();
+        }
+        
+        function togglePromptTime() {
+            const modal = document.createElement('div');
+            modal.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 10001; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: var(--modal-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; width: 300px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 16px;">Set Daily Prompt Time</h3>
+                        <input type="time" id="timePickerInput" value="${settingsData.dailyPromptTime}" style="
+                            width: 100%;
+                            padding: 12px;
+                            background: var(--input-bg);
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            color: var(--text-primary);
+                            font-size: 16px;
+                        ">
+                        <div style="display: flex; gap: 12px; margin-top: 20px;">
+                            <button onclick="cancelTimePicker()" style="
+                                flex: 1;
+                                padding: 12px;
+                                background: transparent;
+                                border: 1px solid var(--border-color);
+                                border-radius: 8px;
+                                color: var(--text-primary);
+                                cursor: pointer;
+                            ">Cancel</button>
+                            <button onclick="saveTimePicker()" style="
+                                flex: 1;
+                                padding: 12px;
+                                background: var(--accent-color);
+                                border: none;
+                                border-radius: 8px;
+                                color: var(--bg-primary);
+                                font-weight: 600;
+                                cursor: pointer;
+                            ">Save</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            modal.id = 'timePickerModal';
+            document.body.appendChild(modal);
+        }
+        
+        function cancelTimePicker() {
+            const modal = document.getElementById('timePickerModal');
+            if (modal) modal.remove();
+        }
+        
+        function saveTimePicker() {
+            const input = document.getElementById('timePickerInput');
+            if (input) {
+                settingsData.dailyPromptTime = input.value;
+                const [hours, minutes] = settingsData.dailyPromptTime.split(':');
+                const h = parseInt(hours);
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                const displayHours = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                document.getElementById('promptTimeText').textContent = `${displayHours}:${minutes} ${ampm}`;
+                saveSettingsToServer();
+            }
+            cancelTimePicker();
+        }
+        
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // Close sidebar when clicking overlay
+        document.getElementById('sidebarOverlay').addEventListener('click', function() {
+            toggleSidebar();
+        });
+        
+        // Add keyboard shortcut for send (Ctrl/Cmd + Enter)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                sendMessageClick();
+            }
+        });
+    </script>
+</body>
+</html>

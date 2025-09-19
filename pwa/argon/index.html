@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinkerGenie — Leadership Development</title>
+    <meta name="theme-color" content="#FFD700">
+    <meta name="description" content="AI-powered leadership development platform">
+    <link rel="manifest" href="../manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/pwa/favicon.ico">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/nucleo@latest/css/nucleo.css" rel="stylesheet">
+    <link href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" rel="stylesheet">
+    
+    <!-- Argon CSS (Official) -->
+    <link type="text/css" href="https://cdn.jsdelivr.net/gh/creativetimofficial/argon-design-system@1.2.0/assets/css/argon.min.css" rel="stylesheet">
+    
+    <!-- TinkerGenie Overrides -->
+    <link rel="stylesheet" href="argon-overrides.css">
+    
+    <style>
+        /* TinkerGenie Custom Styles */
+        :root {
+            --tg-primary: #FFD700;
+            --tg-primary-hover: #E0B800;
+            --tg-dark: #1a1a1a;
+        }
+        
+        body {
+            background: var(--tg-dark);
+            min-height: 100vh;
+        }
+        
+        .bg-gradient-tg {
+            background: linear-gradient(87deg, #FFD700 0, #E0B800 100%) !important;
+        }
+        
+        .btn-tg {
+            background: var(--tg-primary);
+            border-color: var(--tg-primary);
+            color: var(--tg-dark);
+            font-weight: 600;
+        }
+        
+        .btn-tg:hover {
+            background: var(--tg-primary-hover);
+            border-color: var(--tg-primary-hover);
+            color: var(--tg-dark);
+            transform: translateY(-2px);
+        }
+        
+        .text-tg {
+            color: var(--tg-primary) !important;
+        }
+        
+        .badge-tg {
+            background-color: var(--tg-primary);
+            color: var(--tg-dark);
+        }
+        
+        /* Chat Styles */
+        .chat-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #0f0f0f;
+        }
+        
+        .message-bubble {
+            max-width: 70%;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-bubble.user {
+            background: var(--tg-primary);
+            color: var(--tg-dark);
+            margin-left: auto;
+        }
+        
+        .message-bubble.assistant {
+            background: #2d2d2d;
+            color: white;
+        }
+        
+        /* Hide screens */
+        .screen { display: none; }
+        .screen.active { display: block; }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen active">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand text-tg" href="#">
+                    <i class="ni ni-bulb-61 mr-2"></i>TinkerGenie
+                </a>
+            </div>
+        </nav>
+        
+        <div class="main-content">
+            <div class="header py-7">
+                <div class="container">
+                    <div class="header-body text-center mb-5">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-5 col-md-6">
+                                <h1 class="text-white">Welcome to TinkerGenie!</h1>
+                                <p class="text-lead text-light">Your AI-powered leadership development platform</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="container mt--8 pb-5">
+                <div class="row justify-content-center">
+                    <div class="col-lg-5 col-md-7">
+                        <div class="card bg-secondary shadow border-0">
+                            <div class="card-header bg-gradient-tg pb-5">
+                                <div class="text-center">
+                                    <h2 class="text-dark mb-0">Sign In</h2>
+                                    <small class="text-dark">Leadership Development Platform</small>
+                                </div>
+                            </div>
+                            <div class="card-body px-lg-5 py-lg-5">
+                                <form id="loginForm" onsubmit="handleLogin(event)">
+                                    <div class="form-group mb-3">
+                                        <div class="input-group input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="ni ni-email-83"></i></span>
+                                            </div>
+                                            <input class="form-control" placeholder="Email" type="email" id="loginEmail" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="input-group input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
+                                            </div>
+                                            <input class="form-control" placeholder="Password" type="password" id="loginPassword" required>
+                                        </div>
+                                    </div>
+                                    <div class="custom-control custom-checkbox">
+                                        <input class="custom-control-input" id="rememberMe" type="checkbox" checked>
+                                        <label class="custom-control-label" for="rememberMe">
+                                            <span class="text-muted">Remember me</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="alert alert-danger mt-3 d-none" id="loginError">
+                                        <small id="loginErrorText">Invalid credentials</small>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-tg btn-block my-4" id="loginButton">
+                                        Sign in
+                                    </button>
+                                </form>
+                                
+                                <hr class="my-3">
+                                
+                                <button class="btn btn-danger btn-block" onclick="handleGoogleSSO()">
+                                    <i class="fab fa-google mr-2"></i>
+                                    Continue with Google
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Screen -->
+    <div id="chatScreen" class="screen">
+        <div class="chat-container">
+            <!-- Navigation -->
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <div class="container-fluid px-3">
+                    <span class="badge badge-tg mr-3" id="dayBadge">Day 1</span>
+                    <a class="navbar-brand mx-auto text-tg" href="#">
+                        <i class="ni ni-bulb-61 mr-2"></i>TinkerGenie
+                    </a>
+                    <button class="btn btn-link text-tg p-0" onclick="openSettings()">
+                        <i class="ni ni-settings-gear-65"></i>
+                    </button>
+                </div>
+            </nav>
+            
+            <!-- Welcome Section -->
+            <div class="container text-center py-5" id="welcomeSection">
+                <h2 class="display-4 text-white" id="greetingText">Loading...</h2>
+                <p class="lead text-light" id="dailyPrompt">Loading your daily prompt...</p>
+                <button class="btn btn-tg btn-lg mt-3" onclick="startChat()">
+                    <i class="ni ni-chat-round mr-2"></i>Start Today's Session
+                </button>
+            </div>
+            
+            <!-- Messages -->
+            <div class="chat-messages" id="chatMessages" style="display: none;">
+                <!-- Messages will appear here -->
+            </div>
+            
+            <!-- Typing Indicator -->
+            <div class="px-4 py-3 d-none" id="typingIndicator">
+                <div class="spinner-border spinner-border-sm text-tg mr-2"></div>
+                <span class="text-light">TinkerGenie is thinking...</span>
+            </div>
+            
+            <!-- Input -->
+            <div class="bg-dark border-top p-3">
+                <div class="input-group">
+                    <button class="btn btn-secondary" onclick="toggleVoice()" id="voiceBtn">
+                        <i class="ni ni-mic-2"></i>
+                    </button>
+                    <textarea class="form-control bg-secondary text-white border-0" 
+                              id="messageInput" 
+                              placeholder="Type your message..." 
+                              rows="1"
+                              onkeydown="handleKeydown(event)"
+                              oninput="adjustHeight(this)"></textarea>
+                    <div class="input-group-append">
+                        <button class="btn btn-tg" onclick="sendMessage()" id="sendBtn" disabled>
+                            <i class="ni ni-send"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Preferences Modal -->
+    <div class="modal fade" id="preferencesModal" tabindex="-1" data-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-secondary">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">
+                        <i class="ni ni-satisfied text-tg mr-2"></i>
+                        Welcome to TinkerGenie!
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <h4 class="text-tg" id="prefUserName">Loading...</h4>
+                        <p class="text-light">Let's personalize your leadership journey</p>
+                    </div>
+                    
+                    <h6 class="text-white mb-3">Communication Style</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-dark style-option" onclick="selectStyle('concise')">
+                                <div class="card-body text-center">
+                                    <i class="ni ni-bullet-list-67 text-tg display-4"></i>
+                                    <h6 class="text-white mt-2">Concise</h6>
+                                    <small class="text-muted">Direct & actionable</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-dark style-option selected" onclick="selectStyle('balanced')">
+                                <div class="card-body text-center">
+                                    <i class="ni ni-compass-04 text-tg display-4"></i>
+                                    <h6 class="text-white mt-2">Balanced</h6>
+                                    <small class="text-muted">Perfect mix</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-dark style-option" onclick="selectStyle('detailed')">
+                                <div class="card-body text-center">
+                                    <i class="ni ni-books text-tg display-4"></i>
+                                    <h6 class="text-white mt-2">Detailed</h6>
+                                    <small class="text-muted">In-depth analysis</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="text-white">Daily Prompt Time</label>
+                        <input type="time" class="form-control" id="prefPromptTime" value="09:00">
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
+                    <button class="btn btn-tg" onclick="savePreferences()">
+                        <i class="ni ni-check-bold mr-2"></i>Start My Journey
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-secondary">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">
+                        <i class="ni ni-settings text-tg mr-2"></i>Settings
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="text-white">Communication Style</label>
+                        <select class="form-control" id="settingsStyle">
+                            <option value="concise">Concise</option>
+                            <option value="balanced" selected>Balanced</option>
+                            <option value="detailed">Detailed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="text-white">Daily Prompt Time</label>
+                        <input type="time" class="form-control" id="settingsTime" value="09:00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="text-white">Progress</label>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-gradient-tg" id="progressBar" style="width: 5%;">
+                                Day <span id="currentDay">1</span> of 180
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-danger" onclick="confirmLogout()">
+                        <i class="ni ni-user-run mr-2"></i>Sign Out
+                    </button>
+                    <button class="btn btn-tg" onclick="saveSettings()">
+                        <i class="ni ni-check-bold mr-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Core -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Argon JS -->
+    <script src="https://cdn.jsdelivr.net/gh/creativetimofficial/argon-design-system@1.2.0/assets/js/argon.min.js"></script>
+    
+    <!-- SignalR -->
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@7.0.0/dist/browser/signalr.min.js"></script>
+    
+    <!-- App Logic -->
+    <script>
+        const API_BASE = 'https://tinker.twobrain.ai/api';
+        const HUB_URL = 'https://tinker.twobrain.ai/chatHub';
+        
+        const state = {
+            token: localStorage.getItem('token'),
+            userId: localStorage.getItem('userId'),
+            userName: localStorage.getItem('userName') || 'User',
+            userEmail: localStorage.getItem('userEmail'),
+            isFirstTime: localStorage.getItem('isFirstTime') !== 'false',
+            currentDay: parseInt(localStorage.getItem('currentDay') || '1'),
+            communicationStyle: localStorage.getItem('communicationStyle') || 'balanced',
+            promptTime: localStorage.getItem('promptTime') || '09:00',
+            connection: null,
+            chatStarted: false
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+        });
+        
+        function initApp() {
+            setupInputHandlers();
+            
+            // Check remembered email
+            const rememberedEmail = localStorage.getItem('rememberedEmail');
+            if (rememberedEmail) {
+                document.getElementById('loginEmail').value = rememberedEmail;
+            }
+            
+            // Route based on auth
+            if (state.token) {
+                if (state.isFirstTime) {
+                    showPreferences();
+                } else {
+                    showChat();
+                }
+            } else {
+                showLogin();
+            }
+        }
+        
+        function showLogin() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('loginScreen').classList.add('active');
+        }
+        
+        function showChat() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('chatScreen').classList.add('active');
+            initChat();
+        }
+        
+        function showPreferences() {
+            document.getElementById('prefUserName').textContent = state.userName;
+            $('#preferencesModal').modal('show');
+        }
+        
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            const button = document.getElementById('loginButton');
+            
+            button.innerHTML = '<span class="spinner-border spinner-border-sm mr-2"></span>Signing in...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    state.token = data.accessToken || data.token;
+                    state.userId = data.userId || email.split('@')[0];
+                    state.userName = data.userName || email.split('@')[0];
+                    state.userEmail = email;
+                    
+                    localStorage.setItem('token', state.token);
+                    localStorage.setItem('userId', state.userId);
+                    localStorage.setItem('userName', state.userName);
+                    localStorage.setItem('userEmail', state.userEmail);
+                    
+                    if (rememberMe) {
+                        localStorage.setItem('rememberedEmail', email);
+                    }
+                    
+                    if (state.isFirstTime) {
+                        showPreferences();
+                    } else {
+                        showChat();
+                    }
+                } else {
+                    document.getElementById('loginErrorText').textContent = data.message || 'Invalid credentials';
+                    document.getElementById('loginError').classList.remove('d-none');
+                }
+            } catch (error) {
+                // Fallback for testing
+                if (email && password) {
+                    state.token = btoa(JSON.stringify({ email, exp: Date.now() + 86400000 }));
+                    state.userId = email.split('@')[0];
+                    state.userName = email.split('@')[0];
+                    state.userEmail = email;
+                    
+                    localStorage.setItem('token', state.token);
+                    localStorage.setItem('userId', state.userId);
+                    localStorage.setItem('userName', state.userName);
+                    localStorage.setItem('userEmail', state.userEmail);
+                    
+                    if (rememberMe) {
+                        localStorage.setItem('rememberedEmail', email);
+                    }
+                    
+                    showChat();
+                }
+            } finally {
+                button.innerHTML = 'Sign in';
+                button.disabled = false;
+            }
+        }
+        
+        function handleGoogleSSO() {
+            window.location.href = `${API_BASE}/auth/google`;
+        }
+        
+        function initChat() {
+            updateGreeting();
+            updateDayBadge();
+            initSignalR();
+        }
+        
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            let greeting = 'Hello';
+            
+            if (hour >= 5 && hour < 12) greeting = 'Good Morning';
+            else if (hour >= 12 && hour < 17) greeting = 'Good Afternoon';
+            else if (hour >= 17 && hour < 21) greeting = 'Good Evening';
+            else greeting = 'Good Night';
+            
+            document.getElementById('greetingText').innerHTML = `${greeting}, ${state.userName}!`;
+            document.getElementById('dailyPrompt').textContent = "What's your biggest leadership challenge today?";
+        }
+        
+        function updateDayBadge() {
+            document.getElementById('dayBadge').textContent = `Day ${state.currentDay}`;
+            document.getElementById('currentDay').textContent = state.currentDay;
+            document.getElementById('progressBar').style.width = `${(state.currentDay / 180) * 100}%`;
+        }
+        
+        function initSignalR() {
+            if (!state.token) return;
+            
+            state.connection = new signalR.HubConnectionBuilder()
+                .withUrl(`${HUB_URL}?access_token=${state.token}`)
+                .withAutomaticReconnect()
+                .build();
+            
+            state.connection.on('ReceiveMessage', (message) => {
+                hideTyping();
+                addMessage('assistant', message);
+            });
+            
+            state.connection.on('ReceiveTypingIndicator', () => {
+                showTyping();
+            });
+            
+            state.connection.start().catch(err => console.error('SignalR error:', err));
+        }
+        
+        function startChat() {
+            state.chatStarted = true;
+            document.getElementById('welcomeSection').style.display = 'none';
+            document.getElementById('chatMessages').style.display = 'block';
+            
+            const prompt = document.getElementById('dailyPrompt').textContent;
+            addMessage('assistant', prompt);
+        }
+        
+        function addMessage(type, content) {
+            const container = document.getElementById('chatMessages');
+            if (!container) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `d-flex mb-3 ${type === 'user' ? 'justify-content-end' : 'justify-content-start'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble ${type} rounded p-3`;
+            bubble.textContent = content;
+            
+            messageDiv.appendChild(bubble);
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            if (!state.chatStarted) startChat();
+            
+            addMessage('user', message);
+            input.value = '';
+            adjustHeight(input);
+            document.getElementById('sendBtn').disabled = true;
+            
+            showTyping();
+            
+            // Simulate response for demo
+            setTimeout(() => {
+                hideTyping();
+                addMessage('assistant', "That's a great point about leadership. Let me help you explore that further.");
+            }, 1500);
+        }
+        
+        function showTyping() {
+            document.getElementById('typingIndicator').classList.remove('d-none');
+        }
+        
+        function hideTyping() {
+            document.getElementById('typingIndicator').classList.add('d-none');
+        }
+        
+        function selectStyle(style) {
+            state.communicationStyle = style;
+            document.querySelectorAll('.style-option').forEach(el => el.classList.remove('selected'));
+            event.target.closest('.style-option').classList.add('selected');
+        }
+        
+        function savePreferences() {
+            state.promptTime = document.getElementById('prefPromptTime').value;
+            state.isFirstTime = false;
+            
+            localStorage.setItem('communicationStyle', state.communicationStyle);
+            localStorage.setItem('promptTime', state.promptTime);
+            localStorage.setItem('isFirstTime', 'false');
+            
+            $('#preferencesModal').modal('hide');
+            showChat();
+        }
+        
+        function openSettings() {
+            document.getElementById('settingsStyle').value = state.communicationStyle;
+            document.getElementById('settingsTime').value = state.promptTime;
+            $('#settingsModal').modal('show');
+        }
+        
+        function saveSettings() {
+            state.communicationStyle = document.getElementById('settingsStyle').value;
+            state.promptTime = document.getElementById('settingsTime').value;
+            
+            localStorage.setItem('communicationStyle', state.communicationStyle);
+            localStorage.setItem('promptTime', state.promptTime);
+            
+            $('#settingsModal').modal('hide');
+        }
+        
+        function confirmLogout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                logout();
+            }
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.reload();
+        }
+        
+        function setupInputHandlers() {
+            const input = document.getElementById('messageInput');
+            if (input) {
+                input.addEventListener('input', function() {
+                    document.getElementById('sendBtn').disabled = !this.value.trim();
+                });
+            }
+        }
+        
+        function handleKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        function adjustHeight(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+        
+        function toggleVoice() {
+            alert('Voice recognition coming soon!');
+        }
+        
+        // Style option selection fix
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.style-option')) {
+                const option = e.target.closest('.style-option');
+                const style = option.onclick.toString().match(/selectStyle\('(\w+)'\)/)[1];
+                selectStyle(style);
+            }
+        });
+    </script>
+</body>
+</html>

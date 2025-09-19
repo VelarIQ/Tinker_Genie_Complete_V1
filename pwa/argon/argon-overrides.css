@@ -1,0 +1,80 @@
+/* Argon overrides: TinkerGenie branding */
+/* Drop this AFTER argon.css (or bootstrap.css) */
+
+:root{
+  --tg-primary:#FFD700;
+  --tg-primary-hover:#E0B800;
+  --tg-dark:#1a1a1a;
+  --tg-light:#ffffff;
+  --tg-muted:#6c757d;
+  --tg-gray:#333333;
+}
+
+/* Primary palette */
+.text-primary{ color: var(--tg-primary) !important; }
+.bg-primary{ background-color: var(--tg-primary) !important; }
+.border-primary{ border-color: var(--tg-primary) !important; }
+
+/* Buttons */
+.btn-primary{
+  color: var(--tg-dark) !important;
+  background-color: var(--tg-primary) !important;
+  border-color: var(--tg-primary) !important;
+  box-shadow: 0 4px 10px rgba(255,215,0,0.25);
+}
+.btn-primary:hover, .btn-primary:focus{
+  color: var(--tg-dark) !important;
+  background-color: var(--tg-primary-hover) !important;
+  border-color: var(--tg-primary-hover) !important;
+}
+.btn-outline-primary{
+  color: var(--tg-primary) !important;
+  border-color: var(--tg-primary) !important;
+}
+.btn-outline-primary:hover{
+  color: var(--tg-dark) !important;
+  background-color: var(--tg-primary) !important;
+  border-color: var(--tg-primary) !important;
+}
+
+/* Badges */
+.badge-primary{
+  background-color: var(--tg-primary) !important;
+  color: var(--tg-dark) !important;
+}
+
+/* Navbar */
+.navbar-light .navbar-brand,
+.navbar .navbar-brand{
+  color: var(--tg-primary) !important;
+}
+.navbar-light .navbar-nav .nav-link,
+.navbar-dark .navbar-nav .nav-link{
+  color: #fff;
+}
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:hover{
+  color: var(--tg-primary) !important;
+}
+
+/* Cards */
+.card{
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+.card .card-header{
+  border-bottom: 1px solid rgba(0,0,0,.05);
+}
+.card .card-title{
+  color: var(--tg-primary);
+}
+
+/* Forms focus ring */
+.form-control:focus{
+  border-color: var(--tg-primary);
+  box-shadow: 0 0 0 .2rem rgba(255,215,0,.25);
+}
+
+/* Links */
+a{ color: var(--tg-primary); }
+a:hover{ color: var(--tg-primary-hover); }

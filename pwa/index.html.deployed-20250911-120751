@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>TinkerGenie - Leadership Development</title>
+    <meta name="cache-buster" content="1756501470">
+    <link rel="manifest" href="manifest.json?v=1756501470">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        :root {
+            --black: #1a1a1a;
+            --white: #ffffff;
+            --yellow: #FFD700;
+            --gray: #333333;
+            --gray-light: #f5f5f5;
+            --shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--black);
+            min-height: 100vh;
+            color: var(--white);
+            overflow-x: hidden;
+        }
+
+        /* Login Screen */
+        .login-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow) 22%, var(--black) 28%, var(--black) 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.4s ease-out;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-header {
+            background: transparent;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            color: var(--black);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .login-header p {
+            color: #333;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .login-body {
+            padding: 30px;
+            background: transparent;
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--yellow);
+        }
+
+        .form-group input:disabled {
+            background: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+            border-color: #ddd;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--yellow) 0%, #FFA500 100%);
+            color: var(--black);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--yellow) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #db4437;
+            color: white;
+            border: 1px solid #c23321;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: var(--yellow) !important;
+            color: var(--black);
+            filter: brightness(1.1);
+            border-color: var(--yellow);
+        }
+
+        .btn-secondary::before {
+            content: "G";
+            background: white;
+            color: #db4437;
+            width: 18px;
+            height: 18px;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.6);
+            z-index: 1;
+        }
+
+        .divider span {
+            background: transparent;
+            padding: 0 20px;
+        }
+
+        /* Preferences Overlay */
+        .preferences-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .preferences-content {
+            background: var(--white);
+            margin: 20px;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid var(--black);
+        }
+
+        .preferences-content h2 {
+            color: var(--black);
+            margin-bottom: 20px;
+            text-shadow: none;
+        }
+
+        .preferences-content p {
+            color: var(--black);
+            margin-bottom: 25px;
+        }
+
+        .user-name {
+            color: var(--black);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .style-options {
+            margin: 20px 0;
+        }
+
+        .style-option {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .style-option:hover {
+            border-color: var(--yellow);
+            background: var(--yellow) !important;
+        }
+
+        .style-option.selected {
+            background: var(--yellow) !important;
+            border-color: var(--yellow);
+        }
+
+        .style-option h3 {
+            color: var(--black);
+            margin-bottom: 5px;
+        }
+
+        .style-option p {
+            color: #111;
+            font-size: 0.9rem;
+        }
+
+        .time-picker {
+            margin: 20px 0;
+        }
+
+        .time-input-container {
+            background: var(--yellow);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 2px solid var(--black);
+            transition: all 0.3s;
+        }
+
+        .time-input-container:hover {
+            border-color: var(--black);
+            background: var(--yellow);
+        }
+
+        .time-input-container.focused {
+            border-color: var(--black);
+            background: var(--yellow);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.15);
+        }
+
+        .time-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            color: var(--black);
+            text-align: center;
+            font-weight: 700;
+            outline: none;
+            letter-spacing: 0.5px;
+        }
+
+        .time-input::placeholder {
+            color: #666;
+            font-weight: normal;
+        }
+
+        .continue-btn {
+            background: var(--yellow);
+            color: var(--black);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .continue-btn:hover {
+            background: var(--yellow) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .continue-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Chat Interface */
+        .chat-container {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--black);
+        }
+
+        .chat-header {
+            background: var(--gray);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #404040;
+        }
+
+        .chat-header h2 {
+            color: white;
+            font-size: 1.3rem;
+            text-align: center;
+            flex: 1;
+        }
+
+        .header-left {
+            flex: 1;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .header-right {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .leadership-prompt {
+            background: var(--yellow);
+            color: var(--black);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .settings-btn:hover {
+            color: var(--yellow);
+        }
+
+        .welcome-message {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 60px 40px;
+            text-align: center;
+            font-weight: 400;
+            font-size: 1.6rem;
+            line-height: 1.4;
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .greeting-text {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .challenge-question {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.4rem;
+            font-weight: 400;
+            max-width: 800px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 700px;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 280px;
+            max-width: 320px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+            border-color: var(--yellow);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+        }
+
+        .action-btn:active {
+            transform: translateY(-2px);
+        }
+
+        .btn-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .btn-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--yellow);
+            display: block;
+        }
+
+        .btn-subtitle {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            display: block;
+            margin-top: 4px;
+        }
+
+        .daily-prompt-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.15));
+        }
+
+        .burning-fires-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 87, 87, 0.3), rgba(255, 87, 87, 0.15));
+            border-color: #ff5757;
+        }
+
+        .first-name {
+            color: var(--yellow);
+            font-weight: 700;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--black);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            line-height: 1.4;
+        }
+
+        .message.user .message-content {
+            background: var(--yellow);
+            color: var(--black);
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant .message-content {
+            background: var(--gray);
+            color: white;
+            border-bottom-left-radius: 5px;
+        }
+
+        .burning-fires {
+            background: linear-gradient(135deg, #ff4757, #ff6b7a);
+            color: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border-left: 5px solid #ff3742;
+        }
+
+        .burning-fires h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .burning-fires p {
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .chat-input {
+            background: var(--gray);
+            padding: 20px;
+            border-top: 1px solid #404040;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .chat-textarea {
+            width: 100%;
+            min-height: 50px;
+            max-height: 120px;
+            padding: 15px 50px 15px 15px;
+            border: 2px solid #404040;
+            border-radius: 25px;
+            background: var(--black);
+            color: white;
+            font-family: inherit;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-textarea:focus {
+            border-color: var(--yellow);
+        }
+
+        .voice-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.3s;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .voice-btn:hover, .voice-btn.active {
+            color: var(--yellow);
+        }
+
+        .voice-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .send-btn {
+            background: var(--yellow);
+            color: var(--black);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: #FFA500;
+            transform: scale(1.1);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 20px;
+            text-align: center;
+            color: #888;
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--yellow);
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .login-card {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .chat-header {
+                padding: 15px;
+            }
+            
+            .chat-input {
+                padding: 15px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+
+            .greeting-text {
+                font-size: 1.8rem;
+            }
+
+            .challenge-question {
+                font-size: 1.2rem;
+            }
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 26, 26, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #404040;
+            border-top: 3px solid var(--yellow);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div class="login-container" id="login">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>TinkerGenie</h1>
+                <p>Leadership Development Platform</p>
+            </div>
+            <div class="login-body">
+                <div id="errorMessage" class="error-message">
+                    Invalid credentials. Please try again.
+                </div>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username" style="opacity: 0.5;">Enter your email</label>
+                        <input type="email" id="username" name="username" placeholder="SSO login only" disabled>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" style="opacity: 0.5;">Password</label>
+                        <input type="password" id="password" name="password" placeholder="SSO login only" disabled>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="loginBtn" disabled>
+                        Sign In (Disabled)
+                    </button>
+                </form>
+                
+                <div class="divider">
+                    <span>Single Sign-On</span>
+                </div>
+                
+                <button class="btn btn-secondary" onclick="googleSSO()">
+                    Continue with Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preferences Overlay -->
+    <div class="preferences-overlay" id="preferences">
+        <div class="preferences-content">
+            <h2>Welcome to TinkerGenie!</h2>
+            <div class="user-name" id="userName">Loading...</div>
+            <p>Let's customize your leadership development experience. Choose your communication style:</p>
+            
+            <div class="style-options">
+                <div class="style-option" onclick="selectStyle('concise')">
+                    <h3>🎯 Concise</h3>
+                    <p>Direct, actionable insights. Get straight to the point.</p>
+                </div>
+                <div class="style-option" onclick="selectStyle('balanced')">
+                    <h3>⚖️ Balanced</h3>
+                    <p>Perfect mix of detail and clarity. Most popular choice.</p>
+                </div>
+                <div class="style-option" onclick="selectStyle('detailed')">
+                    <h3>📚 Detailed</h3>
+                    <p>In-depth explanations with examples and context.</p>
+                </div>
+            </div>
+            
+            <div class="time-picker">
+                <label style="color: var(--white); display: block; margin-bottom: 10px;">
+                    When would you like your daily prompts?
+                </label>
+                <div class="time-input-container" id="timeInputContainer">
+                    <input 
+                        type="time" 
+                        id="promptTime" 
+                        class="time-input"
+                        value="09:00"
+                        placeholder="Select time"
+                    >
+                </div>
+                <p style="color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 8px;">
+                    This will be in your local timezone
+                </p>
+            </div>
+            
+            <button class="continue-btn" onclick="completePreferences()">Continue to Chat</button>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <div class="header-left">
+                <div class="leadership-prompt" id="leadershipPrompt">Leadership Prompt Day 1</div>
+            </div>
+            <h2>TinkerGenie</h2>
+            <div class="header-right">
+                <button class="settings-btn" onclick="openSettings()">⚙️</button>
+            </div>
+        </div>
+
+        <div class="welcome-message" id="welcomeMessage">
+            <div class="greeting-text" id="greetingText">
+                Loading...
+            </div>
+            <div class="action-buttons" id="actionButtons">
+                <button class="action-btn daily-prompt-btn" onclick="startDailyPrompt()">
+                    <span class="btn-icon">📖</span>
+                    <span class="btn-text">Daily Leadership Prompt</span>
+                    <span class="btn-subtitle">Day <span id="currentDayNumber">1</span> Journey</span>
+                </button>
+                <button class="action-btn burning-fires-btn" onclick="startBurningFires()">
+                    <span class="btn-icon">🔥</span>
+                    <span class="btn-text">Burning Fires</span>
+                    <span class="btn-subtitle">Urgent matters to address</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="burning-fires" id="burningFires" style="display: none;">
+            <h3>🔥 Burning Fires Alert</h3>
+            <p>It looks like you have some urgent issues that need immediate attention. Let's tackle the most critical one first.</p>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be inserted here -->
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="input-container">
+                <textarea 
+                    class="chat-textarea" 
+                    id="messageInput" 
+                    placeholder="Type your message..."
+                    rows="1"
+                ></textarea>
+                <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceInput()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
+            </div>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>➤</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://tinker.twobrain.ai/api';
+        
+        let authToken = localStorage.getItem('token');
+        let userId = localStorage.getItem('userId');
+        let isFirstTime = localStorage.getItem('isFirstTime') !== 'false';
+        let selectedStyle = 'balanced';
+        let currentDay = 1;
+        let userName = 'User';
+        let dailyPrompt = '';
+        // State for greeting limits
+        let lastGreetingTime = 0;
+        let greetingCount = 0;
+        let lastGreetingPeriod = '';
+        let recognition = null;
+        let isListening = false;
+        let isFirstMessage = true;
+        let conversationHistory = [];
+        let currentPromptSession = null;
+        let promptQuestionsAsked = 0;
+
+        function getTimeBasedGreeting() {
+            const now = new Date();
+            const hour = now.getHours();
+            
+            let greeting = '';
+            let period = '';
+            
+            if (hour >= 5 && hour < 12) {
+                greeting = 'Good Morning';
+                period = 'morning';
+            } else if (hour >= 12 && hour < 17) {
+                greeting = 'Good Afternoon';  
+                period = 'noon';
+            } else if (hour >= 17 && hour < 21) {
+                greeting = 'Good Evening';
+                period = 'evening';
+            } else {
+                greeting = 'Good Night';
+                period = 'night';
+            }
+            
+            return { greeting, period };
+        }
+
+        function shouldShowGreeting() {
+            const { period } = getTimeBasedGreeting();
+            
+            // Check if we're in a new time period
+            if (period !== lastGreetingPeriod) {
+                lastGreetingPeriod = period;
+                greetingCount = 0;
+                return true;
+            }
+            
+            // Don't show if already greeted in this period
+            if (greetingCount > 0) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        function updateGreeting() {
+            if (shouldShowGreeting()) {
+                const { greeting } = getTimeBasedGreeting();
+                document.getElementById('greetingText').innerHTML = 
+                    `${greeting}, <span class="first-name">${userName}</span>!`;
+                greetingCount++;
+            }
+        }
+
+        function updateDayCounter() {
+            document.getElementById('leadershipPrompt').textContent = `Leadership Prompt Day ${currentDay}`;
+            const dayNumberElement = document.getElementById('currentDayNumber');
+            if (dayNumberElement) {
+                dayNumberElement.textContent = currentDay;
+            }
+        }
+
+        async function startDailyPrompt() {
+            // Hide welcome screen and show chat
+            document.getElementById('welcomeMessage').style.display = 'none';
+            
+            // Clear any existing messages
+            document.getElementById('chatMessages').innerHTML = '';
+            
+            // Set prompt session flag
+            currentPromptSession = {
+                type: 'daily_prompt',
+                day: currentDay,
+                startTime: new Date(),
+                questionsAsked: 0
+            };
+            promptQuestionsAsked = 0;
+            
+            // Debug log
+            console.log('Starting daily prompt with userId:', userId, 'currentDay:', currentDay);
+            
+            // Load and display daily prompt
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat?_t=${Date.now()}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    cache: 'no-store',
+                    body: JSON.stringify({
+                        message: 'START_DAILY_PROMPT',
+                        userId: userId || 'admin',
+                        context: {
+                            currentDay: currentDay,
+                            sessionType: 'daily_prompt'
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Debug log the response
+                console.log('Daily prompt response:', data);
+                
+                if (data.response) {
+                    // Show exactly what we got from the server
+                    console.log('Exact prompt text received:', data.response);
+                    addMessage('assistant', data.response, true);
+                    conversationHistory.push({
+                        role: 'assistant',
+                        content: data.response,
+                        timestamp: new Date()
+                    });
+                } else {
+                    console.error('No response in data:', data);
+                }
+            } catch (error) {
+                console.error('Error starting daily prompt:', error);
+                addMessage('assistant', "I'm having trouble loading today's prompt. Let me help you with something else instead. What's on your mind?");
+            }
+            
+            document.getElementById('messageInput').focus();
+        }
+
+        async function startBurningFires() {
+            // Hide welcome screen and show chat
+            document.getElementById('welcomeMessage').style.display = 'none';
+            
+            // Clear any existing messages
+            document.getElementById('chatMessages').innerHTML = '';
+            
+            // Set burning fires session flag
+            currentPromptSession = {
+                type: 'burning_fires',
+                startTime: new Date()
+            };
+            
+            // Show burning fires intro
+            const introMessage = "🔥 I see you have something urgent that needs attention. Tell me what's happening - what's the most pressing issue you're facing right now? I'm here to help you work through it.";
+            
+            addMessage('assistant', introMessage, true);
+            conversationHistory.push({
+                role: 'assistant',
+                content: introMessage,
+                timestamp: new Date()
+            });
+            
+            document.getElementById('messageInput').focus();
+        }
+
+        function init() {
+            // Don't trust localStorage for first-time check - always verify with server
+            if (authToken) {
+                loadUserData(); // This will determine if preferences are needed
+            } else {
+                // No auth token, show login
+                document.getElementById('login').style.display = 'flex';
+            }
+            
+            setupEventListeners();
+            setupVoiceRecognition();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('messageInput').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+                
+                document.getElementById('sendBtn').disabled = !this.value.trim();
+            });
+
+            document.getElementById('messageInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!document.getElementById('sendBtn').disabled) {
+                        sendMessage();
+                    }
+                }
+            });
+
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+            });
+
+            const timeInput = document.getElementById('promptTime');
+            const timeContainer = document.getElementById('timeInputContainer');
+            
+            if (timeInput && timeContainer) {
+                timeInput.addEventListener('focus', function() {
+                    timeContainer.classList.add('focused');
+                });
+                
+                timeInput.addEventListener('blur', function() {
+                    timeContainer.classList.remove('focused');
+                });
+            }
+        }
+
+        function setupVoiceRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    document.getElementById('voiceBtn').classList.add('active');
+                };
+
+                recognition.onend = function() {
+                    isListening = false;
+                    document.getElementById('voiceBtn').classList.remove('active');
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('messageInput').value = transcript;
+                    document.getElementById('sendBtn').disabled = false;
+                    document.getElementById('messageInput').focus();
+                };
+            } else {
+                document.getElementById('voiceBtn').style.display = 'none';
+            }
+        }
+
+        function toggleVoiceInput() {
+            if (!recognition) return;
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        async function googleSSO() {
+            try {
+                // This should be replaced with actual Google OAuth implementation
+                // For now, redirect to your OAuth endpoint
+                window.location.href = `${API_BASE_URL}/auth/google`;
+            } catch (error) {
+                console.error('SSO error:', error);
+                document.getElementById('errorMessage').textContent = 'SSO login failed. Please try again.';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+
+        }
+
+        async function loadUserData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/preferences/${userId || 'admin'}?_t=${Date.now()}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Cache-Control': 'no-cache'
+                    },
+                    cache: 'no-store'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('User preferences loaded:', data);
+                    
+                    currentDay = data.currentDay || 1;
+                    userName = data.name || 'User';
+                    
+                    // Check onboarding status from server
+                    const hasCompletedOnboarding = data.onboardingCompleted === true;
+                    
+                    if (hasCompletedOnboarding) {
+                        // User has completed onboarding, show chat
+                        localStorage.setItem('isFirstTime', 'false');
+                        showChatScreen();
+                    } else {
+                        // User needs to complete onboarding
+                        localStorage.setItem('isFirstTime', 'true');
+                        showPreferences();
+                    }
+                    
+                    updateDayCounter();
+                    updateGreeting();
+                } else {
+                    console.error('Failed to load preferences, status:', response.status);
+                    // Default to showing preferences for safety
+                    showPreferences();
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                // Default to showing preferences for safety
+                showPreferences();
+            }
+        }
+
+        async function loadTodaysPrompt() {
+            // This function is no longer needed as prompts are loaded when the button is clicked
+            // Keeping it as a stub to avoid breaking references
+            return;
+        }
+
+        function selectStyle(style) {
+            selectedStyle = style;
+            document.querySelectorAll('.style-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.style-option').classList.add('selected');
+        }
+
+        async function completePreferences() {
+            const promptTime = document.getElementById('promptTime').value;
+            
+            try {
+                document.getElementById('loading').style.display = 'flex';
+
+                const response = await fetch(`${API_BASE_URL}/preferences`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        communicationStyle: selectedStyle,
+                        responseLength: selectedStyle === 'concise' ? 'short' : selectedStyle === 'detailed' ? 'long' : 'medium',
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        promptTime: promptTime,
+                        nudgeEnabled: true,
+                        emailSummary: false
+                    })
+                });
+
+                if (response.ok) {
+                    isFirstTime = false;
+                    localStorage.setItem('isFirstTime', 'false');
+                    showChatScreen();
+                    
+                    // Load today's prompt after preferences are saved
+                    await loadTodaysPrompt();
+                    
+                    setTimeout(() => {
+                        const timeDisplay = formatTime(promptTime);
+                        addMessage('assistant', `Great! I've set up your preferences. You'll receive ${selectedStyle} responses and daily prompts at ${timeDisplay}. Let's start your leadership journey!`);
+                    }, 1000);
+                } else {
+                    throw new Error('Failed to save preferences');
+                }
+            } catch (error) {
+                console.error('Preferences error:', error);
+                alert('Error saving preferences. Please try again.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function formatTime(time) {
+            const [hours, minutes] = time.split(':');
+            const hour12 = hours % 12 || 12;
+            const ampm = hours < 12 ? 'AM' : 'PM';
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+
+        function showPreferences() {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('preferences').style.display = 'flex';
+            document.getElementById('userName').textContent = userName;
+        }
+
+        function showChatScreen() {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('preferences').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'flex';
+            updateDayCounter();
+            updateGreeting();
+            updateChallengeQuestion();
+            document.getElementById('messageInput').focus();
+        }
+
+        function addMessage(type, content, skipHistory = false) {
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            // Support formatted content (with line breaks and lists)
+            if (content.includes('\n') || content.includes('•')) {
+                messageContent.innerHTML = formatMessage(content);
+            } else {
+                messageContent.textContent = content;
+            }
+            
+            message.appendChild(messageContent);
+            
+            // Guard against missing DOM element
+            const chatMessages = document.getElementById('chatMessages');
+            if (!chatMessages) {
+                console.error('chatMessages element not found');
+                return;
+            }
+            
+            chatMessages.appendChild(message);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Add to history if not skipped
+            if (!skipHistory) {
+                conversationHistory.push({
+                    role: type === 'user' ? 'user' : 'assistant',
+                    content: content,
+                    timestamp: new Date()
+                });
+            }
+        }
+        
+        function formatMessage(text) {
+            // Convert line breaks to <br>
+            let formatted = text.replace(/\n/g, '<br>');
+            
+            // Convert bullet points
+            formatted = formatted.replace(/• /g, '&nbsp;&nbsp;• ');
+            
+            // Convert numbered lists
+            formatted = formatted.replace(/^(\d+\.) /gm, '&nbsp;&nbsp;$1 ');
+            
+            return formatted;
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage('user', message);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            document.getElementById('sendBtn').disabled = true;
+            
+            document.getElementById('typingIndicator').style.display = 'block';
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+
+            try {
+                // Build context with conversation history
+                const context = {
+                    currentDay: currentDay,
+                    communicationStyle: selectedStyle,
+                    userName: userName,
+                    sessionType: currentPromptSession?.type || 'general',
+                    conversationHistory: conversationHistory.slice(-10), // Last 10 messages for context
+                    promptQuestionsAsked: promptQuestionsAsked
+                };
+                
+                // Track questions in daily prompt session
+                if (currentPromptSession?.type === 'daily_prompt') {
+                    promptQuestionsAsked++;
+                    currentPromptSession.questionsAsked = promptQuestionsAsked;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        userId: userId,
+                        context: context
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.response) {
+                    // Simulate natural typing delay
+                    const typingDelay = Math.min(500 + (data.response.length * 5), 2000);
+                    
+                    setTimeout(() => {
+                        document.getElementById('typingIndicator').style.display = 'none';
+                        addMessage('assistant', data.response);
+                        
+                        // Check if daily prompt is complete
+                        if (currentPromptSession?.type === 'daily_prompt' && promptQuestionsAsked >= 2) {
+                            setTimeout(() => {
+                                const completionMessage = `\n\n✨ Excellent work on today's leadership reflection, ${userName}!\n\nYou've completed Day ${currentDay} of your journey. Your insights show real growth.\n\nIs there anything urgent (burning fires) you need help with before we wrap up?`;
+                                addMessage('assistant', completionMessage);
+                                
+                                // Reset session
+                                currentPromptSession = null;
+                                promptQuestionsAsked = 0;
+                                
+                                // Advance day
+                                currentDay++;
+                                updateDayCounter();
+                                localStorage.setItem('currentDay', currentDay.toString());
+                            }, 1500);
+                        }
+                        
+                        // Check if day should advance
+                        if (data.dayCompleted && data.newDay) {
+                            currentDay = data.newDay;
+                            updateDayCounter();
+                            loadTodaysPrompt();
+                        }
+                    }, typingDelay);
+                } else {
+                    throw new Error(data.message || 'Failed to get response');
+                }
+            } catch (error) {
+                console.error('Chat error:', error);
+                document.getElementById('typingIndicator').style.display = 'none';
+                addMessage('assistant', "I'm having a moment of technical difficulty. Let's try that again - what were you saying?");
+            }
+        }
+
+        async function openSettings() {
+            // This should open a proper settings modal
+            // For now, just reload preferences
+            try {
+                const response = await fetch(`${API_BASE_URL}/preferences/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`Current settings:\nCommunication Style: ${data.communicationStyle}\nDaily Prompt Time: ${data.promptTime}\nTimezone: ${data.timezone}`);
+                }
+            } catch (error) {
+                alert('Settings: Communication style, notification time, pause journey');
+            }
+        }
+
+        // Clear any old service workers and caches
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.update(); // Force update to new version
+                }
+            });
+            
+            // Clear all caches to ensure fresh data
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        if (!name.includes('v1756501470')) {
+                            caches.delete(name);
+                        }
+                    });
+                });
+            }
+        }
+        
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
+

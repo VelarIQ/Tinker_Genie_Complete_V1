@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug: Clear Session Data</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #FFD700;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #FFD700;
+        }
+        
+        button {
+            background: #FFD700;
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            background: #FFA500;
+        }
+        
+        .data-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #333;
+            border-radius: 8px;
+        }
+        
+        .key-list {
+            font-family: monospace;
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Debug: Clear Session Data</h1>
+        <p>This tool helps clear all cached session data that might be causing "active session" issues.</p>
+        
+        <div class="data-section">
+            <h3>Current LocalStorage Data:</h3>
+            <div id="currentData" class="key-list">Loading...</div>
+        </div>
+        
+        <div class="data-section">
+            <h3>Actions:</h3>
+            <button onclick="clearDailyPromptData()">Clear Daily Prompt Sessions</button>
+            <button onclick="clearConversationData()">Clear Conversation Cache</button>
+            <button onclick="clearAllExceptAuth()">Clear All Except Login</button>
+            <button onclick="clearEverything()">Clear Everything (Force Re-login)</button>
+        </div>
+        
+        <div class="data-section">
+            <h3>Results:</h3>
+            <div id="results" style="color: #3fb950;"></div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="window.location.href='chat.html'" style="background: #3fb950;">Return to Chat</button>
+        </div>
+    </div>
+
+    <script>
+        function displayCurrentData() {
+            const data = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                data[key] = value.length > 100 ? value.substring(0, 100) + '...' : value;
+            }
+            
+            document.getElementById('currentData').innerHTML = 
+                Object.keys(data).length > 0 
+                    ? JSON.stringify(data, null, 2)
+                    : 'No localStorage data found';
+        }
+        
+        function clearDailyPromptData() {
+            const clearedKeys = [];
+            
+            // Clear daily prompt related keys
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && (
+                    key.includes('dailyPrompt') ||
+                    key.includes('DailyPrompt') ||
+                    key.includes('daily_prompt') ||
+                    key.includes('currentDay') ||
+                    key.includes('inDailyPrompt') ||
+                    key.includes('lastGreeting')
+                )) {
+                    localStorage.removeItem(key);
+                    clearedKeys.push(key);
+                }
+            }
+            
+            document.getElementById('results').innerHTML = 
+                `Cleared ${clearedKeys.length} daily prompt keys:<br>` + 
+                clearedKeys.join('<br>');
+            
+            displayCurrentData();
+        }
+        
+        function clearConversationData() {
+            const clearedKeys = [];
+            
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && (
+                    key.includes('conversation') ||
+                    key.includes('Conversation') ||
+                    key.includes('lastSync') ||
+                    key.includes('failedMessages')
+                )) {
+                    localStorage.removeItem(key);
+                    clearedKeys.push(key);
+                }
+            }
+            
+            document.getElementById('results').innerHTML = 
+                `Cleared ${clearedKeys.length} conversation keys:<br>` + 
+                clearedKeys.join('<br>');
+            
+            displayCurrentData();
+        }
+        
+        function clearAllExceptAuth() {
+            const preserveKeys = ['authToken', 'userId', 'userName', 'userEmail'];
+            const clearedKeys = [];
+            
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && !preserveKeys.includes(key)) {
+                    localStorage.removeItem(key);
+                    clearedKeys.push(key);
+                }
+            }
+            
+            document.getElementById('results').innerHTML = 
+                `Cleared ${clearedKeys.length} keys (preserved auth):<br>` + 
+                clearedKeys.join('<br>');
+            
+            displayCurrentData();
+        }
+        
+        function clearEverything() {
+            const keyCount = localStorage.length;
+            localStorage.clear();
+            
+            document.getElementById('results').innerHTML = 
+                `Cleared ALL ${keyCount} localStorage keys. You'll need to log in again.`;
+            
+            displayCurrentData();
+        }
+        
+        // Load current data on page load
+        displayCurrentData();
+    </script>
+</body>
+</html>

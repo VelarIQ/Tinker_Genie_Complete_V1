@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear User Cache - TinkerGenie</title>
+    <style>
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 40px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 40px;
+        }
+        h1 {
+            color: #FFD700;
+            margin-bottom: 20px;
+        }
+        .info {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .info p {
+            margin: 8px 0;
+            color: #8b949e;
+        }
+        .info strong {
+            color: #e6edf3;
+        }
+        button {
+            padding: 12px 30px;
+            background: #FFD700;
+            color: #0d1117;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #FFA500;
+        }
+        .danger {
+            background: #f85149;
+            color: white;
+        }
+        .success {
+            background: #3fb950;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Clear User Cache</h1>
+        <p>If you're seeing the wrong user name or old data, use this tool to clear your cached information.</p>
+        
+        <div class="info">
+            <h3>Current Cached Data:</h3>
+            <p><strong>User ID:</strong> <span id="userId">Not set</span></p>
+            <p><strong>User Name:</strong> <span id="userName">Not set</span></p>
+            <p><strong>Email:</strong> <span id="userEmail">Not set</span></p>
+            <p><strong>Auth Token:</strong> <span id="authToken">Not set</span></p>
+            <p><strong>Theme:</strong> <span id="theme">Not set</span></p>
+            <p><strong>Current Day:</strong> <span id="currentDay">Not set</span></p>
+        </div>
+        
+        <button onclick="clearUserData()">Clear User Name Only</button>
+        <button class="danger" onclick="clearAllData()">Clear All Data & Logout</button>
+        <button onclick="goToLogin()">Go to Login</button>
+        
+        <div id="success" class="success">
+            Cache cleared! You can now login again.
+        </div>
+    </div>
+    
+    <script>
+        // Display current data
+        function displayCurrentData() {
+            const userId = localStorage.getItem('userId');
+            document.getElementById('userId').textContent = userId || 'Not set';
+            document.getElementById('userName').textContent = localStorage.getItem('userName') || 'Not set';
+            document.getElementById('userEmail').textContent = localStorage.getItem('userEmail') || 'Not set';
+            document.getElementById('authToken').textContent = localStorage.getItem('authToken') ? '✓ Set' : 'Not set';
+            document.getElementById('theme').textContent = localStorage.getItem('theme') || 'Not set';
+            document.getElementById('currentDay').textContent = localStorage.getItem(`currentDay_${userId}`) || 'Not set';
+        }
+        
+        // Clear just the user name
+        function clearUserData() {
+            localStorage.removeItem('userName');
+            document.getElementById('success').style.display = 'block';
+            document.getElementById('success').textContent = 'User name cleared! Refresh the app to update.';
+            displayCurrentData();
+        }
+        
+        // Clear all data
+        function clearAllData() {
+            if (confirm('This will log you out completely. Continue?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                document.getElementById('success').style.display = 'block';
+                document.getElementById('success').textContent = 'All data cleared! Redirecting to login...';
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+        }
+        
+        // Go to login
+        function goToLogin() {
+            window.location.href = 'login.html';
+        }
+        
+        // Load on page load
+        displayCurrentData();
+    </script>
+</body>
+</html>

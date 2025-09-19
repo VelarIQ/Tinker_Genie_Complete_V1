@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Storage - TinkerGenie</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .section {
+            background: #111;
+            border: 1px solid #0f0;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        h2 {
+            color: #ff0;
+            margin-top: 0;
+        }
+        .key {
+            color: #0ff;
+        }
+        .value {
+            color: #fff;
+            word-break: break-all;
+        }
+        .button {
+            background: #ff0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .button:hover {
+            background: #fff;
+        }
+        .red {
+            background: #f00;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐛 TinkerGenie Debug Storage</h1>
+        
+        <div class="section">
+            <h2>📦 LocalStorage Contents:</h2>
+            <div id="localStorage"></div>
+        </div>
+        
+        <div class="section">
+            <h2>🍪 SessionStorage Contents:</h2>
+            <div id="sessionStorage"></div>
+        </div>
+        
+        <div class="section">
+            <h2>🔧 Debug Actions:</h2>
+            <button class="button" onclick="testLogin()">Test Login as TestUser</button>
+            <button class="button" onclick="testDailyPrompt()">Test Daily Prompt Flow</button>
+            <button class="button red" onclick="clearAll()">Clear All Storage</button>
+            <button class="button" onclick="window.location.reload()">Refresh</button>
+            <button class="button" onclick="window.location.href='login.html'">Go to Login</button>
+        </div>
+        
+        <div class="section">
+            <h2>📋 Test Results:</h2>
+            <div id="results"></div>
+        </div>
+    </div>
+    
+    <script>
+        function displayStorage() {
+            // Display localStorage
+            let localHTML = '';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                localHTML += `<div><span class="key">${key}:</span> <span class="value">${value}</span></div>`;
+            }
+            document.getElementById('localStorage').innerHTML = localHTML || '<em>Empty</em>';
+            
+            // Display sessionStorage
+            let sessionHTML = '';
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                const value = sessionStorage.getItem(key);
+                sessionHTML += `<div><span class="key">${key}:</span> <span class="value">${value}</span></div>`;
+            }
+            document.getElementById('sessionStorage').innerHTML = sessionHTML || '<em>Empty</em>';
+        }
+        
+        function log(message) {
+            const results = document.getElementById('results');
+            results.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+        }
+        
+        async function testLogin() {
+            log('Testing login as testuser...');
+            
+            // Simulate login data storage
+            localStorage.setItem('authToken', 'test-token-' + Date.now());
+            localStorage.setItem('userId', 'test-user-' + Date.now());
+            localStorage.setItem('userName', 'TestUser');
+            localStorage.setItem('userEmail', 'test@tinkergenie.com');
+            localStorage.setItem('isFirstTime', 'false');
+            
+            log('✅ Login data stored in localStorage');
+            displayStorage();
+        }
+        
+        function testDailyPrompt() {
+            log('Testing daily prompt flow...');
+            
+            // Check auth
+            const authToken = localStorage.getItem('authToken');
+            const userId = localStorage.getItem('userId');
+            
+            if (!authToken || !userId) {
+                log('❌ No auth data found - would redirect to login');
+                return;
+            }
+            
+            log('✅ Auth data found');
+            
+            // Simulate welcome to chat transition
+            sessionStorage.setItem('startMode', 'daily');
+            log('✅ Set startMode=daily in sessionStorage');
+            
+            // Check if TinkerGenieApp is available
+            if (typeof TinkerGenieApp !== 'undefined') {
+                log('✅ TinkerGenieApp class is available');
+                
+                try {
+                    const app = new TinkerGenieApp();
+                    if (app.authenticated) {
+                        log('✅ App created and authenticated');
+                    } else {
+                        log('❌ App created but not authenticated');
+                    }
+                } catch (e) {
+                    log('❌ Error creating app: ' + e.message);
+                }
+            } else {
+                log('❌ TinkerGenieApp class not found - app.js not loaded');
+            }
+            
+            displayStorage();
+        }
+        
+        function clearAll() {
+            if (confirm('Clear all storage data?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                log('✅ All storage cleared');
+                displayStorage();
+            }
+        }
+        
+        // Load app.js to test if TinkerGenieApp is available
+        const script = document.createElement('script');
+        script.src = 'app.js?v=' + Date.now();
+        script.onload = () => {
+            log('✅ app.js loaded');
+        };
+        script.onerror = () => {
+            log('❌ Failed to load app.js');
+        };
+        document.head.appendChild(script);
+        
+        // Initial display
+        displayStorage();
+    </script>
+</body>
+</html>

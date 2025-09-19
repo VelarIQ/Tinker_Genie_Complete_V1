@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://tinker.twobrain.ai/sitemap.xml
+
+# Disallow admin areas
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+
+# Allow PWA files
+Allow: /manifest.json
+Allow: /sw.js
+Allow: /sw-no-cache.js

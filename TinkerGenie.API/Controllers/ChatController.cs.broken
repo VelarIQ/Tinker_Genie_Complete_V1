@@ -1,0 +1,434 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Text.Json;
+using System.Net.Http.Headers;
+using System.Text;
+using Npgsql;
+using StackExchange.Redis;
+using System.Security.Claims;
+using System.Text.RegularExpressions;
+
+namespace TinkerGenie.API.Controllers
+{
+    [Authorize]
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ChatController : ControllerBase
+    {
+        private readonly ILogger<ChatController> _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IConnectionMultiplexer _redis;
+        private readonly HttpClient _httpClient;
+        private readonly string _connectionString;
+
+        public ChatController(
+            ILogger<ChatController> logger,
+            IConfiguration configuration,
+            IConnectionMultiplexer redis)
+        {
+            _logger = logger;
+            _configuration = configuration;
+            _redis = redis;
+            _httpClient = new HttpClient();
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            var apiKey = configuration["OpenAI:ApiKey"];
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = 
+                    new AuthenticationHeaderValue("Bearer", apiKey);
+            }
+        }
+
+        [HttpPost]
+                _logger.LogInformation($"Chat request from user: {userId}, message: {request.Message}");
+        public async Task<IActionResult> Chat([FromBody] ChatRequest request)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                    ?? User.FindFirst("userId")?.Value ?? "demo";
+                _logger.LogInformation($"Burning fire: {isBurningFire}, Ready: {isReadyForPrompt}");
+
+                var isBurningFire = DetectBurningFire(request.Message);
+                var isReadyForPrompt = DetectReadyForPrompt(request.Message);
+
+                var userState = await GetUserState(userId);
+                var conversationHistory = await GetConversationHistory(userId, 100);
+
+                string aiResponse;
+
+                if (isBurningFire)
+                {
+                    aiResponse = await HandleBurningFire(request.Message, userId, userState, conversationHistory);
+                }
+                else if (isReadyForPrompt || userState.IsPromptTime)
+                {
+                    aiResponse = await HandlePromptDelivery(userId, userState, request.Message, conversationHistory);
+                }
+                else
+                {
+                    aiResponse = await HandleGeneralChat(request.Message, userId, userState, conversationHistory);
+                }
+
+                await StoreConversation(userId, request.Message, aiResponse);
+
+                return Ok(new ChatResponse
+                {
+                    Message = aiResponse,
+                    Success = true,
+                    MessageType = isBurningFire ? "burning_fire" : isReadyForPrompt ? "prompt_delivery" : "general",
+                    CurrentDay = userState.CurrentDay
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing chat");
+                return Ok(new ChatResponse
+                {
+                    Message = "I understand. Let me help you with that.",
+                    Success = true,
+                    MessageType = "general",
+                    CurrentDay = 1
+                });
+            }
+        }
+
+        private bool DetectBurningFire(string message)
+        {
+            var phrases = new[] { "urgent", "emergency", "help now", "crisis", "burning fire", "immediately", "asap" };
+            var lower = message.ToLower();
+            return phrases.Any(p => lower.Contains(p));
+        }
+
+        private bool DetectReadyForPrompt(string message)
+        {
+            var phrases = new[] { "ready for prompt", "today's prompt", "daily prompt", "give me today's" };
+            var lower = message.ToLower();
+            return phrases.Any(p => lower.Contains(p));
+        }
+
+        private async Task<UserState> GetUserState(string userId)
+        {
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+                SELECT u.current_day, u.signup_date, up.communication_style, up.preferred_prompt_time
+                FROM user_data u
+                LEFT JOIN user_profiles up ON u.user_id = up.user_id
+                WHERE u.user_id = @userId", conn);
+
+            cmd.Parameters.AddWithValue("userId", userId);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new UserState
+                {
+                    CurrentDay = reader.IsDBNull(0) ? 1 : reader.GetInt32(0),
+                    SignupDate = reader.IsDBNull(1) ? DateTime.Now : reader.GetDateTime(1),
+                    CommunicationStyle = reader.IsDBNull(2) ? "balanced" : reader.GetString(2),
+                    IsPromptTime = true
+                };
+            }
+
+            return new UserState { CurrentDay = 1, CommunicationStyle = "balanced" };
+        }
+
+        private async Task<string> HandleBurningFire(string message, string userId, UserState state, List<Message> history)
+        {
+            var courseContent = await SearchCourseContent(message);
+            var contextInfo = courseContent.Any() 
+                ? $"\n\nRelevant materials:\n{string.Join("\n", courseContent.Take(3))}"
+                : "";
+
+            var systemPrompt = $@"You are TinkerGenie, Chris Cooper's AI mentor.
+User has URGENT situation. Give immediate actionable advice.
+Day {state.CurrentDay} of program.
+Style: {state.CommunicationStyle}
+1. Give 3 direct action steps
+2. Reference course materials
+3. End with 'Action: [first step]'{contextInfo}";
+
+            return await CallOpenAI(systemPrompt, message, history, 0.5, 150);
+        }
+
+        private async Task<string> HandlePromptDelivery(string userId, UserState state, string message, List<Message> history)
+        {
+            var prompt = await GetDailyPrompt(state.CurrentDay);
+            
+            if (prompt == null)
+                return "You've completed all 180 days! Let's review your journey.";
+
+            var blanks = ExtractFillInBlanks(prompt.Content);
+            
+            if (blanks.Any() && message.Contains(":"))
+            {
+                var filled = ProcessFillInBlanks(prompt.Content, message);
+                await SavePromptResponse(userId, state.CurrentDay, filled);
+                return $"Great! I've captured: {filled}\n\nReflection: Keep going, you're growing as a leader.";
+            }
+
+            return FormatPromptWithStyle(prompt, state.CommunicationStyle);
+        }
+
+        private async Task<string> HandleGeneralChat(string message, string userId, UserState state, List<Message> history)
+        {
+            var systemPrompt = $@"You are TinkerGenie, Chris Cooper's AI mentor.
+Day {state.CurrentDay}. Style: {state.CommunicationStyle}
+- concise: 2 sentences max
+- balanced: Clear paragraph
+- detailed: Full explanation
+Remember last {history.Count} messages.";
+
+            return await CallOpenAI(systemPrompt, message, history, 0.7, 200);
+        }
+
+        private string FormatPromptWithStyle(DailyPrompt prompt, string style)
+        {
+            return style switch
+            {
+                "concise" => $"Day {prompt.DayNumber}: {prompt.Title}\n\n{prompt.Content}",
+                "balanced" => $"**Day {prompt.DayNumber} - {prompt.Title}**\n\n{prompt.Content}\n\n*Take 2 minutes.*",
+                "detailed" => $"🎯 **Day {prompt.DayNumber}**\n\n**{prompt.Title}**\n\n{prompt.Content}\n\n💪 You've got this!\n\n*2-3 minutes*",
+                _ => prompt.Content
+            };
+        }
+
+        private List<string> ExtractFillInBlanks(string content)
+        {
+            var regex = new Regex(@"_{3,}");
+            return regex.Matches(content).Select(m => m.Value).ToList();
+        }
+
+        private string ProcessFillInBlanks(string template, string input)
+        {
+            var answers = input.Split(',').Select(a => a.Split(':').LastOrDefault()?.Trim() ?? "").ToList();
+            var regex = new Regex(@"_{3,}");
+            int i = 0;
+            return regex.Replace(template, m => i < answers.Count ? $"**{answers[i++]}**" : m.Value);
+        }
+
+        private async Task<List<string>> SearchCourseContent(string query)
+        {
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+                SELECT content FROM leadership_content 
+                WHERE content ILIKE @query 
+                LIMIT 3", conn);
+
+            cmd.Parameters.AddWithValue("query", $"%{query}%");
+
+            var results = new List<string>();
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                results.Add(reader.GetString(0));
+            }
+
+            return results;
+        }
+
+        private async Task<List<Message>> GetConversationHistory(string userId, int limit)
+        {
+            var messages = new List<Message>();
+            var db = _redis.GetDatabase();
+            var cached = await db.StringGetAsync($"history:{userId}");
+            
+            if (!cached.IsNullOrEmpty)
+            {
+                try
+                {
+                    return JsonSerializer.Deserialize<List<Message>>(cached!) ?? new List<Message>();
+                }
+                catch { }
+            }
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+                SELECT sender, message_text, created_at
+                FROM conversation_messages
+                WHERE user_id = @userId
+                ORDER BY created_at DESC
+                LIMIT @limit", conn);
+
+            cmd.Parameters.AddWithValue("userId", userId == "admin" ? Guid.NewGuid() : Guid.Parse(userId));
+            cmd.Parameters.AddWithValue("limit", limit);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                messages.Add(new Message
+                {
+                    Role = reader.GetString(0) == "user" ? "user" : "assistant",
+                    Content = reader.GetString(1)
+                });
+            }
+
+            messages.Reverse();
+            await db.StringSetAsync($"history:{userId}", JsonSerializer.Serialize(messages), TimeSpan.FromHours(1));
+
+            return messages;
+        }
+
+        private async Task<string> CallOpenAI(string systemPrompt, string userMessage, List<Message> history, double temp, int tokens)
+        {
+            var messages = new List<object>
+            {
+                new { role = "system", content = systemPrompt }
+            };
+
+            foreach (var msg in history.TakeLast(20))
+            {
+                messages.Add(new { role = msg.Role, content = msg.Content });
+            }
+
+            messages.Add(new { role = "user", content = userMessage });
+
+            var requestBody = new
+            {
+                model = "gpt-4o-mini-2024-07-18",
+                messages = messages,
+                temperature = temp,
+                max_tokens = tokens
+            };
+
+            var json = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(responseContent);
+
+                return doc.RootElement
+                    .GetProperty("choices")[0]
+                    .GetProperty("message")
+                    .GetProperty("content")
+                    .GetString() ?? "I understand. Let me help.";
+            }
+
+            return "I understand. Let me help you with that.";
+        }
+
+        private async Task StoreConversation(string userId, string userMessage, string aiResponse)
+        {
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+
+                var conversationId = Guid.NewGuid();
+
+                await using var cmd = new NpgsqlCommand(@"
+                    INSERT INTO conversation_messages (id, conversation_id, user_id, sender, message_text, created_at)
+                    VALUES (@id1, @convId, @userId, 'user', @userMsg, CURRENT_TIMESTAMP),
+                           (@id2, @convId, @userId, 'assistant', @aiMsg, CURRENT_TIMESTAMP)", conn);
+
+                cmd.Parameters.AddWithValue("id1", Guid.NewGuid());
+                cmd.Parameters.AddWithValue("id2", Guid.NewGuid());
+                cmd.Parameters.AddWithValue("convId", conversationId);
+                cmd.Parameters.AddWithValue("userId", userId == "admin" ? Guid.NewGuid() : Guid.Parse(userId));
+                cmd.Parameters.AddWithValue("userMsg", userMessage);
+                cmd.Parameters.AddWithValue("aiMsg", aiResponse);
+
+                await cmd.ExecuteNonQueryAsync();
+
+                var db = _redis.GetDatabase();
+                await db.KeyDeleteAsync($"history:{userId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error storing conversation");
+            }
+        }
+
+        private async Task<DailyPrompt?> GetDailyPrompt(int day)
+        {
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+                SELECT day_number, prompt_title, prompt_text
+                FROM leadership_daily_prompts
+                WHERE day_number = @day AND is_active = true
+                LIMIT 1", conn);
+
+            cmd.Parameters.AddWithValue("day", day);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new DailyPrompt
+                {
+                    DayNumber = reader.GetInt32(0),
+                    Title = reader.GetString(1),
+                    Content = reader.GetString(2)
+                };
+            }
+
+            return null;
+        }
+
+        private async Task SavePromptResponse(string userId, int day, string response)
+        {
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+                INSERT INTO user_prompt_progress (id, user_id, day_number, status, user_responses, completed_at)
+                VALUES (@id, @userId, @day, 'completed', @response::jsonb, CURRENT_TIMESTAMP)
+                ON CONFLICT (user_id, day_number)
+                DO UPDATE SET user_responses = @response::jsonb, completed_at = CURRENT_TIMESTAMP", conn);
+
+            cmd.Parameters.AddWithValue("id", Guid.NewGuid());
+            cmd.Parameters.AddWithValue("userId", userId == "admin" ? Guid.NewGuid() : Guid.Parse(userId));
+            cmd.Parameters.AddWithValue("day", day);
+            cmd.Parameters.AddWithValue("response", JsonSerializer.Serialize(new { response }));
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+    }
+
+    public class ChatRequest
+    {
+        public string Message { get; set; } = "";
+        public string? ConversationId { get; set; }
+    }
+
+    public class ChatResponse
+    {
+        public string Message { get; set; } = "";
+        public bool Success { get; set; }
+        public string MessageType { get; set; } = "general";
+        public int CurrentDay { get; set; }
+    }
+
+    public class UserState
+    {
+        public int CurrentDay { get; set; }
+        public DateTime SignupDate { get; set; }
+        public string CommunicationStyle { get; set; } = "balanced";
+        public bool IsPromptTime { get; set; }
+    }
+
+    public class Message
+    {
+        public string Role { get; set; } = "";
+        public string Content { get; set; } = "";
+    }
+
+    public class DailyPrompt
+    {
+        public int DayNumber { get; set; }
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
+    }
+}

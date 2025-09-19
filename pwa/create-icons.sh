@@ -1,0 +1,26 @@
+#!/bin/bash
+echo "Creating app icons..."
+
+# Install ImageMagick if not present
+apt-get update && apt-get install -y imagemagick
+
+# Create base SVG icon
+cat > /var/www/tinker-genie/pwa/icon.svg << 'SVG'
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#000000"/>
+  <circle cx="256" cy="200" r="120" fill="#FFD700"/>
+  <circle cx="256" cy="340" r="100" fill="#FFD700"/>
+  <path d="M 176 200 Q 256 280 336 200" fill="#FFD700"/>
+  <text x="256" y="220" font-family="Arial Black" font-size="100" font-weight="bold" text-anchor="middle" fill="#000000">TB</text>
+</svg>
+SVG
+
+# Generate all required sizes
+for size in 72 96 128 144 152 192 384 512; do
+  convert /var/www/tinker-genie/pwa/icon.svg -resize ${size}x${size} /var/www/tinker-genie/pwa/icon-${size}.png
+done
+
+# Create Apple touch icon
+cp /var/www/tinker-genie/pwa/icon-192.png /var/www/tinker-genie/pwa/apple-touch-icon.png
+
+echo "✅ Icons created"

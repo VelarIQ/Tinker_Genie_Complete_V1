@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<canvas id="canvas" width="512" height="512"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// Background
+ctx.fillStyle = '#FF6B35';
+ctx.fillRect(0, 0, 512, 512);
+
+// Brain icon (simplified)
+ctx.fillStyle = '#FFFFFF';
+ctx.font = 'bold 320px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('🧠', 256, 256);
+
+// Save instruction
+console.log('Right-click canvas and save as icon-512.png');
+</script>
+</body>
+</html>
