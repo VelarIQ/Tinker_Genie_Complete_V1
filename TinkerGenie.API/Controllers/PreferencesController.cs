@@ -25,6 +25,17 @@ namespace TinkerGenie.API.Controllers
             _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
         }
 
+        // Compatibility endpoint: GET /api/user/preferences
+        [HttpGet("/api/user/preferences")]
+        public Task<IActionResult> GetPreferencesForCurrentUser()
+        {
+            var userId = User.FindFirst("userId")?.Value
+                         ?? User.FindFirst("sub")?.Value
+                         ?? User.FindFirst("email")?.Value
+                         ?? string.Empty;
+            return GetPreferences(userId);
+        }
+
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetPreferences(string userId)
         {
@@ -223,6 +234,17 @@ namespace TinkerGenie.API.Controllers
                 _logger.LogError(ex, "Error saving preferences");
                 return StatusCode(500, new { error = ex.Message });
             }
+        }
+
+        // Compatibility endpoint: POST /api/user/preferences
+        [HttpPost("/api/user/preferences")]
+        public Task<IActionResult> UpdatePreferencesForCurrentUser([FromBody] dynamic preferences)
+        {
+            var userId = User.FindFirst("userId")?.Value
+                         ?? User.FindFirst("sub")?.Value
+                         ?? User.FindFirst("email")?.Value
+                         ?? string.Empty;
+            return UpdatePreferences(userId, preferences);
         }
 
         private string HashPassword(string password)

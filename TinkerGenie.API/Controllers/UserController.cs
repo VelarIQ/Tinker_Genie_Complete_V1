@@ -19,6 +19,15 @@ namespace TinkerGenie.API.Controllers
             _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
             _logger = logger;
         }
+
+        // Compatibility: GET /api/user/current-session
+        [HttpGet("current-session")]
+        [Authorize]
+        public Task<IActionResult> GetCurrentSession()
+        {
+            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst("sub")?.Value ?? string.Empty;
+            return GetSessionState(userId);
+        }
         
         [HttpGet("me")]
         [Authorize]
@@ -232,20 +241,30 @@ namespace TinkerGenie.API.Controllers
                 await using var conn = new NpgsqlConnection(_connectionString);
                 await conn.OpenAsync();
                 
+                // Try to update by any identifier available: id (UUID), user_id (username), or email
+                // Using id::text comparison avoids casting errors when userId is not a UUID
                 await using var cmd = new NpgsqlCommand(@"
                     UPDATE user_data 
                     SET current_day = @currentDay, 
                         last_active = CURRENT_TIMESTAMP
-                    WHERE user_id = @userId", conn);
+                    WHERE id::text = @idText
+                       OR user_id = @userId
+                       OR email = @userEmail", conn);
                 
-                cmd.Parameters.AddWithValue("userId", userId);
+                var email = User.FindFirst("email")?.Value ?? string.Empty;
+                
                 cmd.Parameters.AddWithValue("currentDay", update.CurrentDay);
+                cmd.Parameters.AddWithValue("idText", userId);
+                cmd.Parameters.AddWithValue("userId", userId);
+                cmd.Parameters.AddWithValue("userEmail", (object?)email ?? DBNull.Value);
                 
                 var rowsAffected = await cmd.ExecuteNonQueryAsync();
                 
                 if (rowsAffected > 0)
+                {
                     return Ok(new { success = true });
-                    
+                }
+                
                 return NotFound();
             }
             catch (Exception ex)
@@ -253,6 +272,15 @@ namespace TinkerGenie.API.Controllers
                 _logger.LogError(ex, "Error updating progress for user {UserId}", userId);
                 return BadRequest();
             }
+        }
+
+        // Compatibility: POST /api/user/day-progress
+        [HttpPost("day-progress")]
+        [Authorize]
+        public Task<IActionResult> UpdateDayProgress([FromBody] ProgressUpdate update)
+        {
+            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst("sub")?.Value ?? string.Empty;
+            return UpdateProgress(userId, update);
         }
 
         private string HashPassword(string password)

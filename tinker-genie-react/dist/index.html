@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#FFD700" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="HandheldFriendly" content="true" />
+    <title>TinkerGenie Leadership</title>
+    
+    <style>
+      /* Critical CSS for viewport lock - loads before React */
+      html, body {
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        touch-action: manipulation !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: none !important;
+      }
+      
+      #root {
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important; /* Dynamic viewport height */
+        overflow: hidden !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+      }
+
+      /* Prevent all zooming */
+      * {
+        touch-action: manipulation !important;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+             user-select: none;
+      }
+
+      input, textarea {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+             user-select: text;
+        font-size: 16px !important; /* Prevent iOS zoom */
+      }
+
+      /* Loading screen */
+      .app-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        z-index: 9999;
+      }
+
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid #FFD700;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* iOS Safe Areas */
+      @supports (padding: env(safe-area-inset-top)) {
+        #root {
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
+    </style>
+
+    <script>
+      // Viewport lock script - runs immediately
+      (function() {
+        // Prevent double-tap zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+          }
+          lastTouchEnd = now;
+        }, { passive: false });
+
+        // Prevent pinch zoom
+        document.addEventListener('gesturestart', function(e) {
+          e.preventDefault();
+        });
+
+        document.addEventListener('gesturechange', function(e) {
+          e.preventDefault();
+        });
+
+        // Prevent scroll bounce
+        document.addEventListener('touchmove', function(e) {
+          if (e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        // Lock viewport on load
+        window.addEventListener('load', function() {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+        });
+
+        // Handle dynamic viewport height
+        function setViewportHeight() {
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        
+        setViewportHeight();
+        window.addEventListener('resize', setViewportHeight);
+        window.addEventListener('orientationchange', setViewportHeight);
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-Bl3z1See.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-Ctv_opVF.js">
+    <link rel="modulepreload" crossorigin href="/assets/redux-jvI5uLO0.js">
+    <link rel="modulepreload" crossorigin href="/assets/signalr-BSlTniIf.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DAzXhNrM.css">
+  </head>
+  <body>
+    <div id="root">
+      <div class="app-loading">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+  </body>
+</html>

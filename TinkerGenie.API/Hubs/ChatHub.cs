@@ -21,11 +21,13 @@ namespace TinkerGenie.API.Hubs
         private readonly string _openAiApiKey;
         private readonly string _connectionString;
         private readonly IConfiguration _configuration;
+			private readonly ISessionManagerService _sessionManager;
 
         public ChatHub(
             ILogger<ChatHub> logger,
             IConfiguration configuration,
             IConversationService conversationService,
+            ISessionManagerService sessionManager,
             IConnectionMultiplexer? redis = null,
             IWeaviateService? weaviateService = null,
             ICurriculumSearchService? curriculumSearchService = null,
@@ -34,7 +36,9 @@ namespace TinkerGenie.API.Hubs
             _logger = logger;
             _configuration = configuration;
             _conversationService = conversationService;
-            _weaviateService = weaviateService;
+            
+				_sessionManager = sessionManager;
+_weaviateService = weaviateService;
             _curriculumSearchService = curriculumSearchService;
             _redis = redis;
             _httpClient = httpClientFactory?.CreateClient() ?? new HttpClient();
@@ -60,6 +64,7 @@ namespace TinkerGenie.API.Hubs
                 await Clients.Caller.SendAsync("ReceiveTypingIndicator", true);
                 
                 string aiResponse;
+				string? threadId = conversationId;
                 bool isDailyPrompt = false;
                 int? dayNumber = null;
                 
@@ -76,7 +81,9 @@ namespace TinkerGenie.API.Hubs
                         _logger.LogInformation("Cleared daily prompt session - switching to burning fires");
                     }
                     
-                    var burningResult = await HandleBurningFiresRequest(userId, message, conversationId);
+                    if (string.IsNullOrEmpty(threadId)) { var created = await _sessionManager.CreateThread(userId, ConversationType.BURNING_FIRE, "Urgent Issue"); threadId = created.ThreadId; }
+				            var burningResult = await HandleBurningFiresRequest(userId, message, threadId);
+				            conversationId = threadId;
                     aiResponse = burningResult.Response;
                 }
                 else if (IsTinkerLevelRequest(message))
@@ -89,13 +96,17 @@ namespace TinkerGenie.API.Hubs
                         _logger.LogInformation("Cleared daily prompt session - switching to tinker level");
                     }
                     
-                    var tinkerResult = await HandleTinkerLevelRequest(userId, message, conversationId);
+                    if (string.IsNullOrEmpty(threadId)) { var created = await _sessionManager.CreateThread(userId, ConversationType.TINKER_LEVEL, "Tinker Level Issue"); threadId = created.ThreadId; }
+				            var tinkerResult = await HandleTinkerLevelRequest(userId, message, threadId);
+				            conversationId = threadId;
                     aiResponse = tinkerResult.Response;
                 }
                 // 2. Check if user is in daily prompt session (only if not switching sessions)
                 else if (IsDailyPromptRequest(message))
                 {
-                    var promptResult = await HandleDailyPromptRequest(userId, firstName, businessName, conversationId);
+                    if (string.IsNullOrEmpty(threadId)) { var active = await _sessionManager.GetActiveThread(userId, ConversationType.DAILY_PROMPT); threadId = active.ThreadId; }
+				            var promptResult = await HandleDailyPromptRequest(userId, firstName, businessName, threadId);
+				            conversationId = threadId;
                     aiResponse = promptResult.Response;
                     isDailyPrompt = promptResult.IsDailyPrompt;
                     dayNumber = promptResult.DayNumber;
@@ -103,15 +114,16 @@ namespace TinkerGenie.API.Hubs
                 else
                 {
                     // Regular chat - use existing chat logic
-                    var regularResult = await HandleRegularChat(userId, message, conversationId);
-                    aiResponse = regularResult.Response;
-                    conversationId = regularResult.ConversationId;
+                    if (string.IsNullOrEmpty(threadId)) { var active = await _sessionManager.GetActiveThread(userId, ConversationType.GENERAL_CHAT); threadId = active.ThreadId; }
+				            var regularResult = await HandleRegularChat(userId, message, threadId);
+				            aiResponse = regularResult.Response;
+				            conversationId = threadId;
                 }
                 
                 // Save conversation if needed
                 if (!string.IsNullOrEmpty(message) && !string.IsNullOrEmpty(aiResponse))
                 {
-                    await _conversationService.SaveConversation(userId, message, aiResponse);
+                    if (!string.IsNullOrEmpty(conversationId)) { await _sessionManager.UpdateThreadMessages(conversationId, message, aiResponse); }
                 }
                 
                 // Hide typing indicator
@@ -122,6 +134,9 @@ namespace TinkerGenie.API.Hubs
                 {
                     type = "ReceiveMessage",
                     message = aiResponse,
+				            content = aiResponse,
+				            role = "assistant",
+				            id = Guid.NewGuid().ToString(),
                     conversationId = conversationId,
                     timestamp = DateTime.UtcNow,
                     isError = false,
@@ -139,6 +154,7 @@ namespace TinkerGenie.API.Hubs
                 {
                     type = "ReceiveMessage",
                     message = "I'm experiencing some technical difficulties, but I'm still here to help with your leadership journey. What would you like to discuss today?",
+            sender = "assistant",
                     conversationId = conversationId,
                     timestamp = DateTime.UtcNow,
                     isError = true
@@ -165,6 +181,7 @@ namespace TinkerGenie.API.Hubs
                 {
                     type = "ReceiveMessage",
                     message = promptResult.Response,
+            sender = "assistant",
                     conversationId = promptResult.ConversationId,
                     isError = false,
                     isDailyPrompt = true,
@@ -287,26 +304,63 @@ namespace TinkerGenie.API.Hubs
         {
             try
             {
-                // Get Weaviate context if available
-                string relevantContext = "";
-                if (_weaviateService != null)
-                {
-                    // TODO: Implement SearchCurriculumAsync
-                    // var searchResults = await _weaviateService.SearchCurriculumAsync(message, 3);
-                    // relevantContext = string.Join("\n", searchResults);
-                }
-
-                // Build burning fires prompt with Chris Cooper persona
-                var prompt = BuildBurningFiresPrompt(message, relevantContext);
+                _logger.LogInformation("Handling burning fires request for user {UserId}", userId);
                 
-                // Get AI response
-                var aiResponse = await GetAIResponse(prompt);
+                // Step 1: Search the curriculum for relevant resources
+                CurriculumSearchResponse? searchResults = null;
+                if (_curriculumSearchService != null)
+                {
+                    searchResults = await _curriculumSearchService.SearchForBurningFires(message);
+                    _logger.LogInformation("Found {Count} curriculum resources", searchResults?.Resources?.Count ?? 0);
+                }
+                
+                // Step 2: Build response with discovery questions and curriculum links
+                var responseBuilder = new System.Text.StringBuilder();
+                
+                // Acknowledge the crisis with empathy
+                responseBuilder.AppendLine("I can see this is a critical situation that needs immediate attention.");
+                responseBuilder.AppendLine();
+                
+                // Ask 2-3 discovery questions
+                responseBuilder.AppendLine("To help you navigate this effectively, let me understand a few key things:");
+                responseBuilder.AppendLine();
+                responseBuilder.AppendLine("1. What specific impact is this having on your business right now?");
+                responseBuilder.AppendLine("2. What have you already tried to address this issue?");
+                responseBuilder.AppendLine("3. What resources do you currently have available to tackle this?");
+                responseBuilder.AppendLine();
+                
+                // Add curriculum resources if found
+                if (searchResults?.Resources?.Any() == true)
+                {
+                    responseBuilder.AppendLine("While you gather that information, here are some immediately relevant resources from our curriculum:");
+                    responseBuilder.AppendLine();
+                    
+                    foreach (var resource in searchResults.Resources.Take(3))
+                    {
+                        responseBuilder.AppendLine($"📚 [{resource.Title}]({resource.Url})");
+                        if (!string.IsNullOrEmpty(resource.Preview))
+                        {
+                            responseBuilder.AppendLine($"   {resource.Preview}");
+                        }
+                        responseBuilder.AppendLine();
+                    }
+                }
+                
+                // Clear any existing daily prompt session since we're in burning fires mode
+                if (_redis != null)
+                {
+                    var db = _redis.GetDatabase();
+                    await db.KeyDeleteAsync($"daily_prompt_session:{userId}");
+                    _logger.LogInformation("Cleared daily prompt session for burning fires");
+                }
                 
                 return new ChatResponse
                 {
-                    Response = aiResponse,
-                    ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString(),
-                    IsBurningFires = true
+                    Response = responseBuilder.ToString(),
+                    ConversationId = conversationId ?? Guid.NewGuid().ToString(),
+                    IsBurningFires = true,
+                    IsNewThread = true,
+                    ThreadType = "burning_fires"
                 };
             }
             catch (Exception ex)
@@ -314,19 +368,24 @@ namespace TinkerGenie.API.Hubs
                 _logger.LogError(ex, "Error handling burning fires request");
                 return new ChatResponse
                 {
-                    Response = "I understand this is urgent. Tell me exactly what's happening right now.",
+                    Response = "I understand this is urgent. Let's focus on your immediate crisis. What exactly is happening right now, and what's the biggest risk to your business?",
                     IsError = true,
-                    ConversationId = Guid.NewGuid().ToString() ?? Guid.NewGuid().ToString()
+                    ConversationId = Guid.NewGuid().ToString(),
+                    IsBurningFires = true,
+                    IsNewThread = true,
+                    ThreadType = "burning_fires"
                 };
             }
         }
+
 
         private async Task<ChatResponse> HandleTinkerLevelRequest(string userId, string message, string? conversationId)
         {
             try
             {
                 // Create NEW conversation ID for Other Tinker Level (separate sidebar entry)
-                var newConversationId = Guid.NewGuid().ToString();
+                var thread = await _sessionManager.CreateThread(userId, ConversationType.TINKER_LEVEL, "Tinker Level Issue");
+                var newConversationId = thread.ThreadId;
                 _logger.LogInformation("Creating new Tinker Level conversation {ConversationId} for strategic leadership coaching", newConversationId);
                 
                 // Get strategic leadership resources from knowledge base
@@ -362,8 +421,7 @@ namespace TinkerGenie.API.Hubs
                     response = "I'm here to help you with strategic leadership challenges. Let's dive into what's on your mind.\n\nWhat specific leadership area would you like to work on?";
                 }
                 
-                // Save conversation for sidebar (new entry)
-                await _conversationService.SaveConversation(userId, message, response);
+                await _sessionManager.UpdateThreadMessages(newConversationId, message, response);
                 
                 return new ChatResponse
                 {
@@ -661,6 +719,8 @@ namespace TinkerGenie.API.Hubs
         public int? DayNumber { get; set; }
         public bool IsDailyPromptComplete { get; set; }
         public int? QuestionsRemaining { get; set; }
+        public bool IsNewThread { get; set; }
+        public string? ThreadType { get; set; }
     }
 
     public class DailyPrompt

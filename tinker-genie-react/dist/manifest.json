@@ -1,0 +1,51 @@
+{
+  "name": "TinkerGenie Leadership Coach",
+  "short_name": "TinkerGenie",
+  "description": "Your AI-powered leadership development companion",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#FFD700",
+  "background_color": "#1a1a1a",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "education"],
+  "shortcuts": [
+    {
+      "name": "Daily Prompt",
+      "short_name": "Daily",
+      "description": "Start today's leadership reflection",
+      "url": "/chat?action=daily",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Burning Fires",
+      "short_name": "Urgent",
+      "description": "Address urgent issues",
+      "url": "/chat?action=burning",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
+}
+

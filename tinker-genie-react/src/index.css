@@ -1,0 +1,184 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Chat Container */
+.chat-container {
+  display: flex;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  overflow: hidden;
+  position: relative;
+}
+
+/* Messages Container - Critical for mobile scrolling */
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  padding-bottom: 100px; /* Space for input and keyboard */
+  scroll-behavior: smooth;
+}
+
+/* Fix for iOS Safari scroll issues */
+@supports (-webkit-touch-callout: none) {
+  .messages-container {
+    padding-bottom: 150px; /* Extra padding for iOS */
+  }
+}
+
+/* Ensure typing indicator is visible */
+.typing-indicator {
+  padding: 20px 0;
+  margin-bottom: 20px;
+}
+
+/* Input area positioning */
+.chat-input-container {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  z-index: 10;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .chat-container {
+    flex-direction: column;
+  }
+  
+  .messages-container {
+    padding-bottom: 120px; /* More space for mobile keyboard */
+  }
+  
+  /* Prevent body scroll when sidebar is open */
+  body.sidebar-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+}
+
+/* Markdown content styling */
+.markdown-content {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdown-content pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: #1e1e1e;
+  margin: 0.5rem 0;
+}
+
+.markdown-content code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: rgba(175, 184, 193, 0.2);
+  border-radius: 3px;
+}
+
+.markdown-content pre code {
+  padding: 0;
+  background-color: transparent;
+}
+
+/* Button styles */
+.btn-primary {
+  @apply bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Bounce animation for typing dots */
+@keyframes bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+/* Quick action buttons */
+.quick-action-btn {
+  @apply flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-colors;
+}
+
+/* Sidebar transitions */
+.sidebar-transition {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Toast notifications */
+.toast-notification {
+  @apply fixed top-4 right-4 bg-white rounded-lg shadow-lg p-4 z-50;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Disable pull-to-refresh on mobile */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Fix for message list scrolling */
+.message-list-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure last message is always visible */
+.messages-end-padding {
+  height: 20px;
+  flex-shrink: 0;
+}

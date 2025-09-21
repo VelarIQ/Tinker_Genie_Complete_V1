@@ -307,7 +307,7 @@ namespace TinkerGenie.API.Services
                 var cmd = new Npgsql.NpgsqlCommand(@"
                     INSERT INTO conversation_threads 
                     (thread_id, user_id, type, title, status, metadata, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
+                    VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::jsonb, $7, $8)
                     ON CONFLICT (thread_id) DO UPDATE SET
                     status = $5,
                     metadata = $6::jsonb,
@@ -330,7 +330,7 @@ namespace TinkerGenie.API.Services
                     var msgCmd = new Npgsql.NpgsqlCommand(@"
                         INSERT INTO thread_messages 
                         (thread_id, role, content, timestamp)
-                        VALUES ($1, $2, $3, $4)
+                        VALUES ($1::uuid, $2, $3, $4)
                         ON CONFLICT DO NOTHING", conn);
                     
                     msgCmd.Parameters.AddWithValue(thread.ThreadId);
@@ -359,7 +359,7 @@ namespace TinkerGenie.API.Services
                 var cmd = new Npgsql.NpgsqlCommand(@"
                     SELECT thread_id, type, title, status, metadata, created_at, updated_at
                     FROM conversation_threads
-                    WHERE user_id = $1
+                    WHERE user_id = $1::uuid
                     ORDER BY updated_at DESC
                     LIMIT $2", conn);
                 
@@ -371,7 +371,7 @@ namespace TinkerGenie.API.Services
                 {
                     threads.Add(new ConversationThread
                     {
-                        ThreadId = reader.GetString(0),
+                        ThreadId = reader.GetGuid(0).ToString(),
                         UserId = userId,
                         Type = Enum.Parse<ConversationType>(reader.GetString(1)),
                         Title = reader.GetString(2),
