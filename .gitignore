@@ -1,22 +1,37 @@
-# Build outputs
-bin/
-obj/
-*.dll
-*.pdb
+# Environment
+.env
+.env.*
+.DS_Store
+.tmp/
+tmp/
 
-# Environment files
-appsettings.json
-*.env
+# Node / JS
+node_modules/
+dist/
+build/
+coverage/
+npm-debug.log*
+yarn-error.log*
+.pnpm-store/
 
-# Logs
-*.log
+# Caches
+vite-cache/
+.cache/
+.eslintcache
 
-# Temporary files
-*.tmp
-*.temp
+# TypeScript
+*.tsbuildinfo
 
-# IDE files
-.vs/
-.vscode/
-*.swp
-*.swo
+# .NET
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+
+# App-specific
+pwa/node_modules/
+pwa/dist/
+
+tinker-genie-react/node_modules/
+tinker-genie-react/dist/
+tinker-genie-react/build/
