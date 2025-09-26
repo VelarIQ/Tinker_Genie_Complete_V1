@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { sendMessage, startNewChat, loadConversation, checkDailyPrompt } from '../store/chatSlice';
 import { conversationService, ConversationType } from '../services/conversationService';
 import { signalRService } from '../services/signalRService';
+import { storage } from '../utils/storage';
 import Sidebar from '../components/layout/Sidebar';
 import ChatInput from '../components/chat/ChatInput';
 import MessageList from '../components/chat/MessageList';
@@ -50,7 +51,7 @@ const ChatPage: React.FC = () => {
 
   // Connect SignalR when authenticated
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = storage.getToken();
     if (token) {
       signalRService.connect(token);
     }
