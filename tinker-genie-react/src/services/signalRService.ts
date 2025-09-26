@@ -15,11 +15,13 @@ class SignalRService {
       return;
     }
 
-    const hubUrl = import.meta.env.VITE_SIGNALR_HUB_URL || 'http://localhost:5000/chatHub';
+    // Default to relative URL to avoid mixed-content and ease deployments behind proxies
+    const hubUrl = import.meta.env.VITE_SIGNALR_HUB_URL || '/chatHub';
 
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
         accessTokenFactory: () => token,
+        // Prefer WebSockets, allow fallback transports for environments that block WS
         transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents,
       })
       .withAutomaticReconnect({
