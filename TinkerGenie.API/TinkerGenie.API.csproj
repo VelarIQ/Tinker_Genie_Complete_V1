@@ -27,7 +27,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
+    <!-- Use built-in ASP.NET Core SignalR for net9; do not reference legacy 1.x package -->
     <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="9.0.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.9.11" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />

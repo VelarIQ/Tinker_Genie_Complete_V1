@@ -5,21 +5,43 @@ using TinkerGenie.API.Services;
 using StackExchange.Redis;
 using TinkerGenie.API.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "application/octet-stream" // for SignalR binary protocol
+    });
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add SignalR
-builder.Services.AddSignalR();
+// Add SignalR with recommended options (longer keepalive and handshake timeouts under proxies)
+builder.Services.AddSignalR(options =>
+{
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+});
 
 // Redis connection (single instance)
-var redisConnectionString = builder.Configuration.GetConnectionString("ConnectionString") ?? "localhost:6379";
+var redisConnectionString = builder.Configuration.GetSection("Redis")["ConnectionString"]
+    ?? builder.Configuration.GetConnectionString("ConnectionString")
+    ?? "localhost:6379";
 var redis = ConnectionMultiplexer.Connect(redisConnectionString);
 builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+// SignalR Redis backplane for scale-out
+builder.Services.AddSignalR().AddStackExchangeRedis(redis, options =>
+{
+    options.Configuration.ChannelPrefix = "tinker-genie";
+});
 
 // Register all services that exist
 builder.Services.AddScoped<IOpenAIService, OpenAIService>();
@@ -74,6 +96,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+app.UseResponseCompression();
 
 // Configure pipeline - CORRECT ORDER
 if (app.Environment.IsDevelopment())
@@ -81,6 +104,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Honor reverse proxy headers for correct scheme/remote IP when behind load balancers
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 app.UseHttpsRedirection();
 app.UseCors("AllowTinker");
@@ -92,18 +121,7 @@ app.UseAuthorization();     // Then authorization
 app.MapHub<ChatHub>("/chatHub").RequireAuthorization();
 app.MapHub<SyncHub>("/syncHub").RequireAuthorization();
 
-// Allow SignalR negotiation without authentication
-app.MapPost("/chatHub/negotiate", (HttpContext context) =>
-{
-    // SignalR negotiation endpoint - no auth required
-    return Results.Ok();
-});
-
-app.MapPost("/syncHub/negotiate", (HttpContext context) =>
-{
-    // SignalR negotiation endpoint - no auth required
-    return Results.Ok();
-});
+// Do not override SignalR negotiate endpoints; MapHub provides proper negotiate handling
 
 app.MapControllers();       // Finally controllers
 

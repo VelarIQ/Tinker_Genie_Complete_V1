@@ -52,15 +52,12 @@ namespace TinkerGenie.API.Hubs
                 
                 // Get user info from SignalR context
                 var userId = Context.User?.FindFirst("userId")?.Value ?? "anonymous";
-                var firstName = Context.User?.FindFirst("firstName")?.Value ?? "User";
+                var firstName = Context.User?.FindFirst("name")?.Value ?? "User";
                 var businessName = Context.User?.FindFirst("businessName")?.Value ?? "Unknown Business";
                 
                 // Show typing indicator
-                await Clients.Caller.SendAsync("ReceiveTypingIndicator", new 
-                {
-                    isTyping = true,
-                    message = "TinkerGenie is typing..."
-                });
+                var typingUserId = Context.User?.FindFirst("userId")?.Value ?? "anonymous";
+                await Clients.Caller.SendAsync("UserTyping", typingUserId, true);
                 
                 string aiResponse;
                 bool isDailyPrompt = false;
@@ -115,11 +112,7 @@ namespace TinkerGenie.API.Hubs
                 }
                 
                 // Hide typing indicator
-                await Clients.Caller.SendAsync("ReceiveTypingIndicator", new 
-                {
-                    isTyping = false,
-                    message = ""
-                });
+                await Clients.Caller.SendAsync("UserTyping", typingUserId, false);
                 
                 // Check if this is the first response to daily prompt (need to show options)
                 bool showOptions = false;
@@ -146,10 +139,10 @@ namespace TinkerGenie.API.Hubs
                 // Send response
                 await Clients.Caller.SendAsync("ReceiveMessage", new
                 {
-                    type = "ReceiveMessage",
-                    message = aiResponse,
+                    content = aiResponse,
                     conversationId = conversationId,
                     timestamp = DateTime.UtcNow,
+                    sender = "assistant",
                     isError = false,
                     isDailyPrompt = isDailyPrompt,
                     dayNumber = dayNumber,
@@ -163,23 +156,77 @@ namespace TinkerGenie.API.Hubs
             {
                 _logger.LogError(ex, "Error in SendMessage: {ErrorMessage}", ex.Message);
                 
-                await Clients.Caller.SendAsync("ReceiveTypingIndicator", new 
-                {
-                    isTyping = false,
-                    message = ""
-                });
+                var typingUserId = Context.User?.FindFirst("userId")?.Value ?? "anonymous";
+                await Clients.Caller.SendAsync("UserTyping", typingUserId, false);
                 
                 var errorResponse = new
                 {
-                    type = "ReceiveMessage",
-                    message = "I'm experiencing some technical difficulties, but I'm still here to help with your leadership journey. What would you like to discuss today?",
+                    content = "I'm experiencing some technical difficulties, but I'm still here to help with your leadership journey. What would you like to discuss today?",
                     conversationId = conversationId,
                     timestamp = DateTime.UtcNow,
+                    sender = "assistant",
                     isError = true
                 };
-                
+
                 await Clients.Caller.SendAsync("ReceiveMessage", errorResponse);
             }
+        }
+
+        public async Task JoinUserGroup(string userId)
+        {
+            var normalizedUserId = string.IsNullOrWhiteSpace(userId)
+                ? Context.User?.FindFirst("userId")?.Value ?? "unknown"
+                : userId;
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"user-{normalizedUserId}");
+            _connectionMonitor?.OnConnected(Context.ConnectionId, normalizedUserId);
+        }
+
+        public async Task SendTypingIndicator(bool isTyping, string? conversationId = null)
+        {
+            var userId = Context.User?.FindFirst("userId")?.Value ?? "anonymous";
+            if (!string.IsNullOrWhiteSpace(conversationId))
+            {
+                await Clients.OthersInGroup($"conversation-{conversationId}").SendAsync("UserTyping", userId, isTyping);
+                return;
+            }
+
+            await Clients.OthersInGroup($"user-{userId}").SendAsync("UserTyping", userId, isTyping);
+        }
+
+        public async Task JoinConversation(string conversationId)
+        {
+            if (string.IsNullOrWhiteSpace(conversationId)) return;
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation-{conversationId}");
+        }
+
+        public async Task LeaveConversation(string conversationId)
+        {
+            if (string.IsNullOrWhiteSpace(conversationId)) return;
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conversation-{conversationId}");
+        }
+
+        public async Task NotifyBurningFire(string issue, string conversationId)
+        {
+            var userId = Context.User?.FindFirst("userId")?.Value ?? "anonymous";
+            var payload = new
+            {
+                conversationId = conversationId,
+                issue = issue,
+                userId = userId,
+                timestamp = DateTime.UtcNow
+            };
+            await Clients.Group($"conversation-{conversationId}").SendAsync("BurningFireAlert", payload);
+        }
+
+        public async Task NotifySessionEnd(string conversationId, string sessionType)
+        {
+            var payload = new
+            {
+                conversationId = conversationId,
+                sessionType = sessionType,
+                endTime = DateTime.UtcNow
+            };
+            await Clients.Group($"conversation-{conversationId}").SendAsync("SessionEnded", payload);
         }
 
         public async Task SendDailyPromptRequest()
@@ -189,7 +236,7 @@ namespace TinkerGenie.API.Hubs
                 _logger.LogInformation("Daily prompt request received via WebSocket");
                 
                 var userId = Context.User?.FindFirst("userId")?.Value ?? "anonymous";
-                var firstName = Context.User?.FindFirst("firstName")?.Value ?? "User";
+                var firstName = Context.User?.FindFirst("name")?.Value ?? "User";
                 var businessName = Context.User?.FindFirst("businessName")?.Value ?? "Unknown Business";
                 
                 // Use the same daily prompt logic as HTTP endpoint

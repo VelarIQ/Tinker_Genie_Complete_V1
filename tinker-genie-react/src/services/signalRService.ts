@@ -3,6 +3,7 @@ import { store } from '../store';
 import { addMessage, setTyping, updateStreamingMessage, setDailyPromptComplete } from '../store/chatSlice';
 import { updateConnectionStatus } from '../store/uiSlice';
 import toast from 'react-hot-toast';
+import { storage } from '../utils/storage';
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
@@ -15,11 +16,13 @@ class SignalRService {
       return;
     }
 
-    const hubUrl = import.meta.env.VITE_SIGNALR_HUB_URL || 'http://localhost:5000/chatHub';
+    // Default to relative URL to avoid mixed-content and ease deployments behind proxies
+    const hubUrl = import.meta.env.VITE_SIGNALR_HUB_URL || '/chatHub';
 
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
-        accessTokenFactory: () => token,
+        accessTokenFactory: () => storage.getToken() || token,
+        // Prefer WebSockets, allow fallback transports for environments that block WS
         transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents,
       })
       .withAutomaticReconnect({
@@ -61,9 +64,9 @@ class SignalRService {
       console.log('SignalR: Connected');
       
       // Join user's personal group
-      const userId = localStorage.getItem('userId');
-      if (userId) {
-        await this.connection.invoke('JoinUserGroup', userId);
+      const currentUser = storage.getUser();
+      if (currentUser?.id) {
+        await this.connection.invoke('JoinUserGroup', currentUser.id);
       }
     } catch (error) {
       console.error('SignalR connection failed:', error);
@@ -209,9 +212,9 @@ class SignalRService {
 
     this.reconnectTimer = setTimeout(async () => {
       console.log(`SignalR: Reconnect attempt ${this.reconnectAttempts}`);
-      const token = localStorage.getItem('token');
-      if (token) {
-        await this.connect(token);
+      const latestToken = storage.getToken();
+      if (latestToken) {
+        await this.connect(latestToken);
       }
     }, delay);
   }
