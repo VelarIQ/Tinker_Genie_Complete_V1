@@ -52,7 +52,7 @@ namespace TinkerGenie.API.Hubs
                 
                 // Get user info from SignalR context
                 var userId = Context.User?.FindFirst("userId")?.Value ?? "anonymous";
-                var firstName = Context.User?.FindFirst("firstName")?.Value ?? "User";
+                var firstName = Context.User?.FindFirst("name")?.Value ?? "User";
                 var businessName = Context.User?.FindFirst("businessName")?.Value ?? "Unknown Business";
                 
                 // Show typing indicator
@@ -236,7 +236,7 @@ namespace TinkerGenie.API.Hubs
                 _logger.LogInformation("Daily prompt request received via WebSocket");
                 
                 var userId = Context.User?.FindFirst("userId")?.Value ?? "anonymous";
-                var firstName = Context.User?.FindFirst("firstName")?.Value ?? "User";
+                var firstName = Context.User?.FindFirst("name")?.Value ?? "User";
                 var businessName = Context.User?.FindFirst("businessName")?.Value ?? "Unknown Business";
                 
                 // Use the same daily prompt logic as HTTP endpoint
