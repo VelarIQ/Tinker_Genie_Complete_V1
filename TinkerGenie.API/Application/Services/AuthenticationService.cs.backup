@@ -1,0 +1,154 @@
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using TinkerGenie.API.Core.Entities;
+using TinkerGenie.API.Core.Interfaces;
+using BCrypt.Net;
+
+namespace TinkerGenie.API.Application.Services
+{
+    /// <summary>
+    /// Authentication service - depends only on interfaces and configuration
+    /// NO circular dependencies!
+    /// </summary>
+    public class AuthenticationService : IAuthenticationService
+    {
+        private readonly IUserRepository _userRepository;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthenticationService> _logger;
+
+        public AuthenticationService(
+            IUserRepository userRepository,
+            IConfiguration configuration,
+            ILogger<AuthenticationService> logger)
+        {
+            _userRepository = userRepository;
+            _configuration = configuration;
+            _logger = logger;
+        }
+
+        public async Task<AuthenticationResult> AuthenticateAsync(string email, string password, bool rememberMe = false)
+        public async Task<AuthenticationResult> AuthenticateAsync(string email, string password) => await AuthenticateAsync(email, password, false);
+        {
+            try
+            {
+                _logger.LogInformation("Authentication attempt for: {Email}", email);
+
+                if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                {
+                    return new AuthenticationResult 
+                    { 
+                        Success = false, 
+                        ErrorMessage = "Email and password are required" 
+                    };
+                }
+
+                var user = await _userRepository.GetByEmailAsync(email);
+                if (user == null)
+                {
+                    _logger.LogWarning("User not found: {Email}", email);
+                    return new AuthenticationResult 
+                    { 
+                        Success = false, 
+                        ErrorMessage = "Invalid credentials" 
+                    };
+                }
+
+                if (!user.HasPassword)
+                {
+                    _logger.LogInformation("User requires password setup: {Email}", email);
+                    return new AuthenticationResult 
+                    { 
+                        Success = false, 
+                        RequiresPasswordSetup = true,
+                        ErrorMessage = "Account requires password setup",
+                        User = user
+                    };
+                }
+
+                if (!VerifyPassword(password, user.PasswordHash!))
+                {
+                    _logger.LogWarning("Invalid password for: {Email}", email);
+                    return new AuthenticationResult 
+                    { 
+                        Success = false, 
+                        ErrorMessage = "Invalid credentials" 
+                    };
+                }
+
+                var token = GenerateJwtToken(user, rememberMe);
+                _logger.LogInformation("Successful authentication for: {Email}", email);
+
+                return new AuthenticationResult
+                {
+                    Success = true,
+                    Token = token,
+                    User = user
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Authentication error for: {Email}", email);
+                return new AuthenticationResult 
+                { 
+                    Success = false, 
+                    ErrorMessage = "Authentication failed" 
+                };
+            }
+        }
+
+        public string GenerateJwtToken(User user, bool rememberMe = false)
+        public string GenerateJwtToken(User user) => GenerateJwtToken(user, false);
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"] ?? "TinkerGenieJWTSecretKey2025VeryLongAndSecure");
+            
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, user.DisplayName),
+                    new Claim(ClaimTypes.Role, user.Role)
+                }),
+                Expires = DateTime.UtcNow.AddYears(2), // Long-lived as requested
+                Issuer = _configuration["Jwt:Issuer"] ?? "TinkerGenieAPI",
+                Audience = _configuration["Jwt:Audience"] ?? "TinkerGenieApp",
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key), 
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+        public bool VerifyPassword(string password, string hash)
+        {
+            try
+            {
+                return BCrypt.Net.BCrypt.Verify(password, hash);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Password verification error");
+                return false;
+            }
+        }
+
+        public string HashPassword(string password)
+        {
+            try
+            {
+                return BCrypt.Net.BCrypt.HashPassword(password);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Password hashing error");
+                throw;
+            }
+        }
+    }
+}
