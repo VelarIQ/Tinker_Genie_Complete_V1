@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TinkerGenie.API.Data;
 
 namespace TinkerGenie.API.Models
 {
-    public class GenieInstance
+    public class GenieInstance : ITenantEntity
     {
-        public Guid Id { get; set; }
+        public Guid? Id { get; set; }
         public Guid TenantId { get; set; }
         
         [Required]

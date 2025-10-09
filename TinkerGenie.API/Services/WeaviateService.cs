@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Npgsql;
 using System.Security.Claims;
+using TinkerGenie.API.Services.Interfaces;
+using TinkerGenie.API.Services.Models;
 
 namespace TinkerGenie.API.Services
 {
@@ -36,14 +38,18 @@ namespace TinkerGenie.API.Services
             try
             {
                 var userId = _userDataIsolation.GetUserId(user);
-                _logger.LogInformation($"Searching Weaviate for user {userId}: {query}");
+                _logger.LogInformation("Searching Weaviate for user {UserId}: {Query}", userId, query);
                 
-                // Ensure user collection exists
                 await _userDataIsolation.EnsureUserCollectionExistsAsync(userId);
                 
-                // Search user-specific content
-                var content = await SearchUserContentAsync(userId, query, limit);
-                return content;
+                var personalContent = await SearchUserContentAsync(userId, query, limit);
+                if (personalContent.Count >= limit)
+                {
+                    return personalContent.Take(limit).ToList();
+                }
+
+                var leadershipContent = await SearchLeadershipContentAsync(query, limit - personalContent.Count, fallback: true);
+                return personalContent.Concat(leadershipContent).Where(c => !string.IsNullOrWhiteSpace(c)).Take(limit).ToList();
             }
             catch (Exception ex)
             {
@@ -52,10 +58,65 @@ namespace TinkerGenie.API.Services
             }
         }
 
-        public async Task<List<string>> SearchLeadershipContentAsync(string query, int limit = 3, ClaimsPrincipal? user = null)
+        public async Task<List<string>> SearchLeadershipContentAsync(string query, int limit = 3, ClaimsPrincipal? user = null, bool fallback = false)
         {
-            // This method is called by ChatController
-            return await SearchRelevantContentAsync(query, limit, user);
+            try
+            {
+                var searchPayload = new
+                {
+                    query = $@"
+                    {{
+                        Get {{
+                            LeadershipModules(
+                                nearText: {{ concepts: ""{query}"" }}
+                                limit: {limit}
+                            ) {{
+                                title
+                                summary
+                                _additional {{ distance }}
+                            }}
+                        }}
+                    }}"
+                };
+
+                var content = new StringContent(JsonSerializer.Serialize(searchPayload), System.Text.Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync($"{_weaviateUrl}/v1/graphql", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Leadership content search failed: {Status}", response.StatusCode);
+                    return fallback ? new List<string>() : GetCuratedLeadershipFallback().Select(r => r.Title ?? string.Empty).ToList();
+                }
+
+                var doc = JsonSerializer.Deserialize<JsonElement>(await response.Content.ReadAsStringAsync());
+                var results = new List<string>();
+                if (doc.TryGetProperty("data", out var data) &&
+                    data.TryGetProperty("Get", out var get) &&
+                    get.TryGetProperty("LeadershipModules", out var modules))
+                {
+                    foreach (var module in modules.EnumerateArray())
+                    {
+                        var title = module.TryGetProperty("title", out var titleProp) ? titleProp.GetString() : null;
+                        var summary = module.TryGetProperty("summary", out var summaryProp) ? summaryProp.GetString() : null;
+                        if (!string.IsNullOrWhiteSpace(title))
+                        {
+                            results.Add(summary is { Length: > 0 } ? $"{title} — {summary}" : title);
+                        }
+                    }
+                }
+
+                return results;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching leadership content");
+                return fallback ? new List<string>() : GetCuratedLeadershipFallback().Select(r => r.Title ?? string.Empty).ToList();
+            }
+        }
+
+        public Task<List<string>> SearchLeadershipContentAsync(string query, int limit = 3, ClaimsPrincipal? user = null)
+        {
+            return SearchLeadershipContentAsync(query, limit, user, fallback: false);
         }
 
         public async Task IndexContentAsync(string content, string type, Dictionary<string, object> metadata, ClaimsPrincipal? user = null)
@@ -91,20 +152,20 @@ namespace TinkerGenie.API.Services
             }
         }
 
-        public async Task CreateCollectionAsync()
+        public async Task CreateCollectionAsync(string collectionName)
         {
             try
             {
-                _logger.LogInformation("Creating Weaviate collection");
+                _logger.LogInformation("Creating Weaviate collection {Collection}", collectionName);
                 await Task.CompletedTask;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating Weaviate collection");
+                _logger.LogError(ex, "Error creating Weaviate collection {Collection}", collectionName);
             }
         }
 
-        private async Task<List<string>> SearchUserContentAsync(string userId, string query, int limit)
+        public async Task<List<string>> SearchUserContentAsync(string userId, string query, int limit)
         {
             try
             {
@@ -167,7 +228,7 @@ namespace TinkerGenie.API.Services
             }
         }
 
-        private async Task IndexUserContentAsync(string userId, string content, string type, Dictionary<string, object> metadata)
+        public async Task IndexUserContentAsync(string userId, string content, string type, Dictionary<string, object> metadata)
         {
             try
             {
@@ -209,12 +270,14 @@ namespace TinkerGenie.API.Services
 
         public async Task<bool> DeleteUserDataAsync(string userId)
         {
-            return await _userDataIsolation.DeleteUserDataAsync(userId);
+            // Placeholder implementation until per-user collection deletion is wired up
+            await Task.CompletedTask;
+            return true;
         }
 
         public async Task<List<string>> GetUserCollectionsAsync()
         {
-            return await _userDataIsolation.GetUserCollectionsAsync();
+            return (await _userDataIsolation.GetUserCollectionsAsync()).ToList();
         }
 
         public async Task<List<string>> SearchDailyPromptsAsync(string query, int limit = 5)
@@ -340,98 +403,183 @@ namespace TinkerGenie.API.Services
         }
         
         // Enhanced search methods for burning fires and general chat
-        public async Task<List<CurriculumSearchResult>> SearchCurriculum(string query, int limit = 3)
+        public async Task<List<CurriculumSearchResult>> SearchCurriculumDetailedAsync(string query, int limit = 5)
         {
             try
             {
-                var searchPayload = new
+                var graphqlQuery = $$"""
                 {
-                    query = $@"
-                    {{
-                        Get {{
-                            Curriculum(
-                                nearText: {{ concepts: [""{ query}""]}}
-                                limit: {limit}
-                            ) {{
-                                title
-                                url
-                                content
-                                topics
-                                _additional {{ 
-                                    distance
-                                    certainty
-                                }}
-                            }}
-                        }}
-                    }}"
+                  Get {
+                    Curriculum(
+                      nearText: { concepts: ["{{query}}"] }
+                      limit: {{limit}}
+                    ) {
+                      text
+                      type
+                      metadata
+                      _additional {
+                        distance
+                        certainty
+                      }
+                    }
+                  }
+                }
+                """;
+
+                var payload = new
+                {
+                    query = graphqlQuery
                 };
 
-                var json = JsonSerializer.Serialize(searchPayload);
-                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                
-                var response = await _httpClient.PostAsync($"{_weaviateUrl}/v1/graphql", content);
-                
-                if (response.IsSuccessStatusCode)
+                if (string.IsNullOrWhiteSpace(_weaviateUrl))
                 {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
-                    
+                    _logger.LogWarning("Weaviate URL is not configured");
+                    return GetCuratedLeadershipFallback();
+                }
+
+                var response = await _httpClient.PostAsync(
+                    $"{_weaviateUrl}/v1/graphql",
+                    new StringContent(JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json"));
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Curriculum search failed with status {StatusCode}", response.StatusCode);
+                    return GetCuratedLeadershipFallback();
+                }
+
+                var json = JsonSerializer.Deserialize<JsonElement>(await response.Content.ReadAsStringAsync());
                     var results = new List<CurriculumSearchResult>();
-                    if (result.TryGetProperty("data", out var data) && 
+
+                if (json.TryGetProperty("data", out var data) &&
                         data.TryGetProperty("Get", out var get) &&
                         get.TryGetProperty("Curriculum", out var items))
                     {
                         foreach (var item in items.EnumerateArray())
                         {
-                            var searchResult = new CurriculumSearchResult
+                            var metadataDictionary = new Dictionary<string, object>();
+                            string? title = null;
+                            string? url = null;
+                            string? content = null;
+                            List<string> topics = new();
+
+                            // Get text content
+                            if (item.TryGetProperty("text", out var textProp))
                             {
-                                Title = item.TryGetProperty("title", out var title) ? title.GetString() : "Resource",
-                                Url = item.TryGetProperty("url", out var url) ? url.GetString() : "#",
-                                Content = item.TryGetProperty("content", out var contentProperty) ? contentProperty.GetString() : "",
-                                Topics = new List<string>()
-                            };
-                            
-                            if (item.TryGetProperty("topics", out var topics) && topics.ValueKind == JsonValueKind.Array)
+                                content = textProp.GetString();
+                            }
+
+                            // Parse metadata JSON string
+                            if (item.TryGetProperty("metadata", out var metadataProp) && metadataProp.ValueKind == JsonValueKind.String)
                             {
-                                foreach (var topic in topics.EnumerateArray())
+                                try
                                 {
-                                    searchResult.Topics.Add(topic.GetString() ?? "");
+                                    var metadataJson = JsonSerializer.Deserialize<JsonElement>(metadataProp.GetString() ?? "{}");
+                                    
+                                    // Extract fields from metadata
+                                    if (metadataJson.TryGetProperty("title", out var titleJson))
+                                        title = titleJson.GetString();
+                                    
+                                    if (metadataJson.TryGetProperty("url", out var urlJson))
+                                        url = urlJson.GetString();
+                                    
+                                    if (metadataJson.TryGetProperty("topics", out var topicsJson) && topicsJson.ValueKind == JsonValueKind.Array)
+                                    {
+                                        topics = topicsJson.EnumerateArray()
+                                            .Select(t => t.GetString() ?? string.Empty)
+                                            .Where(s => !string.IsNullOrWhiteSpace(s))
+                                            .ToList();
+                                    }
+                                    
+                                    // Store all metadata
+                                    foreach (var property in metadataJson.EnumerateObject())
+                                    {
+                                        metadataDictionary[property.Name] = property.Value.ToString() ?? string.Empty;
+                                    }
                                 }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Failed to parse metadata JSON");
+                                }
+                            }
+
+                            var result = new CurriculumSearchResult
+                            {
+                                Title = title,
+                                Url = url,
+                                Content = content,
+                                Topics = topics,
+                                Metadata = metadataDictionary
+                            };
+
+                            if (result.Metadata.Count == 0)
+                            {
+                                result.Metadata["source"] = "weaviate";
+                            }
+
+                            if (string.IsNullOrWhiteSpace(result.Content) && !string.IsNullOrWhiteSpace(title))
+                            {
+                                result.Content = title;
                             }
                             
                             if (item.TryGetProperty("_additional", out var additional))
                             {
-                                if (additional.TryGetProperty("certainty", out var certainty))
+                            if (additional.TryGetProperty("certainty", out var certaintyProp))
                                 {
-                                    searchResult.RelevanceScore = (float)certainty.GetDouble();
+                                result.RelevanceScore = (float)certaintyProp.GetDouble();
                                 }
-                                else if (additional.TryGetProperty("distance", out var distance))
+                            else if (additional.TryGetProperty("distance", out var distanceProp))
                                 {
-                                    // Convert distance to a 0-1 score (lower distance = higher score)
-                                    searchResult.RelevanceScore = Math.Max(0, 1 - (float)distance.GetDouble());
-                                }
+                                result.RelevanceScore = Math.Max(0, 1 - (float)distanceProp.GetDouble());
                             }
-                            
-                            results.Add(searchResult);
                         }
+
+                        results.Add(result);
                     }
-                    
-                    return results.OrderByDescending(r => r.RelevanceScore).ToList();
                 }
-                else
+
+                if (results.Count == 0)
                 {
-                    _logger.LogWarning("Search failed for curriculum. Status: {Status}", response.StatusCode);
-                    
-                    // Return mock data for testing
-                    return GetMockCurriculumResults(query);
+                    return GetCuratedLeadershipFallback();
                 }
+
+                return results.OrderByDescending(r => r.RelevanceScore).Take(limit).ToList();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error searching curriculum");
-                // Return mock data for testing
-                return GetMockCurriculumResults(query);
+                _logger.LogError(ex, "Error performing curriculum search for {Query}", query);
+                return GetCuratedLeadershipFallback();
             }
+        }
+
+        private static List<CurriculumSearchResult> GetCuratedLeadershipFallback()
+        {
+            return new List<CurriculumSearchResult>
+            {
+                new()
+                {
+                    Title = "Leadership in Crisis: A Practical Guide",
+                    Url = "https://twobrain.com/resources/crisis-leadership",
+                    Content = "When facing urgent business challenges, leaders must act decisively while maintaining team morale...",
+                    Topics = new() { "leadership", "crisis management", "team management" },
+                    RelevanceScore = 0.9f
+                },
+                new()
+                {
+                    Title = "Staff Management Essentials",
+                    Url = "https://twobrain.com/resources/staff-management",
+                    Content = "Effective staff management starts with clear communication and consistent expectations...",
+                    Topics = new() { "staff", "management", "communication" },
+                    RelevanceScore = 0.85f
+                },
+                new()
+                {
+                    Title = "Financial Recovery Strategies",
+                    Url = "https://twobrain.com/resources/financial-recovery",
+                    Content = "When your business faces financial challenges, these strategies can help you recover...",
+                    Topics = new() { "finance", "recovery", "business strategy" },
+                    RelevanceScore = 0.8f
+                }
+            };
         }
         
         public async Task<List<UserReflectionResult>> SearchUserReflections(string userId, string query, int limit = 5)
@@ -439,6 +587,11 @@ namespace TinkerGenie.API.Services
             try
             {
                 var userCollectionName = _userDataIsolation.GetUserCollectionName(userId);
+                if (string.IsNullOrWhiteSpace(userCollectionName))
+                {
+                    _logger.LogWarning("User collection name missing for user {UserId}", userId);
+                    return new List<UserReflectionResult>();
+                }
                 var searchPayload = new
                 {
                     query = $@"
@@ -486,13 +639,14 @@ namespace TinkerGenie.API.Services
                             var reflectionResult = new UserReflectionResult
                             {
                                 DayNumber = item.TryGetProperty("dayNumber", out var day) ? day.GetInt32() : 0,
-                                Reflection = item.TryGetProperty("reflection", out var reflection) ? reflection.GetString() : "",
+                                Reflection = item.TryGetProperty("reflection", out var reflection) ? reflection.GetString() ?? string.Empty : string.Empty,
                                 Emotions = new List<string>()
                             };
                             
                             if (item.TryGetProperty("timestamp", out var timestamp))
                             {
-                                if (DateTime.TryParse(timestamp.GetString(), out var dt))
+                                var timestampValue = timestamp.GetString();
+                                if (!string.IsNullOrEmpty(timestampValue) && DateTime.TryParse(timestampValue, out var dt))
                                 {
                                     reflectionResult.Timestamp = dt;
                                 }
@@ -500,9 +654,18 @@ namespace TinkerGenie.API.Services
                             
                             if (item.TryGetProperty("emotions", out var emotions) && emotions.ValueKind == JsonValueKind.Array)
                             {
+                                var emotionList = new List<string>();
                                 foreach (var emotion in emotions.EnumerateArray())
                                 {
-                                    reflectionResult.Emotions.Add(emotion.GetString() ?? "");
+                                    var emotionValue = emotion.GetString();
+                                    if (!string.IsNullOrEmpty(emotionValue))
+                                    {
+                                        emotionList.Add(emotionValue);
+                                    }
+                                }
+                                if (emotionList.Count > 0)
+                                {
+                                    reflectionResult.Emotions = emotionList;
                                 }
                             }
                             

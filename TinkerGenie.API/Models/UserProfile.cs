@@ -15,6 +15,7 @@ namespace TinkerGenie.API.Models
         public string? BusinessName { get; set; }
         public int CurrentDay { get; set; } = 1;
         public string CommunicationStyle { get; set; } = "balanced";
+        public string CommunicationTone { get; set; } = "professional";
         public string PreferredResponseLength { get; set; } = "medium";
         public bool JourneyPaused { get; set; } = false;
         public string Timezone { get; set; } = "America/New_York";

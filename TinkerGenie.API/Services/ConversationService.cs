@@ -1,168 +1,233 @@
-using TinkerGenie.API.Models;
-using Npgsql;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using TinkerGenie.API.Data;
+using TinkerGenie.API.Models;
 
 namespace TinkerGenie.API.Services
 {
-    public interface IConversationService
-    {
-        Task<Guid> SaveConversation(string userId, string userMessage, string aiResponse, string? existingConversationId = null);
-        Task<List<ConversationMessage>> GetConversationHistory(string userId, int limit = 10);
-    }
-
     public class ConversationService : IConversationService
     {
         private readonly ILogger<ConversationService> _logger;
-        private readonly IConfiguration _configuration;
-        private readonly string _connectionString;
-
-        public ConversationService(ILogger<ConversationService> logger, IConfiguration configuration)
+        private readonly TinkerGenieContext _context;
+        
+        public ConversationService(ILogger<ConversationService> logger, TinkerGenieContext context)
         {
             _logger = logger;
-            _configuration = configuration;
-            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+            _context = context;
+        }
+        
+        public async Task<Guid> SaveConversation(string userId, string userMessage, string aiResponse)
+        {
+            try
+            {
+                // Find or create conversation
+                var userGuid = Guid.TryParse(userId, out var uid) ? uid : Guid.Empty;
+                
+                var conversation = await _context.GenieConversations
+                    .Where(c => c.UserId == userGuid && c.Status == "active")
+                    .OrderByDescending(c => c.LastMessageAt)
+                    .FirstOrDefaultAsync();
+                
+                if (conversation == null)
+                {
+                    conversation = new GenieConversation
+                    {
+                        UserId = userGuid,
+                        ConversationType = "chat",
+                        Status = "active",
+                        StartedAt = DateTime.UtcNow
+                    };
+                    _context.GenieConversations.Add(conversation);
+                }
+                
+                // Add user message
+                _context.ConversationMessages.Add(new ConversationMessage
+                {
+                    ConversationId = conversation.Id,
+                    UserId = userGuid,
+                    Sender = "user",
+                    MessageText = userMessage,
+                    Content = userMessage,
+                    IsUser = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+                
+                // Add AI response
+                _context.ConversationMessages.Add(new ConversationMessage
+                {
+                    ConversationId = conversation.Id,
+                    Sender = "genie",
+                    MessageText = aiResponse,
+                    Content = aiResponse,
+                    IsUser = false,
+                    AiModelUsed = "gpt-4o-mini",
+                    CreatedAt = DateTime.UtcNow
+                });
+                
+                // Update conversation
+                conversation.MessageCount += 2;
+                conversation.LastMessageAt = DateTime.UtcNow;
+                
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation($"Saved conversation {conversation.Id} for user {userId}");
+                return conversation.Id;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error saving conversation for user {userId}");
+                return Guid.Empty;
+            }
+        }
+        
+        public async Task<List<ConversationMessage>> GetConversationHistory(string userId, int limit = 10)
+        {
+            try
+            {
+                var userGuid = Guid.TryParse(userId, out var uid) ? uid : Guid.Empty;
+                
+                // Get the most recent active conversation
+                var conversation = await _context.GenieConversations
+                    .Where(c => c.UserId == userGuid && c.Status == "active")
+                    .OrderByDescending(c => c.LastMessageAt)
+                    .FirstOrDefaultAsync();
+                
+                if (conversation == null)
+                {
+                    return new List<ConversationMessage>();
+                }
+                
+                // Get recent messages from this conversation
+                var messages = await _context.ConversationMessages
+                    .Where(m => m.ConversationId == conversation.Id)
+                    .OrderByDescending(m => m.CreatedAt)
+                    .Take(limit)
+                    .OrderBy(m => m.CreatedAt)
+                    .ToListAsync();
+                
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting conversation history for user {userId}");
+                return new List<ConversationMessage>();
+            }
         }
 
-    public async Task<Guid> SaveConversation(string userId, string userMessage, string aiResponse, string? existingConversationId = null)
-    {
-        try
+        public async Task<Guid> CreateConversation(string userId, string title, string conversationType)
         {
-            // Use existing conversation ID if provided, otherwise create new one
-            var conversationId = !string.IsNullOrEmpty(existingConversationId) 
-                ? Guid.Parse(existingConversationId) 
-                : Guid.NewGuid();
+            try
+            {
+                var userGuid = Guid.TryParse(userId, out var uid) ? uid : Guid.Empty;
                 
-            await using var conn = new NpgsqlConnection(_connectionString);
-                await conn.OpenAsync();
-
-                // FIRST: Create or get conversation record (required for foreign key constraint)
-                var convCmd = new NpgsqlCommand(@"
-                    INSERT INTO conversations 
-                    (conversation_id, user_id, created_at, last_message_at)
-                    VALUES (@conversationId::uuid, @userId::uuid, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    ON CONFLICT (conversation_id) 
-                    DO UPDATE SET last_message_at = CURRENT_TIMESTAMP", conn);
+                var conversation = new GenieConversation
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userGuid,
+                    Title = title,
+                    ConversationType = conversationType,
+                    Status = "active",
+                    StartedAt = DateTime.UtcNow,
+                    LastMessageAt = DateTime.UtcNow
+                };
                 
-                convCmd.Parameters.AddWithValue("conversationId", conversationId);
-                convCmd.Parameters.AddWithValue("userId", Guid.Parse(userId));
+                _context.GenieConversations.Add(conversation);
+                await _context.SaveChangesAsync();
                 
-                await convCmd.ExecuteNonQueryAsync();
+                _logger.LogInformation($"Created {conversationType} conversation '{title}' ({conversation.Id}) for user {userId}");
+                return conversation.Id;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error creating conversation for user {userId}");
+                return Guid.Empty;
+            }
+        }
 
-                // THEN: Save user message if provided
-                if (!string.IsNullOrEmpty(userMessage))
+        public async Task<Guid> SaveConversationWithId(Guid conversationId, string userId, string userMessage, string aiResponse)
+        {
+            try
+            {
+                var userGuid = Guid.TryParse(userId, out var uid) ? uid : Guid.Empty;
+                
+                // Find the specific conversation
+                var conversation = await _context.GenieConversations
+                    .FirstOrDefaultAsync(c => c.Id == conversationId);
+                
+                if (conversation == null)
                 {
-                    var userCmd = new NpgsqlCommand(@"
-                        INSERT INTO conversation_messages 
-                        (conversation_id, user_id, user_message, ai_response, timestamp)
-                        VALUES (@conversationId::uuid, @userId::uuid, @userMessage, '', CURRENT_TIMESTAMP)", conn);
-                    
-                    userCmd.Parameters.AddWithValue("conversationId", conversationId);
-                    userCmd.Parameters.AddWithValue("userId", Guid.Parse(userId));
-                    userCmd.Parameters.AddWithValue("userMessage", userMessage);
-                    
-                    await userCmd.ExecuteNonQueryAsync();
+                    _logger.LogWarning($"Conversation {conversationId} not found for user {userId}");
+                    return Guid.Empty;
                 }
-
-                // Save AI response if provided (could be combined with user message)
-                if (!string.IsNullOrEmpty(aiResponse) && string.IsNullOrEmpty(userMessage))
+                
+                // Add user message
+                _context.ConversationMessages.Add(new ConversationMessage
                 {
-                    var aiCmd = new NpgsqlCommand(@"
-                        INSERT INTO conversation_messages 
-                        (conversation_id, user_id, user_message, ai_response, timestamp)
-                        VALUES (@conversationId::uuid, @userId::uuid, '', @aiResponse, CURRENT_TIMESTAMP)", conn);
-                    
-                    aiCmd.Parameters.AddWithValue("conversationId", conversationId);
-                    aiCmd.Parameters.AddWithValue("userId", Guid.Parse(userId));
-                    aiCmd.Parameters.AddWithValue("aiResponse", aiResponse);
-                    
-                    await aiCmd.ExecuteNonQueryAsync();
-                }
-
-                // If we have both user message and AI response, save them together
-                if (!string.IsNullOrEmpty(userMessage) && !string.IsNullOrEmpty(aiResponse))
+                    ConversationId = conversationId,
+                    UserId = userGuid,
+                    Sender = "user",
+                    MessageText = userMessage,
+                    Content = userMessage,
+                    IsUser = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+                
+                // Add AI response
+                _context.ConversationMessages.Add(new ConversationMessage
                 {
-                    var bothCmd = new NpgsqlCommand(@"
-                        UPDATE conversation_messages 
-                        SET ai_response = @aiResponse
-                        WHERE id = (
-                            SELECT id FROM conversation_messages 
-                            WHERE conversation_id = @conversationId::uuid 
-                            AND user_id = @userId::uuid
-                            AND user_message = @userMessage
-                            AND ai_response = ''
-                            ORDER BY timestamp DESC
-                            LIMIT 1
-                        )", conn);
-                    
-                    bothCmd.Parameters.AddWithValue("conversationId", conversationId);
-                    bothCmd.Parameters.AddWithValue("userId", Guid.Parse(userId));
-                    bothCmd.Parameters.AddWithValue("userMessage", userMessage);
-                    bothCmd.Parameters.AddWithValue("aiResponse", aiResponse);
-                    
-                    await bothCmd.ExecuteNonQueryAsync();
-                }
-
-                _logger.LogInformation($"Saved conversation {conversationId} for user {userId}");
+                    ConversationId = conversationId,
+                    Sender = "genie",
+                    MessageText = aiResponse,
+                    Content = aiResponse,
+                    IsUser = false,
+                    AiModelUsed = "gpt-4o-mini",
+                    CreatedAt = DateTime.UtcNow
+                });
+                
+                // Update conversation
+                conversation.MessageCount += 2;
+                conversation.LastMessageAt = DateTime.UtcNow;
+                
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation($"Saved messages to conversation {conversationId} for user {userId}");
                 return conversationId;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error saving conversation for user {UserId}: {Message}", userId, ex.Message);
-                return Guid.NewGuid(); // Return a new GUID even on error
+                _logger.LogError(ex, $"Error saving to conversation {conversationId} for user {userId}");
+                return Guid.Empty;
             }
         }
 
-        public async Task<List<ConversationMessage>> GetConversationHistory(string userId, int limit = 10)
+        public async Task<bool> UpdateConversationTitle(Guid conversationId, string title)
         {
-            var messages = new List<ConversationMessage>();
-            
             try
             {
-                await using var conn = new NpgsqlConnection(_connectionString);
-                await conn.OpenAsync();
-
-                // Retrieve messages (TODO: Add is_deleted column for soft delete)
-                var cmd = new NpgsqlCommand(@"
-                    SELECT role, message, timestamp 
-                    FROM conversation_messages 
-                    WHERE user_id = @userId::uuid 
-                    ORDER BY timestamp DESC 
-                    LIMIT @limit", conn);
+                var conversation = await _context.GenieConversations
+                    .FirstOrDefaultAsync(c => c.Id == conversationId);
                 
-                cmd.Parameters.AddWithValue("userId", Guid.Parse(userId));
-                cmd.Parameters.AddWithValue("limit", limit);
-
-                await using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
+                if (conversation == null)
                 {
-                    messages.Add(new ConversationMessage
-                    {
-                        Role = reader.GetString(0),
-                        Message = reader.GetString(1),
-                        Timestamp = reader.GetDateTime(2)
-                    });
+                    _logger.LogWarning($"Conversation {conversationId} not found for title update");
+                    return false;
                 }
                 
-                // Reverse to get chronological order
-                messages.Reverse();
+                conversation.Title = title;
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation($"Updated conversation {conversationId} title to '{title}'");
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting conversation history for user {UserId}", userId);
+                _logger.LogError(ex, $"Error updating conversation {conversationId} title");
+                return false;
             }
-
-            return messages;
         }
-    }
-
-    public class ConversationMessage
-    {
-        public string Role { get; set; } = "";
-        public string Message { get; set; } = "";
-        public DateTime Timestamp { get; set; }
     }
 }

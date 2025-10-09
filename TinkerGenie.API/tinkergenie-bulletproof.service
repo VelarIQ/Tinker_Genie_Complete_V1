@@ -1,0 +1,30 @@
+[Unit]
+Description=TinkerGenie Bulletproof API
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+Restart=always
+RestartSec=5
+User=root
+WorkingDirectory=/var/www/tinker-genie-clean/TinkerGenie.API
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:9001
+ExecStart=/usr/share/dotnet/dotnet run --configuration Release
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tinkergenie-bulletproof
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/www/tinker-genie-clean
+ReadWritePaths=/var/log
+
+[Install]
+WantedBy=multi-user.target
+
+
+

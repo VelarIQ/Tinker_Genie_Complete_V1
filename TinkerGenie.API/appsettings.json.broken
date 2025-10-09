@@ -1,0 +1,30 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "OpenAI": {
+    "ApiKey": "**API_KEY**",
+    "Model": "gpt-4o-mini"
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=161.35.5.159;Database=tinker_genie;Username=genie_admin;Password=***PASSWORD***",
+    "Redis": "161.35.5.159:6379,password=***PASSWORD***",
+    "Weaviate": "http://161.35.5.159:8081"
+  },
+  "OpenAI": {
+    "ApiKey": "**API_KEY**",
+    "Model": "gpt-4o-mini-2024-07-18",
+    "MaxTokens": 150,
+    "Temperature": 0.7
+  },
+  "Jwt": {
+    "Key": "TinkerGenie_Super_Secret_JWT_Key_256_Bits_Long_12345",
+    "Issuer": "TinkerGenieAPI",
+    "Audience": "TinkerGenieApp",
+    "ExpiresInDays": 7
+  }
+}

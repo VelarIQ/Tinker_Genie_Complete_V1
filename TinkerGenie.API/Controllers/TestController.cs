@@ -1,15 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace TinkerGenie.API.Controllers
+namespace TinkerGenie.API.Presentation.Controllers
 {
     [ApiController]
-    [Route("api/auth")]
-    public class TestValidateController : ControllerBase
+    [Route("api/test")]
+    public class TestController : ControllerBase
     {
-        [HttpGet("validate")]
-        public IActionResult Validate()
+        [HttpGet]
+        public IActionResult Get()
         {
-            return Ok(new { isValid = false });
+            return Ok(new { message = "Test controller works!" });
+        }
+
+        [HttpPost]
+        public IActionResult Post()
+        {
+            return Ok(new { message = "Test POST works!" });
         }
     }
 }

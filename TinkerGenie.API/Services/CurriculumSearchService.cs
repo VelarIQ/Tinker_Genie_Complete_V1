@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using WeaviateNET;
+using TinkerGenie.API.Services.Interfaces;
 
 namespace TinkerGenie.API.Services
 {
@@ -42,29 +43,24 @@ namespace TinkerGenie.API.Services
                     fields = new[] { "title", "url", "content", "topics", "relevance_score" }
                 };
 
-                var results = await _weaviateService.SearchCurriculum(issue, 3);
+                var results = await _weaviateService.SearchCurriculumDetailedAsync(issue, 6);
                 
                 var searchResult = new CurriculumSearchResponse
                 {
                     Query = issue,
-                    Resources = new List<CurriculumResource>()
-                };
-
-                if (results != null && results.Any())
-                {
-                    foreach (var result in results)
-                    {
-                        searchResult.Resources.Add(new CurriculumResource
+                    Resources = results
+                        .Take(3) // Assuming a limit of 3 for this specific search
+                        .Select(r => new CurriculumResource
                         {
-                            Title = result.Title ?? "Resource",
-                            Url = result.Url ?? "#",
-                            Preview = TruncateContent(result.Content ?? "", 200),
-                            RelevanceScore = result.RelevanceScore ?? 0.0f,
-                            Topics = result.Topics ?? new List<string>(),
-                            ResourceType = DetermineResourceType(result.Url ?? "")
-                        });
-                    }
-                }
+                            Title = r.Title ?? "Resource",
+                            Url = string.IsNullOrWhiteSpace(r.Url) ? "#" : r.Url,
+                            Preview = TruncateContent(r.Content ?? string.Empty, 200),
+                            RelevanceScore = r.RelevanceScore.GetValueOrDefault(),
+                            Topics = r.Topics ?? new List<string>(),
+                            ResourceType = DetermineResourceType(r.Url ?? string.Empty)
+                        })
+                        .ToList()
+                };
 
                 // If no results from Weaviate, provide fallback resources
                 if (!searchResult.Resources.Any())
@@ -91,29 +87,23 @@ namespace TinkerGenie.API.Services
             {
                 _logger.LogInformation("General curriculum search: {Query}", query);
                 
-                var results = await _weaviateService.SearchCurriculum(query, 5);
+                var results = await _weaviateService.SearchCurriculumDetailedAsync(query, 8);
                 
                 var searchResult = new CurriculumSearchResponse
                 {
                     Query = query,
-                    Resources = new List<CurriculumResource>()
-                };
-
-                if (results != null && results.Any())
-                {
-                    foreach (var result in results)
-                    {
-                        searchResult.Resources.Add(new CurriculumResource
+                    Resources = results
+                        .Select(r => new CurriculumResource
                         {
-                            Title = result.Title ?? "Resource",
-                            Url = result.Url ?? "#",
-                            Preview = TruncateContent(result.Content ?? "", 200),
-                            RelevanceScore = result.RelevanceScore ?? 0.0f,
-                            Topics = result.Topics ?? new List<string>(),
-                            ResourceType = DetermineResourceType(result.Url ?? "")
-                        });
-                    }
-                }
+                            Title = r.Title ?? "Resource",
+                            Url = string.IsNullOrWhiteSpace(r.Url) ? "#" : r.Url,
+                            Preview = TruncateContent(r.Content ?? string.Empty, 200),
+                            RelevanceScore = r.RelevanceScore.GetValueOrDefault(),
+                            Topics = r.Topics ?? new List<string>(),
+                            ResourceType = DetermineResourceType(r.Url ?? string.Empty)
+                        })
+                        .ToList()
+                };
 
                 return searchResult;
             }
@@ -157,7 +147,7 @@ namespace TinkerGenie.API.Services
                         {
                             DayNumber = result.DayNumber,
                             Reflection = result.Reflection ?? "",
-                            RelevanceScore = result.RelevanceScore ?? 0.0f,
+                            RelevanceScore = result.RelevanceScore ?? 0f,
                             Date = result.Timestamp ?? DateTime.UtcNow,
                             Emotions = result.Emotions ?? new List<string>()
                         });

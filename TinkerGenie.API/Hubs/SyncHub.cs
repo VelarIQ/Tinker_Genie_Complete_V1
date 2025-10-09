@@ -53,8 +53,8 @@ namespace TinkerGenie.API.Hubs
                     Context.ConnectionId);
             }
             else
-            {
-                _logger.LogInformation("SyncHub client disconnected: {ConnectionId}", Context.ConnectionId);
+        {
+            _logger.LogInformation("SyncHub client disconnected: {ConnectionId}", Context.ConnectionId);
             }
             
             await base.OnDisconnectedAsync(exception);

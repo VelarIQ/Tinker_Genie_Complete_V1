@@ -2,6 +2,7 @@ using System.Text.Json;
 using StackExchange.Redis;
 using Microsoft.AspNetCore.SignalR;
 using TinkerGenie.API.Hubs;
+using TinkerGenie.API.Utilities;
 
 namespace TinkerGenie.API.Services
 {
@@ -60,7 +61,7 @@ namespace TinkerGenie.API.Services
             {
                 try
                 {
-                    var update = JsonSerializer.Deserialize<BroadcastMessage>(message!);
+                    var update = JsonSerializationHelper.Deserialize<BroadcastMessage>(message!);
                     if (update != null)
                     {
                         await _chatHub.Clients.All.SendAsync("GlobalUpdate", update);
@@ -78,7 +79,7 @@ namespace TinkerGenie.API.Services
             {
                 try
                 {
-                    var failoverInfo = JsonSerializer.Deserialize<FailoverMessage>(message!);
+                    var failoverInfo = JsonSerializationHelper.Deserialize<FailoverMessage>(message!);
                     if (failoverInfo != null)
                     {
                         _logger.LogWarning("API Failover detected: {FromServer} -> {ToServer}", 
@@ -105,7 +106,7 @@ namespace TinkerGenie.API.Services
                 try
                 {
                     var userId = channel.ToString().Replace(USER_CHANNEL_PREFIX, "");
-                    var userMessage = JsonSerializer.Deserialize<UserMessage>(message!);
+                    var userMessage = JsonSerializationHelper.Deserialize<UserMessage>(message!);
                     
                     if (userMessage != null)
                     {
@@ -126,7 +127,7 @@ namespace TinkerGenie.API.Services
                 try
                 {
                     var sessionId = channel.ToString().Replace(SESSION_CHANNEL_PREFIX, "");
-                    var sessionUpdate = JsonSerializer.Deserialize<SessionUpdate>(message!);
+                    var sessionUpdate = JsonSerializationHelper.Deserialize<SessionUpdate>(message!);
                     
                     if (sessionUpdate != null)
                     {
@@ -150,7 +151,7 @@ namespace TinkerGenie.API.Services
         {
             var subscriber = _redis.GetSubscriber();
             var channel = $"{USER_CHANNEL_PREFIX}{userId}";
-            var json = JsonSerializer.Serialize(message);
+            var json = JsonSerializationHelper.Serialize(message);
             
             await subscriber.PublishAsync(RedisChannel.Literal(channel), json);
             _logger.LogDebug("Published message to user channel: {Channel}", channel);
@@ -160,7 +161,7 @@ namespace TinkerGenie.API.Services
         {
             var subscriber = _redis.GetSubscriber();
             var channel = $"{SESSION_CHANNEL_PREFIX}{sessionId}";
-            var json = JsonSerializer.Serialize(message);
+            var json = JsonSerializationHelper.Serialize(message);
             
             await subscriber.PublishAsync(RedisChannel.Literal(channel), json);
             _logger.LogDebug("Published message to session channel: {Channel}", channel);
@@ -169,7 +170,7 @@ namespace TinkerGenie.API.Services
         public async Task PublishGlobalUpdate(object message)
         {
             var subscriber = _redis.GetSubscriber();
-            var json = JsonSerializer.Serialize(message);
+            var json = JsonSerializationHelper.Serialize(message);
             
             await subscriber.PublishAsync(RedisChannel.Literal(GLOBAL_CHANNEL), json);
             _logger.LogDebug("Published global update");

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using StackExchange.Redis;
 using Microsoft.Extensions.Logging;
+using TinkerGenie.API.Utilities;
 
 namespace TinkerGenie.API.Services
 {
@@ -44,7 +45,7 @@ namespace TinkerGenie.API.Services
             var sessionJson = await db.StringGetAsync(sessionKey);
             if (sessionJson.HasValue)
             {
-                var existingSession = JsonSerializer.Deserialize<UserSession>(sessionJson!);
+                var existingSession = JsonSerializationHelper.Deserialize<UserSession>(sessionJson!);
                 
                 // Check if it's a new day - reset daily prompt context if needed
                 if (existingSession != null && existingSession.LastActive.Date < DateTime.UtcNow.Date)
@@ -83,7 +84,7 @@ namespace TinkerGenie.API.Services
                 var threadJson = await db.StringGetAsync($"thread:{threadId}");
                 if (threadJson.HasValue)
                 {
-                    return JsonSerializer.Deserialize<ConversationThread>(threadJson!)!;
+                    return JsonSerializationHelper.Deserialize<ConversationThread>(threadJson!)!;
                 }
             }
 
@@ -116,7 +117,7 @@ namespace TinkerGenie.API.Services
 
             // Save thread to Redis
             var db = _redis.GetDatabase();
-            var threadJson = JsonSerializer.Serialize(thread);
+            var threadJson = JsonSerializationHelper.Serialize(thread);
             await db.StringSetAsync($"thread:{thread.ThreadId}", threadJson, TimeSpan.FromDays(30));
 
             // Update session with new thread
@@ -138,7 +139,7 @@ namespace TinkerGenie.API.Services
             
             if (threadJson.HasValue)
             {
-                var thread = JsonSerializer.Deserialize<ConversationThread>(threadJson!);
+                var thread = JsonSerializationHelper.Deserialize<ConversationThread>(threadJson!);
                 if (thread != null)
                 {
                     var session = await GetOrCreateSession(userId);
@@ -162,7 +163,7 @@ namespace TinkerGenie.API.Services
                 var threadJson = await db.StringGetAsync($"thread:{threadId}");
                 if (threadJson.HasValue)
                 {
-                    threads.Add(JsonSerializer.Deserialize<ConversationThread>(threadJson!)!);
+                    threads.Add(JsonSerializationHelper.Deserialize<ConversationThread>(threadJson!)!);
                 }
             }
 
@@ -183,7 +184,7 @@ namespace TinkerGenie.API.Services
             
             if (threadJson.HasValue)
             {
-                var thread = JsonSerializer.Deserialize<ConversationThread>(threadJson!);
+                var thread = JsonSerializationHelper.Deserialize<ConversationThread>(threadJson!);
                 if (thread != null)
                 {
                     // Add user message
@@ -205,7 +206,7 @@ namespace TinkerGenie.API.Services
                     thread.LastActive = DateTime.UtcNow;
 
                     // Update in Redis
-                    var updatedJson = JsonSerializer.Serialize(thread);
+                    var updatedJson = JsonSerializationHelper.Serialize(thread);
                     await db.StringSetAsync($"thread:{threadId}", updatedJson, TimeSpan.FromDays(30));
 
                     // Async persist to database
@@ -228,7 +229,7 @@ namespace TinkerGenie.API.Services
             var sessionJson = await db.StringGetAsync($"session:{userId}:active");
             if (sessionJson.HasValue)
             {
-                var session = JsonSerializer.Deserialize<UserSession>(sessionJson!);
+                var session = JsonSerializationHelper.Deserialize<UserSession>(sessionJson!);
                 if (session != null)
                 {
                     // Mark threads as completed
@@ -238,7 +239,7 @@ namespace TinkerGenie.API.Services
                         var threadJson = await db.StringGetAsync(threadKey);
                         if (threadJson.HasValue)
                         {
-                            var thread = JsonSerializer.Deserialize<ConversationThread>(threadJson!);
+                            var thread = JsonSerializationHelper.Deserialize<ConversationThread>(threadJson!);
                             if (thread != null)
                             {
                                 thread.Status = ThreadStatus.Completed;
@@ -256,7 +257,7 @@ namespace TinkerGenie.API.Services
         private async Task SaveSession(string userId, UserSession session)
         {
             var db = _redis.GetDatabase();
-            var sessionJson = JsonSerializer.Serialize(session);
+            var sessionJson = JsonSerializationHelper.Serialize(session);
             await db.StringSetAsync($"session:{userId}:active", sessionJson, TimeSpan.FromHours(24));
         }
 
@@ -304,23 +305,33 @@ namespace TinkerGenie.API.Services
                 using var conn = new Npgsql.NpgsqlConnection(_connectionString);
                 await conn.OpenAsync();
                 
-                var cmd = new Npgsql.NpgsqlCommand(@"
+            var cmd = new Npgsql.NpgsqlCommand(@"
                     INSERT INTO conversation_threads 
                     (thread_id, user_id, type, title, status, metadata, created_at, updated_at)
-                    VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::jsonb, $7, $8)
+                    VALUES (@threadId::uuid, @userId::uuid, @type, @title, @status, @metadata::jsonb, @createdAt, @updatedAt)
                     ON CONFLICT (thread_id) DO UPDATE SET
-                    status = $5,
-                    metadata = $6::jsonb,
-                    updated_at = $8", conn);
+                    status = @status,
+                    metadata = @metadata::jsonb,
+                    updated_at = @updatedAt", conn);
+
+                // Log for debugging
+                _logger.LogInformation("Persisting thread {ThreadId} for user {UserId}", thread.ThreadId, thread.UserId);
                 
-                cmd.Parameters.AddWithValue(thread.ThreadId);
-                cmd.Parameters.AddWithValue(thread.UserId);
-                cmd.Parameters.AddWithValue(thread.Type.ToString());
-                cmd.Parameters.AddWithValue(thread.Title);
-                cmd.Parameters.AddWithValue(thread.Status.ToString());
-                cmd.Parameters.AddWithValue(JsonSerializer.Serialize(thread.Metadata));
-                cmd.Parameters.AddWithValue(thread.StartTime);
-                cmd.Parameters.AddWithValue(thread.LastActive);
+                cmd.Parameters.AddWithValue("threadId", Guid.Parse(thread.ThreadId));
+                
+                // Try to parse user ID as GUID, log if it fails
+                if (!Guid.TryParse(thread.UserId, out var userGuid))
+                {
+                    _logger.LogError("Invalid user ID format: {UserId} - not a valid GUID", thread.UserId);
+                    throw new FormatException($"User ID '{thread.UserId}' is not a valid GUID");
+                }
+                cmd.Parameters.AddWithValue("userId", userGuid);
+                cmd.Parameters.AddWithValue("type", thread.Type.ToString());
+                cmd.Parameters.AddWithValue("title", thread.Title);
+                cmd.Parameters.AddWithValue("status", thread.Status.ToString());
+                cmd.Parameters.AddWithValue("metadata", JsonSerializationHelper.Serialize(thread.Metadata));
+                cmd.Parameters.AddWithValue("createdAt", thread.StartTime);
+                cmd.Parameters.AddWithValue("updatedAt", thread.LastActive);
                 
                 await cmd.ExecuteNonQueryAsync();
 
@@ -330,13 +341,13 @@ namespace TinkerGenie.API.Services
                     var msgCmd = new Npgsql.NpgsqlCommand(@"
                         INSERT INTO thread_messages 
                         (thread_id, role, content, timestamp)
-                        VALUES ($1::uuid, $2, $3, $4)
+                        VALUES (@threadId::uuid, @role, @content, @timestamp)
                         ON CONFLICT DO NOTHING", conn);
-                    
-                    msgCmd.Parameters.AddWithValue(thread.ThreadId);
-                    msgCmd.Parameters.AddWithValue(msg.Role);
-                    msgCmd.Parameters.AddWithValue(msg.Content);
-                    msgCmd.Parameters.AddWithValue(msg.Timestamp);
+
+                    msgCmd.Parameters.AddWithValue("threadId", Guid.Parse(thread.ThreadId));
+                    msgCmd.Parameters.AddWithValue("role", msg.Role);
+                    msgCmd.Parameters.AddWithValue("content", msg.Content);
+                    msgCmd.Parameters.AddWithValue("timestamp", msg.Timestamp);
                     
                     await msgCmd.ExecuteNonQueryAsync();
                 }
@@ -359,7 +370,7 @@ namespace TinkerGenie.API.Services
                 var cmd = new Npgsql.NpgsqlCommand(@"
                     SELECT thread_id, type, title, status, metadata, created_at, updated_at
                     FROM conversation_threads
-                    WHERE user_id = $1::uuid
+                    WHERE user_id = $1
                     ORDER BY updated_at DESC
                     LIMIT $2", conn);
                 
@@ -369,18 +380,7 @@ namespace TinkerGenie.API.Services
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    threads.Add(new ConversationThread
-                    {
-                        ThreadId = reader.GetGuid(0).ToString(),
-                        UserId = userId,
-                        Type = Enum.Parse<ConversationType>(reader.GetString(1)),
-                        Title = reader.GetString(2),
-                        Status = Enum.Parse<ThreadStatus>(reader.GetString(3)),
-                        Metadata = JsonSerializer.Deserialize<Dictionary<string, object>>(reader.GetString(4)) ?? new(),
-                        StartTime = reader.GetDateTime(5),
-                        LastActive = reader.GetDateTime(6),
-                        Messages = new List<ThreadMessage>()
-                    });
+                    threads.Add(JsonSerializationHelper.Deserialize<ConversationThread>(reader.GetString(4)) ?? new ConversationThread());
                 }
             }
             catch (Exception ex)

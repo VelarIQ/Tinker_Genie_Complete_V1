@@ -1,14 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TinkerGenie.API.Data;
 
 namespace TinkerGenie.API.Models
 {
     [Table("genie_conversations")]
-    public class GenieConversation
+    public class GenieConversation : ITenantEntity
     {
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();
         
+        public Guid TenantId { get; set; }
         public Guid UserId { get; set; }
         public Guid? GenieInstanceId { get; set; }
         public string? Title { get; set; }
@@ -30,5 +32,37 @@ namespace TinkerGenie.API.Models
         public string? EmotionalContext { get; set; }
         
         public string[]? ContextTags { get; set; }
+        
+        /// <summary>
+        /// Additional metadata in JSON format
+        /// </summary>
+        [Column(TypeName = "jsonb")]
+        public string? Metadata { get; set; }
+        
+        /// <summary>
+        /// When the conversation was created
+        /// </summary>
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        /// <summary>
+        /// When the conversation was last updated
+        /// </summary>
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        
+        // Navigation properties
+        public virtual User? User { get; set; }
+        public virtual GenieInstance? GenieInstance { get; set; }
+
+        Guid? ITenantEntity.Id
+        {
+            get => Id;
+            set
+            {
+                if (value.HasValue)
+                {
+                    Id = value.Value;
+                }
+            }
+        }
     }
 }
